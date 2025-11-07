@@ -3,13 +3,13 @@ patterns:
     type: colorbar
     description: SMPTE Color Bars
     colors:
-      - "#C0C0C0"  # White (75%)
-      - "#C0C000"  # Yellow
-      - "#00C0C0"  # Cyan
-      - "#00C000"  # Green
-      - "#C000C0"  # Magenta
-      - "#C00000"  # Red
-      - "#0000C0"  # Blue
+      - "#C0C0C0" # White (75%)
+      - "#C0C000" # Yellow
+      - "#00C0C0" # Cyan
+      - "#00C000" # Green
+      - "#C000C0" # Magenta
+      - "#C00000" # Red
+      - "#0000C0" # Blue
 
   - name: grayscale
     type: grayscale
