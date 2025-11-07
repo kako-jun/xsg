@@ -1,0 +1,31 @@
+patterns:
+  - name: colorbar
+    type: colorbar
+    description: SMPTE Color Bars
+    colors:
+      - "#C0C0C0"  # White (75%)
+      - "#C0C000"  # Yellow
+      - "#00C0C0"  # Cyan
+      - "#00C000"  # Green
+      - "#C000C0"  # Magenta
+      - "#C00000"  # Red
+      - "#0000C0"  # Blue
+
+  - name: grayscale
+    type: grayscale
+    description: 16-step grayscale gradient
+
+  - name: checker
+    type: checker
+    description: Black and white checkerboard
+    gridSize: 50
+
+  - name: crosshatch
+    type: crosshatch
+    description: Grid pattern for alignment
+    gridSize: 50
+
+  - name: pixeldefect
+    type: pixeldefect
+    description: Simulated pixel defects for testing
+    defectCount: 50
