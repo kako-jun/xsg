@@ -3,7 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "XSG - Signal Generator",
-  description: "Professional test pattern generator for display calibration and testing",
+  description:
+    "Professional test pattern generator for display calibration and testing",
 };
 
 export default function RootLayout({

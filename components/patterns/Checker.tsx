@@ -24,7 +24,12 @@ export default function Checker() {
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
           ctx.fillStyle = (row + col) % 2 === 0 ? "#000000" : "#FFFFFF";
-          ctx.fillRect(col * squareSize, row * squareSize, squareSize, squareSize);
+          ctx.fillRect(
+            col * squareSize,
+            row * squareSize,
+            squareSize,
+            squareSize
+          );
         }
       }
     };

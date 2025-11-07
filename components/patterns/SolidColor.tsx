@@ -20,10 +20,5 @@ export default function SolidColor() {
 
   const bgColor = colors[color.toLowerCase()] || color;
 
-  return (
-    <div
-      className="w-full h-full"
-      style={{ backgroundColor: bgColor }}
-    />
-  );
+  return <div className="w-full h-full" style={{ backgroundColor: bgColor }} />;
 }
