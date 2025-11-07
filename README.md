@@ -82,8 +82,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ### Display Patterns
 
 **Quick Access:**
-- Press **'M'** key to toggle the pattern selection menu
-- Press **ESC** to hide the menu
+- **Desktop**: Press **'M'** key to toggle the pattern selection menu (ESC to close)
+- **Mobile**: Tap the menu button (☰) in the bottom-right corner
 
 Navigate to the URL with the desired pattern:
 
