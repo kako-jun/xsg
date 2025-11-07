@@ -75,7 +75,7 @@ export default function PatternMenu() {
         className="fixed bottom-4 right-4 bg-black bg-opacity-70 hover:bg-opacity-90 text-white px-4 py-2 rounded-lg shadow-lg text-sm transition-all active:scale-95"
         aria-label="Open pattern menu"
       >
-        <span className="hidden sm:inline">Press 'M' for menu</span>
+        <span className="hidden sm:inline">Press &apos;M&apos; for menu</span>
         <span className="sm:hidden text-lg">☰</span>
       </button>
     );
@@ -98,7 +98,7 @@ export default function PatternMenu() {
             </button>
           </div>
           <p className="text-gray-400 text-sm mt-1">
-            <span className="hidden sm:inline">Press 'M' to toggle menu • ESC to close</span>
+            <span className="hidden sm:inline">Press &apos;M&apos; to toggle menu • ESC to close</span>
             <span className="sm:hidden">Tap buttons to select pattern</span>
           </p>
         </div>
