@@ -537,3 +537,676 @@ MIT License
 ## 作者
 
 kako-jun
+
+---
+
+## 移植元アプリ（pattern-generator）の調査
+
+XSGは `ZR572_SmartFactory/tools/pattern-generator` の機能を移植・改善したアプリケーションです。
+
+### 移植元の技術スタック
+
+- **フレームワーク**: Vue.js + Electron
+- **Canvas描画**: HTML5 Canvas 2D Context API
+- **API**: Express.js（ポート20190）
+- **画像管理**: public/images/bg/ と public/images/fg/ にPNG/GIF/BMP
+
+### 移植元のアーキテクチャ
+
+#### レイヤーシステム
+
+移植元アプリは **2層構造** を採用：
+
+1. **Background（背景層）**
+   - パターン全体の基礎となる層
+   - 1つのbackgroundオブジェクトのみ
+
+2. **Foreground（前景層）**
+   - 背景の上に重ねて描画される層
+   - 複数のforegroundオブジェクトを配列で管理
+   - ドット欠け、ライン、ウィンドウ、画像などを描画
+
+#### パターンタイプ
+
+**Background Types:**
+```javascript
+Pattern.BackgroundType = {
+  Solid: "Solid",              // 単色塗りつぶし
+  Crosshatch: "Crosshatch",    // クロスハッチ（格子）
+  Mesh: "Mesh",                // メッシュ（市松模様）
+  Grayscale: "Grayscale",      // グレースケール（段階）
+  RepeatCropImage: "RepeatCropImage",  // 画像の繰り返しクロップ
+  Image: "Image",              // 画像表示
+}
+```
+
+**Foreground Types:**
+```javascript
+Pattern.ForegroundType = {
+  Dot: "Dot",                  // ドット（画素欠け）
+  Line: "Line",                // ライン
+  Window: "Window",            // ウィンドウ（移動する矩形）
+  Image: "Image",              // 画像表示
+  Crosshatch: "Crosshatch",    // クロスハッチ（格子）
+}
+```
+
+#### API仕様
+
+**エンドポイント:**
+```bash
+GET /show?bg={background_json}&fg={foreground_array_json}
+GET /answer?visibility=true|false
+GET /quit
+```
+
+**パラメータ例（推測）:**
+```javascript
+// Background
+{
+  "type": "Grayscale",
+  "step_num": 16,
+  "grayscale_direction": "h",  // h: horizontal, v: vertical
+  "grayscale_inverse": false,
+  "flat_step_ids": [],
+  "inverted_step_ids": []
+}
+
+// Foreground (配列)
+[
+  {
+    "type": "Dot",
+    "x": 960,
+    "y": 540,
+    "rgb_string": "RGB(255, 0, 0)",
+    "alpha": 1.0
+  },
+  {
+    "type": "Image",
+    "image_id": "fg/クロストーク",
+    "x": 960,
+    "y": 540,
+    "image_scale": 1.0,
+    "image_stretch": "fill",  // or "none"
+    "alpha": 1.0,
+    "rotate": 0,
+    "blur_radius": 0
+  }
+]
+```
+
+#### 主な機能
+
+**共通プロパティ:**
+- `rgb_string`: 色指定（"RGB(r, g, b)"形式）
+- `alpha`: 透明度（0.0-1.0）
+- `rotate`: 回転角度（0-360度）
+- `blur_radius`: ぼかし半径（0-10）
+
+**Foreground専用プロパティ:**
+- `blink_interval`: 点滅間隔（ミリ秒）
+- `line_direction`: ラインの方向（"h" or "v"）
+- `line_length`: ラインの長さ
+- `line_width`: ラインの幅
+- `window_width`, `window_height`: ウィンドウサイズ
+- `window_speed`: ウィンドウの移動速度
+- `image_id`: 画像ファイル名（拡張子なし、またはフルパス）
+- `image_scale`: 画像のスケール
+- `image_stretch`: 画像の引き伸ばし方法
+
+**Background専用プロパティ:**
+- `rect_width`, `rect_height`: クロスハッチ/メッシュのセルサイズ
+- `rgb_string2`: 2色目（クロスハッチ/メッシュ用）
+- `step_num`: グレースケールのステップ数
+- `grayscale_direction`: グレースケールの方向
+- `grayscale_inverse`: グレースケールの反転
+- `flat_step_ids`: フラット化するステップID配列
+- `inverted_step_ids`: 反転するステップID配列
+
+#### 座標指定の柔軟性
+
+座標や長さは以下の形式で指定可能：
+- 絶対値: `"100"` → 100ピクセル
+- パーセンテージ: `"50p"` → 画面幅/高さの50%
+- 複合指定: `"50pplus10"` → 50% + 10px、`"50pminus10"` → 50% - 10px
+
+```javascript
+decodeRatio("50p", "h")         // 画面幅の50%
+decodeRatio("50pplus10", "h")   // 画面幅の50% + 10px
+decodeRatio("50pminus10", "h")  // 画面幅の50% - 10px
+decodeRatio("100", "h")         // 100px
+```
+
+### 画像リソース
+
+**Background画像:**
+- 砂嵐（sandstorm）
+- テストチャート（ISO12233）
+- CN（カラーノイズ）パターン
+
+**Foreground画像:**
+- グレースケール（赤/緑/青）
+- クロストーク
+- caltab（キャリブレーションターゲット）
+- 各種テストパターン
+
+### 移植の課題と方針
+
+#### 1. スキーマの改善
+
+**問題点:**
+- 元のJSONスキーマは自由形式で、バリデーションがない
+- プロパティ名が直感的でない（`rgb_string`など）
+- 座標指定の文字列パース（`"50pplus10"`）が複雑
+
+**改善方針:**
+- **JSON Schemaで標準化**: 厳密なバリデーションを導入
+- **Canvas 2D Context APIに寄せる**: 標準的なプロパティ名を使用
+- **座標指定の簡素化**: パーセント指定は別フィールドに分離
+
+**新スキーマ案:**
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "background": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": ["solid", "crosshatch", "mesh", "grayscale", "image"]
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "foreground": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": ["dot", "line", "rect", "image", "crosshatch"]
+          },
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "color": { "type": "string" },
+          "opacity": { "type": "number" }
+        }
+      }
+    }
+  }
+}
+```
+
+#### 2. ファイル読み込み機能
+
+**要件:**
+- コマンドライン引数でJSONファイルを指定
+- YAMLファイルもサポート
+- 画像ファイルの参照
+
+**実装方針:**
+```bash
+# パターンファイルを読み込んで表示
+uv run python -m app.main --file patterns/my_pattern.json
+uv run python -m app.main --file patterns/my_pattern.yaml
+
+# 画像ディレクトリを指定
+uv run python -m app.main --file patterns/my_pattern.json --images ./images
+```
+
+#### 3. レイヤーシステムの実装
+
+**React + Canvas実装案:**
+
+```typescript
+// frontend/src/components/PatternCanvas.tsx
+interface BackgroundLayer {
+  type: 'solid' | 'crosshatch' | 'mesh' | 'grayscale' | 'image';
+  color?: string;
+  opacity?: number;
+  // type-specific properties
+}
+
+interface ForegroundLayer {
+  type: 'dot' | 'line' | 'rect' | 'image' | 'crosshatch';
+  x: number;
+  y: number;
+  color?: string;
+  opacity?: number;
+  // type-specific properties
+}
+
+interface Pattern {
+  background: BackgroundLayer;
+  foreground: ForegroundLayer[];
+}
+
+function renderPattern(canvas: HTMLCanvasElement, pattern: Pattern) {
+  const ctx = canvas.getContext('2d')!;
+
+  // 1. Render background
+  renderBackground(ctx, pattern.background);
+
+  // 2. Render foreground layers
+  pattern.foreground.forEach(fg => {
+    renderForeground(ctx, fg);
+  });
+}
+```
+
+#### 4. 画像表示の実装
+
+**方針:**
+- 画像は `public/images/` に配置
+- フロントエンドから直接読み込み（開発時）
+- バックエンドがbase64エンコードして送信（本番時）
+
+**代替案:**
+- APIエンドポイントで画像を配信（`/api/images/{filename}`）
+- 画像をインポートして静的アセットとして扱う
+
+#### 5. アニメーション機能
+
+**実装が必要な機能:**
+- 点滅（blink）
+- 移動ウィンドウ（window）
+- requestAnimationFrameで実装
+
+#### 6. 互換性レイヤー
+
+**旧形式のサポート:**
+- 旧APIエンドポイント `/show?bg=...&fg=...` をサポート
+- 旧JSON形式から新形式への変換関数を実装
+
+```python
+# backend/app/compat.py
+def convert_legacy_pattern(bg_json: str, fg_json: str) -> dict:
+    """Convert legacy pattern format to new format"""
+    bg = json.loads(bg_json)
+    fg = json.loads(fg_json)
+
+    return {
+        "background": convert_background(bg),
+        "foreground": [convert_foreground(f) for f in fg]
+    }
+```
+
+### 標準スキーマとの比較
+
+テストパターン記述のための標準規格・候補を比較検討します。
+
+#### 候補1: Canvas 2D Context API（2004年～）
+
+**概要:**
+- HTML5 Canvas要素の描画API
+- `fillStyle`, `strokeStyle`, `globalAlpha`, `rotate()`, `drawImage()`など
+
+**メリット:**
+- ✅ シンプルで習得しやすい
+- ✅ 全ブラウザでサポート（IE9+）
+- ✅ ピクセル精度の制御が可能
+- ✅ ドキュメント・サンプルが豊富
+- ✅ 画像データへの直接アクセス（`getImageData`）
+
+**デメリット:**
+- ⚠️ 古い仕様（2004年）
+- ⚠️ 宣言的でない（命令的プログラミング）
+- ⚠️ 状態管理が煩雑（`save()`/`restore()`）
+
+**スキーマ例:**
+```json
+{
+  "fillStyle": "#FF0000",
+  "globalAlpha": 1.0,
+  "operations": [
+    {"type": "fillRect", "x": 0, "y": 0, "width": 100, "height": 100}
+  ]
+}
+```
+
+#### 候補2: SVG (Scalable Vector Graphics)（2001年～）
+
+**概要:**
+- XMLベースのベクター画像フォーマット
+- W3C標準、広く使われている
+
+**メリット:**
+- ✅ ベクター形式（拡大しても綺麗）
+- ✅ XML/JSON形式で宣言的に記述可能
+- ✅ CSSでスタイリング可能
+- ✅ DOMとして操作できる
+- ✅ アニメーション機能が充実（SMIL）
+
+**デメリット:**
+- ⚠️ ピクセル精度の制御が難しい
+- ⚠️ 複雑な仕様（フィルター、マスク、グラデーション等）
+- ⚠️ 大量のオブジェクトでパフォーマンス低下
+
+**スキーマ例:**
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080">
+  <rect x="0" y="0" width="100" height="100" fill="#FF0000" opacity="1.0"/>
+  <circle cx="50" cy="50" r="20" fill="#00FF00"/>
+</svg>
+```
+
+JSON化も可能：
+```json
+{
+  "svg": {
+    "width": 1920,
+    "height": 1080,
+    "elements": [
+      {"type": "rect", "x": 0, "y": 0, "width": 100, "height": 100, "fill": "#FF0000"}
+    ]
+  }
+}
+```
+
+#### 候補3: WebGL / WebGPU（2011年～ / 2023年～）
+
+**概要:**
+- GPU加速による高速描画API
+- WebGPUは次世代グラフィックスAPI
+
+**メリット:**
+- ✅ 高速（GPU活用）
+- ✅ 高度なシェーダー処理が可能
+- ✅ 大量のオブジェクトを高速描画
+
+**デメリット:**
+- ❌ 複雑すぎる（シェーダー言語が必要）
+- ❌ テストパターン生成には過剰
+- ⚠️ WebGPUはまだブラウザサポートが限定的
+- ⚠️ ピクセル精度よりパフォーマンス重視
+
+**評価:** オーバースペック、採用しない
+
+#### 候補4: CSS Paint API (Houdini)（2018年～）
+
+**概要:**
+- CSSで描画ロジックを定義できるAPI
+- Canvas 2D Context APIのサブセット
+
+**メリット:**
+- ✅ CSSと統合されている
+- ✅ 宣言的に記述可能
+
+**デメリット:**
+- ❌ ブラウザサポートが限定的（Chrome/Edge のみ）
+- ⚠️ 基本的にCanvas 2D APIのラッパー
+- ⚠️ ドキュメントが少ない
+
+**評価:** まだ早い、Canvas 2Dで十分
+
+#### 候補5: 独自JSON形式（AfterEffects / Lottie / Rive等）
+
+**概要:**
+- アニメーションツールのエクスポート形式
+- Lottie: After Effectsのアニメーションをエクスポート
+
+**メリット:**
+- ✅ 宣言的で理解しやすい
+- ✅ アニメーション記述が充実
+- ✅ ツールでの編集が可能
+
+**デメリット:**
+- ⚠️ 標準規格ではない（各社独自）
+- ⚠️ テストパターン生成向けではない
+- ⚠️ 複雑な仕様
+
+**Lottie例:**
+```json
+{
+  "v": "5.7.4",
+  "fr": 60,
+  "ip": 0,
+  "op": 180,
+  "w": 1920,
+  "h": 1080,
+  "layers": [
+    {
+      "ty": 1,
+      "sw": 1920,
+      "sh": 1080,
+      "sc": "#ff0000"
+    }
+  ]
+}
+```
+
+#### 候補6: Processing / p5.js風の記述
+
+**概要:**
+- アーティスト向けプログラミング言語・ライブラリ
+- シンプルで直感的
+
+**メリット:**
+- ✅ 非常にシンプル
+- ✅ 教育目的に最適
+
+**デメリット:**
+- ⚠️ 標準規格ではない
+- ⚠️ JSONで表現しにくい（コード中心）
+
+**評価:** JSONスキーマとしては不適
+
+#### 候補7: GStreamer / FFmpeg風の記述
+
+**概要:**
+- 動画処理フレームワークの記述形式
+- テストパターン生成機能がある
+
+**FFmpeg例:**
+```bash
+ffmpeg -f lavfi -i testsrc=size=1920x1080:rate=30 output.mp4
+ffmpeg -f lavfi -i color=c=red:s=1920x1080 output.mp4
+```
+
+**メリット:**
+- ✅ 業務用映像機器で広く使われている
+- ✅ テストパターン生成のための機能が充実
+
+**デメリット:**
+- ⚠️ コマンドライン向けの記述
+- ⚠️ JSON化が難しい
+
+**評価:** 参考になるが、そのまま採用は難しい
+
+---
+
+### 比較表
+
+| 候補 | 標準性 | 宣言的 | ピクセル精度 | 学習容易性 | ブラウザサポート | 総合評価 |
+|------|--------|--------|------------|-----------|----------------|---------|
+| **Canvas 2D** | ⭐⭐⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | **⭐⭐⭐** |
+| **SVG** | ⭐⭐⭐ | ⭐⭐⭐ | ⭐ | ⭐⭐ | ⭐⭐⭐ | **⭐⭐** |
+| **WebGL/GPU** | ⭐⭐ | ⭐ | ⭐⭐ | ⭐ | ⭐⭐ | ⭐ |
+| **CSS Paint** | ⭐⭐ | ⭐⭐ | ⭐⭐ | ⭐⭐ | ⭐ | ⭐ |
+| **Lottie等** | ⭐ | ⭐⭐⭐ | ⭐ | ⭐⭐ | ⭐⭐ | ⭐ |
+
+---
+
+### 推奨: ハイブリッドアプローチ
+
+**結論: Canvas 2D Context API + SVG的な宣言的記述**
+
+Canvas 2D APIの命令的な記述をそのまま使うのではなく、**SVGのような宣言的な記述**をJSONで定義し、それをCanvas 2D APIで描画する方式を採用します。
+
+**新スキーマ案（改訂版）:**
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "XSG Pattern Schema v1.0",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "canvas": {
+      "type": "object",
+      "properties": {
+        "width": {"type": "integer"},
+        "height": {"type": "integer"}
+      }
+    },
+    "background": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {"const": "solid"},
+            "fill": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+            "opacity": {"type": "number", "minimum": 0, "maximum": 1}
+          },
+          "required": ["type", "fill"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {"const": "gradient"},
+            "direction": {"enum": ["horizontal", "vertical"]},
+            "steps": {"type": "integer", "minimum": 2},
+            "reverse": {"type": "boolean"}
+          },
+          "required": ["type", "direction", "steps"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {"const": "image"},
+            "src": {"type": "string"},
+            "fit": {"enum": ["fill", "contain", "cover"]},
+            "opacity": {"type": "number"}
+          },
+          "required": ["type", "src"]
+        }
+      ]
+    },
+    "foreground": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {"const": "dot"},
+              "x": {"type": "number"},
+              "y": {"type": "number"},
+              "fill": {"type": "string"},
+              "opacity": {"type": "number"}
+            },
+            "required": ["type", "x", "y"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {"const": "line"},
+              "x1": {"type": "number"},
+              "y1": {"type": "number"},
+              "x2": {"type": "number"},
+              "y2": {"type": "number"},
+              "stroke": {"type": "string"},
+              "strokeWidth": {"type": "number"}
+            },
+            "required": ["type", "x1", "y1", "x2", "y2"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {"const": "rect"},
+              "x": {"type": "number"},
+              "y": {"type": "number"},
+              "width": {"type": "number"},
+              "height": {"type": "number"},
+              "fill": {"type": "string"},
+              "stroke": {"type": "string"},
+              "opacity": {"type": "number"}
+            },
+            "required": ["type", "x", "y", "width", "height"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {"const": "image"},
+              "src": {"type": "string"},
+              "x": {"type": "number"},
+              "y": {"type": "number"},
+              "width": {"type": "number"},
+              "height": {"type": "number"},
+              "opacity": {"type": "number"},
+              "rotate": {"type": "number"}
+            },
+            "required": ["type", "src", "x", "y"]
+          }
+        ]
+      }
+    }
+  },
+  "required": ["version", "background"]
+}
+```
+
+**利点:**
+- ✅ **宣言的**: SVGのように要素を定義するだけ
+- ✅ **標準プロパティ名**: SVG/CSSと同じ命名（`fill`, `stroke`, `opacity`）
+- ✅ **厳密なバリデーション**: JSON Schemaで型チェック
+- ✅ **実装の柔軟性**: Canvas 2D / WebGL / SVGどれでも実装可能
+
+**プロパティ命名規則（SVG/CSS準拠）:**
+- `fill`: 塗りつぶし色（Canvas 2Dの`fillStyle`に相当）
+- `stroke`: 線の色（`strokeStyle`）
+- `opacity`: 透明度（`globalAlpha`）
+- `strokeWidth`: 線の太さ（`lineWidth`）
+- `x`, `y`, `width`, `height`: 座標とサイズ
+
+この方式なら、**SVGの表現力**と**Canvas 2Dの実装しやすさ**の両方を活かせます。
+
+### 移植計画
+
+#### Phase 1: 基本レイヤーシステム（優先度: 高）
+- ✅ 単色背景（Solid）
+- ✅ グレースケール背景（Grayscale）
+- 🔄 メッシュ背景（Mesh/Checkerboard）
+- 🔄 クロスハッチ背景（Crosshatch）
+- 🔄 ドット前景（Dot - pixel defect）
+- 🔄 ライン前景（Line）
+- 🔄 画像背景（Background Image）
+- 🔄 画像前景（Foreground Image）
+
+#### Phase 2: 高度な機能（優先度: 中）
+- 🔄 透明度（alpha/opacity）
+- 🔄 回転（rotate）
+- 🔄 ぼかし（blur）
+- 🔄 アニメーション（blink, window movement）
+- 🔄 複数前景レイヤーの合成
+
+#### Phase 3: ファイル読み込み（優先度: 高）
+- 🔄 `--file` オプションでJSONファイル読み込み
+- 🔄 YAMLファイル対応
+- 🔄 画像ファイルの参照と読み込み
+- 🔄 相対パス/絶対パスの解決
+
+#### Phase 4: 互換性（優先度: 低）
+- 🔄 旧API形式のサポート（`/show?bg=...&fg=...`）
+- 🔄 旧JSON形式の自動変換
+- 🔄 移行ツールの提供
+
+### 次のステップ
+
+1. **スキーマ設計**: 新しいJSONスキーマを定義（Canvas API準拠）
+2. **レイヤー実装**: BackgroundとForegroundのレンダラーを実装
+3. **ファイルローダー**: JSON/YAMLファイルを読み込む機能
+4. **画像管理**: 画像リソースの配置と読み込み
+5. **サンプル作成**: 移植元の主要パターンをサンプルファイルとして作成
