@@ -30,6 +30,7 @@ xsg/
 
 - 🎨 **Accurate Test Patterns**: SMPTE color bars, grayscale, checkerboard, and more
 - 🖥️ **Fullscreen Desktop App**: Frameless, fullscreen window (PyWebView)
+- 📺 **Multi-Display Support**: Display patterns across multiple monitors with flexible selection
 - 🌐 **Web Version**: Also runs in browser for quick testing
 - 🔧 **Flexible Configuration**: YAML-based pattern definitions
 - 🔍 **Pixel Defect Simulation**: Unique testing capability
@@ -210,6 +211,8 @@ Available options:
 - `--dev`: Development mode (uses Vite dev server at http://localhost:3000)
 - `--pattern PATTERN`: Initial pattern to display (default: colorbar)
 - `--port PORT`: API server port (default: 8000)
+- `--display SPEC`: Display selection (default: all) - see Multi-Display Support section
+- `--list-displays`: List all available displays and exit
 - `--api-only`: Run API server only without GUI
 
 ### Single Instance Control
@@ -234,6 +237,93 @@ uv run python -m app.main --dev --pattern checker
 ```
 
 This ensures only one fullscreen window is displayed at a time.
+
+## 🖥️ Multi-Display Support
+
+XSG supports displaying test patterns across multiple monitors simultaneously or on selected displays.
+
+### Listing Available Displays
+
+Before selecting displays, you can list all available monitors:
+
+```bash
+uv run python -m app.main --list-displays
+```
+
+**Example output:**
+
+```
+[INFO] Available displays:
+
+  Display 1: 2560x1440 at (0, 0) (Primary)
+  Display 2: 2560x1440 at (-2560, 0)
+  Display 3: 1920x1080 at (2560, 0)
+
+Position-based groups:
+  Left-to-right: 3 groups
+    left-1: 2560x1440
+    left-2: 2560x1440
+    left-3: 1920x1080
+  Top-to-bottom: 1 groups
+    top-1: 2560x1440, 2560x1440, 1920x1080
+```
+
+### Display Selection
+
+Use the `--display` option to select which displays to use:
+
+```bash
+# Display on all monitors (default)
+uv run python -m app.main --dev --display all
+
+# Display on primary monitor only
+uv run python -m app.main --dev --display primary
+
+# Display on leftmost monitor(s)
+uv run python -m app.main --dev --display left
+
+# Display on second monitor from left
+uv run python -m app.main --dev --display left-2
+
+# Display on rightmost monitor(s)
+uv run python -m app.main --dev --display right
+
+# Display on topmost monitor(s)
+uv run python -m app.main --dev --display top
+
+# Display on second monitor from top
+uv run python -m app.main --dev --display top-2
+
+# Display on bottommost monitor(s)
+uv run python -m app.main --dev --display bottom
+
+# Multiple selections (comma-separated)
+uv run python -m app.main --dev --display "left,right"
+```
+
+### Display Grouping
+
+Monitors are grouped by their **position**:
+
+- **Left-to-right groups**: Monitors with the same X coordinate form one group
+- **Top-to-bottom groups**: Monitors with the same Y coordinate form one group
+
+**Example:**
+
+If you have monitors arranged like this:
+```
+[Monitor 1: 1920x1080 at (0, 0)]
+[Monitor 2: 1920x1080 at (0, 1080)]  <- Same X as Monitor 1
+[Monitor 3: 2560x1440 at (1920, 0)]
+```
+
+Groups would be:
+- `left-1`: Monitor 1, Monitor 2 (both at X=0)
+- `left-2`: Monitor 3 (at X=1920)
+- `top-1`: Monitor 1, Monitor 3 (both at Y=0)
+- `top-2`: Monitor 2 (at Y=1080)
+
+**Important:** When you specify `top-2`, it will create windows on **all monitors** in that group (e.g., both Monitor 1 and Monitor 2 if they share the same Y coordinate).
 
 ## ⚙️ Configuration
 
@@ -312,6 +402,8 @@ curl http://localhost:8000/api/patterns
 - ✅ Vite + React frontend
 - ✅ FastAPI backend
 - ✅ PyWebView desktop wrapper
+- ✅ Multi-display support
+- ✅ Single instance control
 - 🔄 OS-level gamma correction control
 - 🔄 Custom pattern editor
 - 🔄 Pattern animation support

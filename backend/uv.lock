@@ -145,6 +145,20 @@ wheels = [
 ]
 
 [[package]]
+name = "cython"
+version = "3.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/82/01f0b63287cb922e5ba96c5147c30f1e51f541ce91bd178025bb3518b1ba/cython-3.2.0.tar.gz", hash = "sha256:41fdce8237baee2d961c292ed0386903dfe126f131e450a62de0fd7a5280d4b2", size = 3267264, upload-time = "2025-11-05T13:35:04.231Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ff/2b/904493fceda95747ba83971b40a66c8cc29ff009313429903f38ee620140/cython-3.2.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:e9e4b2248dc3a98b86aeba65e9862d2cc881d072c163c0fb31b511d4d72e93c8", size = 2946248, upload-time = "2025-11-05T13:35:30.406Z" },
+    { url = "https://files.pythonhosted.org/packages/57/d3/2e6f5f2552c860bb9c00653d092103521846114f6a2ae0648ecf84c0816c/cython-3.2.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:511d823d9f8a1b850178ec355d6df0a1731b9c20b08ee6d1a780f68215e9013f", size = 2959932, upload-time = "2025-11-05T13:35:37.518Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/d0/dc4b260e8fde81b23ab4dca56948b3e69617ef470247ec6a3e09370a9849/cython-3.2.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:d900e58e826f9a5a27b0e2b50e33473e9986a5bae375c39b0f2e19f2c545fa23", size = 2950437, upload-time = "2025-11-05T13:35:45.427Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/db/de5331ca6489da1761078825709257e1f24e543b4040f86a2502a4b841f9/cython-3.2.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:a0a8274959d538d12f865193dcd67bb5630906e020190c890d2b7c13d31713c6", size = 2961164, upload-time = "2025-11-05T13:35:53.826Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/6b/9e1e171fe19274465d84dffa4610d46f434b1ae945e946802db396695d67/cython-3.2.0-cp39-abi3-macosx_10_9_x86_64.whl", hash = "sha256:04821ce06598a3aa5c9e0270d98960cfe6556dedbd1418c65e4479162b8ae74a", size = 2869249, upload-time = "2025-11-05T13:36:08.944Z" },
+    { url = "https://files.pythonhosted.org/packages/20/58/1f798ddb7fe6bfddf85f4f97d2d4ad63a491a7b643e85c1e274d0f09138e/cython-3.2.0-py3-none-any.whl", hash = "sha256:73f7f4c75acde5b5b4df05b11fdc2705ec637b99241d1bc2f4ebf345f7a2ea90", size = 1252818, upload-time = "2025-11-05T13:35:00.391Z" },
+]
+
+[[package]]
 name = "fastapi"
 version = "0.121.1"
 source = { registry = "https://pypi.org/simple" }
@@ -691,6 +705,19 @@ wheels = [
 ]
 
 [[package]]
+name = "screeninfo"
+version = "0.8.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cython", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ec/bb/e69e5e628d43f118e0af4fc063c20058faa8635c95a1296764acc8167e27/screeninfo-0.8.1.tar.gz", hash = "sha256:9983076bcc7e34402a1a9e4d7dabf3729411fd2abb3f3b4be7eba73519cd2ed1", size = 10666, upload-time = "2022-09-09T11:35:23.419Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6e/bf/c5205d480307bef660e56544b9e3d7ff687da776abb30c9cb3f330887570/screeninfo-0.8.1-py3-none-any.whl", hash = "sha256:e97d6b173856edcfa3bd282f81deb528188aff14b11ec3e195584e7641be733c", size = 12907, upload-time = "2022-09-09T11:35:21.351Z" },
+]
+
+[[package]]
 name = "sniffio"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -933,6 +960,7 @@ dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
     { name = "pywebview" },
+    { name = "screeninfo" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -949,6 +977,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "pydantic", specifier = ">=2.9.0" },
     { name = "pywebview", specifier = ">=5.0.0" },
+    { name = "screeninfo", specifier = ">=0.8.1" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32.0" },
 ]
 

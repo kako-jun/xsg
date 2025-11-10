@@ -331,6 +331,113 @@ if not check_singleton():
     sys.exit(0)
 ```
 
+### マルチディスプレイ対応
+
+XSGは複数のディスプレイに同時に表示可能です。位置ベースの柔軟な指定方法をサポートします。
+
+#### ディスプレイ一覧の表示
+
+```bash
+uv run python -m app.main --list-displays
+```
+
+**出力例:**
+```
+[INFO] Available displays:
+
+  Display 1: 2560x1440 at (0, 0) (Primary)
+  Display 2: 2560x1440 at (-2560, 0)
+  Display 3: 1920x1080 at (2560, 0)
+
+Position-based groups:
+  Left-to-right: 3 groups
+    left-1: 2560x1440
+    left-2: 2560x1440
+    left-3: 1920x1080
+  Top-to-bottom: 1 groups
+    top-1: 2560x1440, 2560x1440, 1920x1080
+```
+
+#### ディスプレイ指定方法
+
+**全体指定:**
+```bash
+--display all           # 全ディスプレイ（デフォルト）
+--display primary       # プライマリディスプレイのみ
+```
+
+**位置ベース指定（グループ単位）:**
+```bash
+# 左右方向
+--display left          # 左端グループ（left-1の略）
+--display left-2        # 左から2番目のグループ
+--display right         # 右端グループ
+--display right-2       # 右から2番目のグループ
+
+# 上下方向
+--display top           # 上端グループ（top-1の略）
+--display top-2         # 上から2番目のグループ
+--display bottom        # 下端グループ
+--display bottom-2      # 下から2番目のグループ
+```
+
+**複数指定（カンマ区切り）:**
+```bash
+--display left,right           # 左端と右端
+--display top,bottom           # 上端と下端
+--display left-1,left-2        # 左から1番目と2番目
+```
+
+#### グループの概念
+
+**重要**: 同じ座標から始まるディスプレイは1つのグループとして扱われます。
+
+```
+例: Y座標が同じディスプレイが2台横並び
+
+  [A: 2560x1440]  [B: 1920x1080]  ← Y=0（グループ1）
+  (0, 0)          (2560, 0)
+
+--display top      → A, B の両方（上端グループ全体）
+--display left     → A のみ（左端グループ）
+--display right    → B のみ（右端グループ）
+```
+
+#### 実装詳細
+
+```python
+# ディスプレイ情報取得（screeninfo使用）
+def get_display_info():
+    monitors = get_monitors()
+    return [{
+        "x": m.x,
+        "y": m.y,
+        "width": m.width,
+        "height": m.height,
+        "is_primary": m.is_primary
+    } for m in monitors]
+
+# 座標でグループ化
+def group_displays_by_position(displays, axis="x"):
+    # 同じX座標（またはY座標）のディスプレイをグループ化
+    groups = defaultdict(list)
+    for display in displays:
+        coord = display[axis]
+        groups[coord].append(display)
+    return sorted(groups.items())
+
+# 各ディスプレイにウィンドウを作成
+for display in selected_displays:
+    window = webview.create_window(
+        url=url,
+        x=display["x"],
+        y=display["y"],
+        width=display["width"],
+        height=display["height"],
+        frameless=True
+    )
+```
+
 ### パターン制御アーキテクチャ
 
 XSGでは、**Pythonバックエンドが完全にパターンを制御**します。
@@ -373,13 +480,13 @@ XSGでは、**Pythonバックエンドが完全にパターンを制御**しま�
 - ✅ シングルインスタンス制御
 - ✅ コマンドライン引数でパターン指定
 - ✅ API経由のパターン制御
+- ✅ マルチディスプレイ対応（位置ベース指定）
 
 ### 今後の実装
 - 🔄 OSレベルのガンマ補正制御
 - 🔄 カスタムパターンエディタ
 - 🔄 パターンアニメーション
 - 🔄 設定ファイルの保存/読み込み
-- 🔄 マルチディスプレイ対応
 - 🔄 より高度なテストパターン（Zone Plate、Needleなど）
 
 ## トラブルシューティング

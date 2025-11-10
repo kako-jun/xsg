@@ -9,7 +9,7 @@ import sys
 import threading
 import time
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import httpx
 import uvicorn
@@ -19,6 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from screeninfo import get_monitors
 
 
 # FastAPI application
@@ -66,8 +67,8 @@ class AppState:
 # Global state instance
 app_state = AppState()
 
-# Global webview window reference
-webview_window = None
+# Global webview window references (list for multi-display support)
+webview_windows = []
 
 # Singleton socket for preventing multiple instances
 singleton_socket = None
@@ -164,7 +165,7 @@ async def get_current_pattern():
 @app.post("/api/pattern")
 async def set_pattern(request: PatternSetRequest):
     """Set current pattern and navigate to it"""
-    global webview_window
+    global webview_windows
 
     # Update state
     app_state.set_pattern(request.pattern, request.params)
@@ -176,14 +177,15 @@ async def set_pattern(request: PatternSetRequest):
 
     url = f"http://localhost:3000/?{'&'.join(url_params)}"
 
-    # Navigate PyWebView window to new URL
-    if webview_window:
+    # Navigate all PyWebView windows to new URL
+    if webview_windows:
         try:
-            webview_window.load_url(url)
+            for window in webview_windows:
+                window.load_url(url)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to load URL: {str(e)}")
     else:
-        # If no webview window (e.g., API-only mode), just update state
+        # If no webview windows (e.g., API-only mode), just update state
         pass
 
     return {
@@ -191,6 +193,7 @@ async def set_pattern(request: PatternSetRequest):
         "pattern": request.pattern,
         "params": request.params,
         "url": url,
+        "windows_count": len(webview_windows),
     }
 
 
@@ -243,6 +246,153 @@ if frontend_path.exists():
 
 
 # ============================================================================
+# Multi-Display Support
+# ============================================================================
+
+
+def get_display_info():
+    """Get information about all monitors"""
+    monitors = get_monitors()
+    return [
+        {
+            "index": i,
+            "x": m.x,
+            "y": m.y,
+            "width": m.width,
+            "height": m.height,
+            "is_primary": m.is_primary if hasattr(m, "is_primary") else False,
+        }
+        for i, m in enumerate(monitors)
+    ]
+
+
+def group_displays_by_position(displays, axis="x"):
+    """
+    Group displays by X or Y coordinate
+    Returns list of groups, sorted by coordinate
+    """
+    from collections import defaultdict
+
+    groups = defaultdict(list)
+    for display in displays:
+        coord = display[axis]
+        groups[coord].append(display)
+
+    # Sort groups by coordinate
+    sorted_groups = sorted(groups.items(), key=lambda x: x[0])
+    return [group for coord, group in sorted_groups]
+
+
+def select_displays(display_spec: str, all_displays: List[dict]) -> List[dict]:
+    """
+    Select displays based on specification string.
+
+    Supported formats:
+    - "all": all displays
+    - "primary": primary display only
+    - "left", "left-2", "left-3": left-to-right groups
+    - "right", "right-2": right-to-left groups
+    - "top", "top-2": top-to-bottom groups
+    - "bottom", "bottom-2": bottom-to-top groups
+    - Multiple specs separated by comma: "left,right"
+    """
+    if not display_spec or display_spec == "all":
+        return all_displays
+
+    selected = []
+    specs = [s.strip() for s in display_spec.split(",")]
+
+    for spec in specs:
+        if spec == "primary":
+            primary = [d for d in all_displays if d["is_primary"]]
+            selected.extend(primary)
+
+        elif spec.startswith("left"):
+            # Group by X coordinate (same X = same vertical column)
+            groups = group_displays_by_position(all_displays, axis="x")
+            index = 1  # default
+            if "-" in spec:
+                index = int(spec.split("-")[1])
+            if 1 <= index <= len(groups):
+                selected.extend(groups[index - 1])
+
+        elif spec.startswith("right"):
+            groups = group_displays_by_position(all_displays, axis="x")
+            index = 1
+            if "-" in spec:
+                index = int(spec.split("-")[1])
+            # Right means from the end
+            if 1 <= index <= len(groups):
+                selected.extend(groups[-(index)])
+
+        elif spec.startswith("top"):
+            # Group by Y coordinate (same Y = same horizontal row)
+            groups = group_displays_by_position(all_displays, axis="y")
+            index = 1
+            if "-" in spec:
+                index = int(spec.split("-")[1])
+            if 1 <= index <= len(groups):
+                selected.extend(groups[index - 1])
+
+        elif spec.startswith("bottom"):
+            groups = group_displays_by_position(all_displays, axis="y")
+            index = 1
+            if "-" in spec:
+                index = int(spec.split("-")[1])
+            # Bottom means from the end
+            if 1 <= index <= len(groups):
+                selected.extend(groups[-(index)])
+
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_selected = []
+    for d in selected:
+        key = (d["x"], d["y"], d["width"], d["height"])
+        if key not in seen:
+            seen.add(key)
+            unique_selected.append(d)
+
+    return unique_selected
+
+
+def print_display_list():
+    """Print list of all displays and exit"""
+    displays = get_display_info()
+
+    print("[INFO] Available displays:")
+    print()
+
+    for i, d in enumerate(displays, 1):
+        primary_marker = " (Primary)" if d["is_primary"] else ""
+        print(
+            f"  Display {i}: {d['width']}x{d['height']} at ({d['x']}, {d['y']}){primary_marker}"
+        )
+
+    print()
+    print("Position-based groups:")
+
+    # Show left-right groups
+    left_groups = group_displays_by_position(displays, axis="x")
+    print(f"  Left-to-right: {len(left_groups)} groups")
+    for i, group in enumerate(left_groups, 1):
+        displays_str = ", ".join(
+            [f"{d['width']}x{d['height']}" for d in group]
+        )
+        print(f"    left-{i}: {displays_str}")
+
+    # Show top-bottom groups
+    top_groups = group_displays_by_position(displays, axis="y")
+    print(f"  Top-to-bottom: {len(top_groups)} groups")
+    for i, group in enumerate(top_groups, 1):
+        displays_str = ", ".join(
+            [f"{d['width']}x{d['height']}" for d in group]
+        )
+        print(f"    top-{i}: {displays_str}")
+
+    print()
+
+
+# ============================================================================
 # PyWebView Integration
 # ============================================================================
 
@@ -269,13 +419,14 @@ def start_api_server(host: str = "127.0.0.1", port: int = 8000):
     uvicorn.run(app, host=host, port=port, log_level="info")
 
 
-def create_desktop_window(
+def create_desktop_windows(
     dev_mode: bool = False,
     api_url: str = "http://127.0.0.1:8000",
     initial_pattern: str = "colorbar",
+    display_spec: str = "all",
 ):
-    """Create PyWebView desktop window"""
-    global webview_window
+    """Create PyWebView desktop windows on selected displays"""
+    global webview_windows
 
     # Build initial URL with pattern
     if dev_mode:
@@ -292,21 +443,44 @@ def create_desktop_window(
     url = f"{base_url}/?pattern={initial_pattern}"
     print(f"[INFO] Initial pattern: {initial_pattern}")
 
-    # Create desktop window
+    # Get all displays and select based on spec
+    all_displays = get_display_info()
+    selected_displays = select_displays(display_spec, all_displays)
+
+    if not selected_displays:
+        print(f"[ERROR] No displays matched specification: {display_spec}")
+        sys.exit(1)
+
+    print(f"[INFO] Creating windows on {len(selected_displays)} display(s)")
+
+    # Create window for each selected display
     api = DesktopAPI()
-    window = webview.create_window(
-        title="XSG - Signal Generator",
-        url=url,
-        fullscreen=True,  # Start in fullscreen
-        frameless=True,  # Remove title bar
-        resizable=False,
-        js_api=api,  # Expose Python API to JavaScript
-    )
+    windows = []
 
-    # Store window reference globally
-    webview_window = window
+    for i, display in enumerate(selected_displays):
+        print(
+            f"[INFO] Display {i+1}/{len(selected_displays)}: "
+            f"{display['width']}x{display['height']} at ({display['x']}, {display['y']})"
+        )
 
-    # Start webview
+        window = webview.create_window(
+            title=f"XSG - Signal Generator ({i+1})",
+            url=url,
+            x=display["x"],
+            y=display["y"],
+            width=display["width"],
+            height=display["height"],
+            fullscreen=False,  # Use manual positioning instead
+            frameless=True,  # Remove title bar
+            resizable=False,
+            js_api=api,  # Expose Python API to JavaScript
+        )
+        windows.append(window)
+
+    # Store window references globally
+    webview_windows = windows
+
+    # Start webview (blocks until all windows are closed)
     webview.start(debug=dev_mode)
 
 
@@ -373,10 +547,28 @@ def main():
         help="Initial pattern to display (default: colorbar)",
     )
     parser.add_argument(
+        "--display",
+        type=str,
+        default="all",
+        help='Display selection: "all", "primary", "left", "left-2", "right", "top", "bottom", etc. (default: all)',
+    )
+    parser.add_argument(
+        "--list-displays",
+        action="store_true",
+        help="List all available displays and exit",
+    )
+    parser.add_argument(
         "--api-only", action="store_true", help="Run API server only (no GUI)"
     )
 
     args = parser.parse_args()
+
+    # ========================================================================
+    # List Displays Mode
+    # ========================================================================
+    if args.list_displays:
+        print_display_list()
+        sys.exit(0)
 
     # ========================================================================
     # Singleton Instance Check
@@ -423,11 +615,12 @@ def main():
         # Wait for API server to start
         time.sleep(2)
 
-        # Create and start desktop window
-        create_desktop_window(
+        # Create and start desktop windows on selected displays
+        create_desktop_windows(
             dev_mode=args.dev,
             api_url=f"http://127.0.0.1:{args.port}",
             initial_pattern=args.pattern,
+            display_spec=args.display,
         )
 
 
