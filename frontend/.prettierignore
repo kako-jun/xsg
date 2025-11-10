@@ -3,13 +3,9 @@ node_modules
 .pnp
 .pnp.js
 
-# Next.js
-.next
-out
-build
-
-# Production
+# Build output
 dist
+build
 
 # Misc
 .DS_Store
@@ -23,12 +19,8 @@ yarn-error.log*
 # Local env files
 .env*.local
 
-# Vercel
-.vercel
-
 # TypeScript
 *.tsbuildinfo
-next-env.d.ts
 
 # Package locks
 package-lock.json

@@ -1,7 +1,4 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 interface PatternMenuItem {
   name: string;
@@ -61,7 +58,6 @@ const patterns: PatternMenuItem[] = [
 
 export default function PatternMenu() {
   const [isVisible, setIsVisible] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -80,7 +76,7 @@ export default function PatternMenu() {
   }, []);
 
   const handlePatternSelect = (pattern: string) => {
-    router.push(`?pattern=${pattern}`);
+    window.location.href = `?pattern=${pattern}`;
     setIsVisible(false);
   };
 

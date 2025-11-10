@@ -1,13 +1,13 @@
-"use client";
+import { useEffect, useRef, useMemo } from "react";
 
-import { useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
-
-// Vertical gradient pattern
-export default function VerticalGradient() {
+// Horizontal gradient pattern
+export default function HorizontalGradient() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const searchParams = useSearchParams();
-  const steps = parseInt(searchParams.get("steps") || "256");
+
+  const steps = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return parseInt(params.get("steps") || "256");
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -20,12 +20,12 @@ export default function VerticalGradient() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
 
-      const barHeight = canvas.height / steps;
+      const barWidth = canvas.width / steps;
 
       for (let i = 0; i < steps; i++) {
         const level = Math.floor((255 / (steps - 1)) * i);
         ctx.fillStyle = `rgb(${level}, ${level}, ${level})`;
-        ctx.fillRect(0, i * barHeight, canvas.width, barHeight);
+        ctx.fillRect(i * barWidth, 0, barWidth, canvas.height);
       }
     };
 

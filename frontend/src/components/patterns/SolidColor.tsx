@@ -1,11 +1,11 @@
-"use client";
-
-import { useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 
 // Solid color field
 export default function SolidColor() {
-  const searchParams = useSearchParams();
-  const color = searchParams.get("color") || "white";
+  const color = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("color") || "white";
+  }, []);
 
   const colors: Record<string, string> = {
     white: "#FFFFFF",

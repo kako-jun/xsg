@@ -2,14 +2,38 @@
 
 **XSG** is a professional test pattern generator for display calibration and testing. It provides accurate color bars, grayscale, checkerboard, and other patterns typically found in expensive broadcast signal generators.
 
+## 📦 Architecture
+
+XSG is built with a modern frontend/backend architecture:
+
+- **Frontend**: Vite + React + TypeScript + Tailwind CSS
+- **Backend**: FastAPI + PyWebView (desktop application wrapper)
+- **Deployment**: Static export for web, or packaged desktop app with PyInstaller
+
+```
+xsg/
+├── frontend/          # Vite + React application
+│   ├── src/
+│   │   ├── components/  # React components
+│   │   ├── lib/         # Utilities and types
+│   │   └── main.tsx     # Application entry
+│   ├── public/          # Static assets
+│   └── vite.config.ts
+└── backend/           # FastAPI + PyWebView wrapper
+    ├── app/
+    │   └── main.py      # Desktop application
+    ├── pyproject.toml   # uv dependencies
+    └── build.bat/sh     # Build scripts
+```
+
 ## ✨ Features
 
 - 🎨 **Accurate Test Patterns**: SMPTE color bars, grayscale, checkerboard, and more
-- 🖥️ **Fullscreen Display**: Borderless, maximized window for precise testing
+- 🖥️ **Fullscreen Desktop App**: Frameless, fullscreen window (PyWebView)
+- 🌐 **Web Version**: Also runs in browser for quick testing
 - 🔧 **Flexible Configuration**: YAML-based pattern definitions
-- 🔍 **Pixel Defect Simulation**: Unique testing capability not found in hardware generators
-- 🌐 **Browser-Based**: No installation required, runs completely locally
-- ⚡ **Instant Switching**: Change patterns via URL query parameters
+- 🔍 **Pixel Defect Simulation**: Unique testing capability
+- ⚡ **REST API**: Control patterns via FastAPI backend
 - 🎯 **Professional Grade**: Designed to replace costly hardware signal generators
 
 ## 🎯 Supported Patterns
@@ -67,13 +91,11 @@
 
 ## 🚀 Quick Start
 
-### Development
+### Web Version (Development)
 
 ```bash
-# Install dependencies
+cd frontend
 npm install
-
-# Start development server
 npm run dev
 ```
 
@@ -122,15 +144,53 @@ Navigate to the URL with the desired pattern:
 - Multiburst: [http://localhost:3000?pattern=multiburst](http://localhost:3000?pattern=multiburst)
 - Pixel Defect: [http://localhost:3000?pattern=pixeldefect](http://localhost:3000?pattern=pixeldefect)
 
+### Desktop Application (Development)
+
+```bash
+# Terminal 1: Start frontend dev server
+cd frontend
+npm run dev
+
+# Terminal 2: Start backend with PyWebView
+cd backend
+uv sync
+uv run python -m app.main --dev
+```
+
+Or use the dev scripts:
+
+```bash
+# Windows
+cd backend
+dev.bat
+
+# Linux/macOS
+cd backend
+chmod +x dev.sh
+./dev.sh
+```
+
 ### Production Build
 
 ```bash
-# Build for production
+# Build frontend
+cd frontend
 npm run build
 
-# Start production server
-npm start
+# Package desktop application
+cd ../backend
+uv sync
+uv pip install pyinstaller
+
+# Windows
+build.bat
+
+# Linux/macOS
+chmod +x build.sh
+./build.sh
 ```
+
+The packaged application will be in `backend/dist/`.
 
 ## ⚙️ Configuration
 
@@ -160,9 +220,17 @@ patterns:
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js](https://nextjs.org/) 15 (App Router)
+### Frontend
+- **Build Tool**: [Vite](https://vite.dev/) 6.0
+- **Framework**: [React](https://react.dev/) 18
 - **Language**: [TypeScript](https://www.typescriptlang.org/) 5.7
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) 3.4
+
+### Backend
+- **API Framework**: [FastAPI](https://fastapi.tiangolo.com/) 0.121
+- **Desktop Wrapper**: [PyWebView](https://pywebview.flowrl.com/) 6.1
+- **Package Manager**: [uv](https://docs.astral.sh/uv/)
+- **Packaging**: [PyInstaller](https://pyinstaller.org/)
 - **Configuration**: [js-yaml](https://github.com/nodeca/js-yaml)
 
 ## 🎨 Use Cases
@@ -176,18 +244,35 @@ patterns:
 
 ## 🌍 Why XSG?
 
-Professional signal generators can cost thousands of dollars. XSG provides the same functionality in a free, browser-based application that works on any computer with a modern web browser.
+Professional signal generators can cost thousands of dollars. XSG provides the same functionality in a free application that works as a browser app or desktop application.
 
 Our **pixel defect simulation** feature is unique - even expensive hardware generators don't offer this capability, making XSG a valuable tool for quality assurance and testing.
 
+## 🔌 API Endpoints
+
+XSG includes a FastAPI backend with the following endpoints:
+
+- `GET /` - API information
+- `GET /api/patterns` - List all available patterns
+- `GET /api/patterns/{pattern_id}` - Get specific pattern info
+- `POST /api/gamma` - Set gamma correction settings
+- `GET /api/gamma` - Get current gamma settings
+
+Example:
+
+```bash
+curl http://localhost:8000/api/patterns
+```
+
 ## 📝 Future Plans
 
-- Gamma correction control
-- Custom pattern editor
-- Pattern animation support
-- REST API for remote control
-- Desktop application (Tauri/Rust)
-- More advanced patterns (Zone Plate, Needle, etc.)
+- ✅ Vite + React frontend
+- ✅ FastAPI backend
+- ✅ PyWebView desktop wrapper
+- 🔄 OS-level gamma correction control
+- 🔄 Custom pattern editor
+- 🔄 Pattern animation support
+- 🔄 More advanced patterns (Zone Plate, Needle, etc.)
 
 ## 📄 License
 

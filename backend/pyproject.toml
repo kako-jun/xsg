@@ -1,0 +1,25 @@
+[project]
+name = "xsg-backend"
+version = "0.1.0"
+description = "XSG backend API with PyWebView for desktop signal generator"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pywebview>=5.0.0",
+    "pydantic>=2.9.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "black>=24.0.0",
+    "ruff>=0.6.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
