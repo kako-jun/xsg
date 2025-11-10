@@ -75,8 +75,29 @@ export default function PatternMenu() {
     };
   }, []);
 
-  const handlePatternSelect = (pattern: string) => {
-    window.location.href = `?pattern=${pattern}`;
+  const handlePatternSelect = async (pattern: string) => {
+    try {
+      // Call backend API to change pattern
+      const response = await fetch("http://localhost:8000/api/pattern", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          pattern: pattern,
+          params: {},
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to change pattern:", await response.text());
+      }
+    } catch (error) {
+      console.error("Error calling pattern API:", error);
+      // Fallback to direct URL navigation if API fails
+      window.location.href = `?pattern=${pattern}`;
+    }
+
     setIsVisible(false);
   };
 

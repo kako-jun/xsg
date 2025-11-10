@@ -4,12 +4,14 @@ FastAPI + PyWebView integrated application
 """
 
 import os
+import socket
 import sys
 import threading
 import time
 from pathlib import Path
 from typing import Optional
 
+import httpx
 import uvicorn
 import webview
 from fastapi import FastAPI, HTTPException
@@ -37,6 +39,41 @@ app.add_middleware(
 
 
 # ============================================================================
+# Application State
+# ============================================================================
+
+
+class AppState:
+    """Global application state"""
+
+    def __init__(self, initial_pattern: str = "colorbar"):
+        self.current_pattern = initial_pattern
+        self.pattern_params = {}  # Additional parameters like steps, color, etc.
+
+    def set_pattern(self, pattern: str, params: dict = None):
+        """Set current pattern"""
+        self.current_pattern = pattern
+        self.pattern_params = params or {}
+
+    def get_pattern(self) -> dict:
+        """Get current pattern"""
+        return {
+            "pattern": self.current_pattern,
+            "params": self.pattern_params,
+        }
+
+
+# Global state instance
+app_state = AppState()
+
+# Global webview window reference
+webview_window = None
+
+# Singleton socket for preventing multiple instances
+singleton_socket = None
+
+
+# ============================================================================
 # Models
 # ============================================================================
 
@@ -48,6 +85,13 @@ class PatternInfo(BaseModel):
     name: str
     description: str
     category: str
+
+
+class PatternSetRequest(BaseModel):
+    """Request to set a pattern"""
+
+    pattern: str
+    params: dict = {}
 
 
 class GammaSettings(BaseModel):
@@ -108,6 +152,45 @@ async def get_pattern(pattern_id: str):
         "id": pattern_id,
         "status": "available",
         "message": f"Pattern {pattern_id} is ready",
+    }
+
+
+@app.get("/api/pattern/current")
+async def get_current_pattern():
+    """Get current active pattern"""
+    return app_state.get_pattern()
+
+
+@app.post("/api/pattern")
+async def set_pattern(request: PatternSetRequest):
+    """Set current pattern and navigate to it"""
+    global webview_window
+
+    # Update state
+    app_state.set_pattern(request.pattern, request.params)
+
+    # Build URL with parameters
+    url_params = [f"pattern={request.pattern}"]
+    for key, value in request.params.items():
+        url_params.append(f"{key}={value}")
+
+    url = f"http://localhost:3000/?{'&'.join(url_params)}"
+
+    # Navigate PyWebView window to new URL
+    if webview_window:
+        try:
+            webview_window.load_url(url)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to load URL: {str(e)}")
+    else:
+        # If no webview window (e.g., API-only mode), just update state
+        pass
+
+    return {
+        "status": "ok",
+        "pattern": request.pattern,
+        "params": request.params,
+        "url": url,
     }
 
 
@@ -187,19 +270,27 @@ def start_api_server(host: str = "127.0.0.1", port: int = 8000):
 
 
 def create_desktop_window(
-    dev_mode: bool = False, api_url: str = "http://127.0.0.1:8000"
+    dev_mode: bool = False,
+    api_url: str = "http://127.0.0.1:8000",
+    initial_pattern: str = "colorbar",
 ):
     """Create PyWebView desktop window"""
+    global webview_window
 
+    # Build initial URL with pattern
     if dev_mode:
         # Development mode: use Vite dev server
-        url = "http://localhost:3000"
-        print(f"[DEV] Development mode: {url}")
+        base_url = "http://localhost:3000"
+        print(f"[DEV] Development mode: {base_url}")
         print("[WARN] Make sure Vite dev server is running (npm run dev)")
     else:
         # Production mode: use FastAPI static files
-        url = f"{api_url}/app"
-        print(f"[PROD] Production mode: {url}")
+        base_url = f"{api_url}/app"
+        print(f"[PROD] Production mode: {base_url}")
+
+    # Add pattern parameter to URL
+    url = f"{base_url}/?pattern={initial_pattern}"
+    print(f"[INFO] Initial pattern: {initial_pattern}")
 
     # Create desktop window
     api = DesktopAPI()
@@ -212,8 +303,53 @@ def create_desktop_window(
         js_api=api,  # Expose Python API to JavaScript
     )
 
+    # Store window reference globally
+    webview_window = window
+
     # Start webview
     webview.start(debug=dev_mode)
+
+
+# ============================================================================
+# Singleton Instance Control
+# ============================================================================
+
+# Fixed port for singleton check (different from API server port)
+SINGLETON_PORT = 19999
+
+
+def check_singleton() -> bool:
+    """
+    Check if another instance is already running.
+    Returns True if this is the only instance, False otherwise.
+    """
+    global singleton_socket
+
+    try:
+        # Try to bind to singleton port
+        singleton_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        singleton_socket.bind(("127.0.0.1", SINGLETON_PORT))
+        singleton_socket.listen(1)
+        return True  # This is the only instance
+    except OSError:
+        return False  # Another instance is already running
+
+
+def send_pattern_to_running_instance(pattern: str, port: int = 8000) -> bool:
+    """
+    Send pattern change request to running instance via HTTP API.
+    Returns True if successful, False otherwise.
+    """
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            response = client.post(
+                f"http://127.0.0.1:{port}/api/pattern",
+                json={"pattern": pattern, "params": {}},
+            )
+            return response.status_code == 200
+    except Exception as e:
+        print(f"[ERROR] Failed to communicate with running instance: {e}")
+        return False
 
 
 # ============================================================================
@@ -231,14 +367,48 @@ def main():
     )
     parser.add_argument("--port", type=int, default=8000, help="API server port")
     parser.add_argument(
+        "--pattern",
+        type=str,
+        default="colorbar",
+        help="Initial pattern to display (default: colorbar)",
+    )
+    parser.add_argument(
         "--api-only", action="store_true", help="Run API server only (no GUI)"
     )
 
     args = parser.parse_args()
 
+    # ========================================================================
+    # Singleton Instance Check
+    # ========================================================================
+    if not check_singleton():
+        # Another instance is already running
+        print(
+            f"[INFO] XSG is already running. Sending pattern '{args.pattern}' to existing instance..."
+        )
+
+        # Wait a moment for the existing API server to be ready
+        time.sleep(0.5)
+
+        # Send pattern to running instance
+        if send_pattern_to_running_instance(args.pattern, args.port):
+            print(f"[SUCCESS] Pattern changed to '{args.pattern}'")
+            sys.exit(0)
+        else:
+            print("[ERROR] Failed to communicate with existing instance")
+            print("[ERROR] Make sure the API server is running on the expected port")
+            sys.exit(1)
+
+    # This is the first (and only) instance
+    print("[INFO] Starting XSG Signal Generator...")
+
+    # Initialize app state with initial pattern
+    global app_state
+    app_state = AppState(initial_pattern=args.pattern)
+
     if args.api_only:
         # API server only mode
-        print("🚀 Starting API server...")
+        print("[API] Starting API server...")
         start_api_server(port=args.port)
     else:
         # Desktop application mode
@@ -255,7 +425,9 @@ def main():
 
         # Create and start desktop window
         create_desktop_window(
-            dev_mode=args.dev, api_url=f"http://127.0.0.1:{args.port}"
+            dev_mode=args.dev,
+            api_url=f"http://127.0.0.1:{args.port}",
+            initial_pattern=args.pattern,
         )
 
 

@@ -288,6 +288,79 @@ http://localhost:3000/?pattern=vgradient&steps=128
 - `M` キー: パターンメニューを開く/閉じる
 - `ESC` キー: メニューを閉じる
 
+### シングルインスタンス制御
+
+XSGは**同時に1つのインスタンスのみ**起動可能です。多重起動を防止し、既存インスタンスに対してパターン変更を送信します。
+
+#### 仕組み
+
+1. **排他制御**: ポート19999でソケットをバインドし、唯一のインスタンスであることを保証
+2. **多重起動時の動作**:
+   - 新しいプロセスは既存プロセスを検出
+   - HTTP APIで既存プロセスに `--pattern` 引数を送信
+   - 既存プロセスがそのパターンに切り替わる
+   - 新しいプロセスは終了
+
+#### 使用例
+
+```bash
+# 1回目の起動: colorbarで表示
+uv run python -m app.main --dev --pattern colorbar
+
+# 別ターミナルで2回目の起動を試みる
+uv run python -m app.main --dev --pattern checker
+
+# 結果:
+# - 2回目のプロセスは起動せず終了
+# - 既存プロセスの表示がcheckerに切り替わる
+```
+
+#### 実装詳細
+
+```python
+# シングルトンチェック
+def check_singleton() -> bool:
+    singleton_socket.bind(("127.0.0.1", 19999))
+    return True  # バインド成功 = 唯一のインスタンス
+
+# 多重起動時の処理
+if not check_singleton():
+    # 既存インスタンスにパターン送信
+    httpx.post("http://127.0.0.1:8000/api/pattern",
+               json={"pattern": args.pattern, "params": {}})
+    sys.exit(0)
+```
+
+### パターン制御アーキテクチャ
+
+XSGでは、**Pythonバックエンドが完全にパターンを制御**します。
+
+#### フロー
+
+```
+1. 起動時: --pattern 引数でパターン指定
+   python -m app.main --dev --pattern colorbar
+   ↓
+2. バックエンドが状態保持 (AppState)
+   ↓
+3. PyWebViewで該当URLをロード
+   http://localhost:3000/?pattern=colorbar
+   ↓
+4. GUI操作: ユーザーがパターン選択
+   ↓
+5. フロントエンド → POST /api/pattern
+   ↓
+6. バックエンド → window.load_url() でURL変更
+   ↓
+7. 画面が新しいパターンに切り替わる
+```
+
+#### 重要な設計原則
+
+- **GUIは直接パターンを変更しない**: 必ずAPIを経由
+- **状態はバックエンドが保持**: `app_state.current_pattern`
+- **URLパラメータは維持**: フロントエンドはURLベースで動作
+
 ## 将来の拡張計画
 
 ### 実装済み
@@ -297,6 +370,9 @@ http://localhost:3000/?pattern=vgradient&steps=128
 - ✅ フルスクリーン・フレームレス表示
 - ✅ REST API
 - ✅ uv パッケージマネージャー
+- ✅ シングルインスタンス制御
+- ✅ コマンドライン引数でパターン指定
+- ✅ API経由のパターン制御
 
 ### 今後の実装
 - 🔄 OSレベルのガンマ補正制御

@@ -34,6 +34,7 @@ xsg/
 - 🔧 **Flexible Configuration**: YAML-based pattern definitions
 - 🔍 **Pixel Defect Simulation**: Unique testing capability
 - ⚡ **REST API**: Control patterns via FastAPI backend
+- 🔒 **Single Instance**: Only one instance runs; duplicate launches change pattern in existing window
 - 🎯 **Professional Grade**: Designed to replace costly hardware signal generators
 
 ## 🎯 Supported Patterns
@@ -191,6 +192,48 @@ chmod +x build.sh
 ```
 
 The packaged application will be in `backend/dist/`.
+
+## 🎮 Command Line Options
+
+### Pattern Selection
+
+You can specify the initial pattern when launching XSG:
+
+```bash
+# Start with a specific pattern
+uv run python -m app.main --dev --pattern checker
+uv run python -m app.main --dev --pattern colorbar
+uv run python -m app.main --dev --pattern vgradient
+```
+
+Available options:
+- `--dev`: Development mode (uses Vite dev server at http://localhost:3000)
+- `--pattern PATTERN`: Initial pattern to display (default: colorbar)
+- `--port PORT`: API server port (default: 8000)
+- `--api-only`: Run API server only without GUI
+
+### Single Instance Control
+
+**XSG runs only one instance at a time.** If you try to launch a second instance:
+
+1. The new process detects the existing instance
+2. Sends the `--pattern` argument to the running instance via API
+3. The existing window changes to display the new pattern
+4. The new process exits
+
+**Example:**
+
+```bash
+# Terminal 1: Launch XSG with colorbar
+uv run python -m app.main --dev --pattern colorbar
+
+# Terminal 2: Try to launch with checker
+uv run python -m app.main --dev --pattern checker
+# → The window from Terminal 1 switches to checker pattern
+# → Terminal 2 process exits after sending the command
+```
+
+This ensures only one fullscreen window is displayed at a time.
 
 ## ⚙️ Configuration
 
