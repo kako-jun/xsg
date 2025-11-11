@@ -1,0 +1,229 @@
+# ============================================
+# XSG Pattern Format v1.0 - Complete Schema
+# ============================================
+# 移植元（pg）の全プロパティに対応
+#
+# 標準準拠:
+#   - p5.js: プロパティ名（fill, stroke, diameter, etc.）
+#   - JSON Canvas: 構造（nodes配列、id、type）
+#   - CSS: ぼかし（filter: blur()）、座標（calc()）
+#   - WAAPI: アニメーション（keyframes, duration, iterations）
+# ============================================
+
+# メタデータ
+canvas:
+  width: 1920
+  height: 1080
+
+# ノード配列（描画順 = 配列順、最初が最背面）
+nodes:
+  # ============================================
+  # 1. Background（必ず最初）
+  # ============================================
+
+  # --- Solid（単色塗りつぶし）---
+  - id: bg-solid
+    type: background
+    preset: solid
+    params:
+      color: "#FFFFFF"
+
+  # --- Crosshatch（格子）---
+  - id: bg-crosshatch
+    type: background
+    preset: crosshatch
+    params:
+      width: 50           # rect_width → width
+      height: 50          # rect_height → height
+      color1: "#FFFFFF"   # rgb_string → color1
+      color2: "#000000"   # rgb_string2 → color2
+
+  # --- Mesh/Checker（市松模様）---
+  - id: bg-checker
+    type: background
+    preset: checker
+    params:
+      size: 50            # rect_width/height → size（正方形）
+      color1: "#000000"
+      color2: "#FFFFFF"
+
+  # --- Grayscale（段階的グレースケール）---
+  - id: bg-grayscale
+    type: background
+    preset: grayscale
+    params:
+      steps: 16                    # step_num → steps
+      direction: horizontal        # grayscale_direction: "h"→horizontal, "v"→vertical
+      reverse: false               # grayscale_inverse → reverse
+      flatSteps: [0, 15]           # flat_step_ids → flatSteps
+      invertedSteps: [7, 8]        # inverted_step_ids → invertedSteps
+
+  # --- Image（画像表示）---
+  - id: bg-image
+    type: background
+    preset: image
+    params:
+      src: "./images/bg/sandstorm.png"
+      fit: cover                   # contain | cover | fill
+
+  # --- RepeatCropImage（画像の繰り返しクロップ）---
+  - id: bg-repeat-crop
+    type: background
+    preset: repeatCropImage
+    params:
+      src: "./images/bg/test-chart.png"
+      cropWidth: 100               # クロップ幅
+      cropHeight: 100              # クロップ高さ
+      cropX: 0                     # クロップ開始X座標
+      cropY: 0                     # クロップ開始Y座標
+
+  # ============================================
+  # 2. Foreground Layers
+  # ============================================
+
+  # --- Rect（矩形）---
+  - id: static-rect
+    type: rect
+    x: 100                         # 絶対座標
+    y: 100
+    width: 200
+    height: 100
+    fill: "#FF0000"                # rgb_string → fill
+    stroke: "#000000"
+    strokeWidth: 2                 # line_width → strokeWidth
+    opacity: 0.8                   # alpha → opacity
+    blur: 5                        # blur_radius → blur
+    rotate: 45                     # rotate（そのまま）
+
+  # --- Circle（円）---
+  - id: dot
+    type: circle
+    x: 960
+    y: 540
+    diameter: 10                   # Dot用（小さい円）
+    fill: "#FF0000"
+    opacity: 1.0
+
+  # --- Ellipse（楕円）---
+  - id: ellipse
+    type: ellipse
+    x: 500
+    y: 500
+    width: 150
+    height: 100
+    fill: "#0000FF"
+
+  # --- Line（ライン）---
+  - id: line-horizontal
+    type: line
+
+    # Option 1: x1,y1,x2,y2で指定（p5.js標準）
+    x1: 0
+    y1: 540
+    x2: 1920
+    y2: 540
+    stroke: "#FFFFFF"
+    strokeWidth: 3                 # line_width → strokeWidth
+
+  # --- Line with direction/length（移植元互換）---
+  - id: line-with-direction
+    type: line
+    x: 960                         # 開始点
+    y: 540
+    direction: horizontal          # line_direction: "h"→horizontal, "v"→vertical
+    length: 500                    # line_length → length
+    stroke: "#FF0000"
+    strokeWidth: 5
+
+  # --- Image（画像レイヤー）---
+  - id: image-layer
+    type: image
+    src: "./images/fg/crosstalk.png"  # image_id → src
+    x: 960
+    y: 540
+    width: 400                     # Optional
+    height: 300
+    fit: contain                   # image_stretch: "fill"→fill, "none"→contain
+    scale: 1.5                     # image_scale → scale（新規追加）
+    opacity: 0.5
+    rotate: 45
+    blur: 2
+
+  # --- Blinking（点滅）---
+  - id: blinking-dot
+    type: circle
+    x: 960
+    y: 540
+    diameter: 1
+    fill: "#FF0000"
+    blink: 500                     # blink_interval → blink
+
+  # --- Moving rect（移動する矩形、旧Window）---
+  - id: moving-rect
+    type: rect
+    x: 0
+    y: 540
+    width: 100                     # window_width → width
+    height: 100                    # window_height → height
+    fill: "#0000FF"
+    blur: 3
+    animation:
+      props:
+        x: [0, 1920]
+      duration: 19200              # window_speed: 100px/s → duration計算
+      iterations: Infinity
+      easing: linear
+
+  # --- Complex animation（複雑なアニメーション）---
+  - id: complex-rect
+    type: rect
+    x: 100
+    y: 100
+    width: 50
+    height: 50
+    fill: "#FF00FF"
+    animation:
+      keyframes:
+        - x: 100
+          y: 100
+          opacity: 0
+        - x: 1820
+          y: 100
+          opacity: 1
+        - x: 1820
+          y: 980
+          opacity: 1
+        - x: 100
+          y: 980
+          opacity: 0
+      duration: 20000
+      iterations: Infinity
+      easing: ease-in-out
+      direction: normal
+      delay: 0
+
+  # --- Preset pattern（既存XSGパターン）---
+  - id: pixel-defects
+    type: preset
+    preset: pixeldefect
+    params:
+      count: 50
+      colors: ["#FF0000", "#00FF00", "#0000FF"]
+
+  # --- Crosshatch（前景としてのクロスハッチ）---
+  - id: fg-crosshatch
+    type: preset
+    preset: crosshatch
+    params:
+      width: 100
+      height: 100
+      color1: "#FFFFFF"
+      color2: "#000000"
+
+# ============================================
+# 座標指定のバリエーション
+# ============================================
+# - 絶対値: x: 100
+# - パーセント: x: "50%"
+# - 計算式: x: "calc(50% + 10px)"
+# - 計算式: x: "calc(50% - 10px)"

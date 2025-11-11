@@ -1,0 +1,45 @@
+# Digital Signage Example
+# Mixes web pages, patterns, and images in sequence
+
+playback:
+  order: sequence
+  loop: true
+  defaultDuration: 10000
+
+sources:
+  # Company dashboard (web page)
+  - type: url
+    url: "https://example.com/dashboard"
+    readonly: true
+    duration: 30000
+
+  # Test pattern (for display calibration)
+  - type: pattern
+    path: "@/patterns/colorbar-simple.yaml"
+    duration: 5000
+
+  # Announcement image
+  - type: image
+    src: "@/images/announcement.png"
+    fit: contain
+    duration: 15000
+
+  # Another pattern
+  - type: pattern
+    path: "@/patterns/checker-with-dot.yaml"
+    duration: 5000
+
+  # Random pattern (inline)
+  - type: inline
+    pattern:
+      canvas:
+        width: 1920
+        height: 1080
+      nodes:
+        - id: bg
+          type: background
+          preset: grayscale
+          params:
+            steps: 16
+            direction: horizontal
+    duration: 10000

@@ -1,0 +1,12 @@
+# Simple Color Bar Pattern
+# Demonstrates: Background preset usage
+
+canvas:
+  width: 1920
+  height: 1080
+
+nodes:
+  # Background: SMPTE Color Bars
+  - id: bg-colorbar
+    type: background
+    preset: colorbar

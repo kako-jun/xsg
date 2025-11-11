@@ -1,0 +1,30 @@
+# Random Pattern Screensaver
+# Generates random patterns and displays them in random order
+
+playback:
+  order: random
+  loop: true
+  defaultDuration: 3000
+
+# No explicit sources - only generated patterns
+generator:
+  enabled: true
+  count: 100
+  duration: 3000
+  constraints:
+    presets:
+      - colorbar
+      - checker
+      - grayscale
+      - solid
+    layers:
+      min: 1
+      max: 3
+    colors:
+      - "#FF0000"
+      - "#00FF00"
+      - "#0000FF"
+      - "#FFFF00"
+      - "#FF00FF"
+      - "#00FFFF"
+      - "#FFFFFF"

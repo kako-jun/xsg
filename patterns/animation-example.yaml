@@ -1,0 +1,38 @@
+# Animation Example
+# Demonstrates: WAAPI animations with props syntax
+
+canvas:
+  width: 1920
+  height: 1080
+
+nodes:
+  # Background
+  - id: bg-black
+    type: background
+    preset: solid
+    params:
+      color: "#000000"
+
+  # Animated circle (pulsing)
+  - id: pulse-circle
+    type: circle
+    x: 50%
+    y: 50%
+    diameter: 100
+    fill: "#FF0000"
+    animation:
+      props:
+        opacity: [1.0, 0.3, 1.0]
+      duration: 2000
+      iterations: Infinity
+      easing: ease-in-out
+
+  # Blinking rectangle
+  - id: blink-rect
+    type: rect
+    x: 100
+    y: 100
+    width: 200
+    height: 200
+    fill: "#00FF00"
+    blink: 500

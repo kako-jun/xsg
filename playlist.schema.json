@@ -1,0 +1,174 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/kako-jun/xsg/schemas/playlist.schema.json",
+  "title": "XSG Playlist Format",
+  "description": "Schema for XSG playlist files",
+  "version": "1.0.0",
+  "type": "object",
+  "required": ["playback"],
+  "properties": {
+    "playback": {
+      "type": "object",
+      "required": ["order"],
+      "properties": {
+        "order": {
+          "enum": ["sequence", "random", "shuffle"],
+          "description": "Playback order: sequence (in order), random (random each time), shuffle (shuffled once)"
+        },
+        "loop": {
+          "type": "boolean",
+          "default": true,
+          "description": "Loop playback"
+        },
+        "defaultDuration": {
+          "type": "number",
+          "minimum": 0,
+          "default": 5000,
+          "description": "Default duration per item (ms)"
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "description": "Explicit sources (patterns, URLs, images)",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["type", "path"],
+            "properties": {
+              "type": { "const": "pattern" },
+              "path": {
+                "type": "string",
+                "description": "Path to pattern file (supports @/, relative, absolute, URL)"
+              },
+              "duration": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Display duration (ms)"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "url"],
+            "properties": {
+              "type": { "const": "url" },
+              "url": {
+                "type": "string",
+                "description": "URL to display (web page)"
+              },
+              "readonly": {
+                "type": "boolean",
+                "default": true,
+                "description": "Disable user interaction"
+              },
+              "duration": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Display duration (ms)"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "src"],
+            "properties": {
+              "type": { "const": "image" },
+              "src": {
+                "type": "string",
+                "description": "Image source (supports @/, relative, absolute, URL)"
+              },
+              "fit": {
+                "enum": ["contain", "cover", "fill"],
+                "default": "cover",
+                "description": "Image fit mode"
+              },
+              "tile": {
+                "type": "boolean",
+                "default": false,
+                "description": "Tile image (for character display)"
+              },
+              "tileSize": {
+                "type": "number",
+                "minimum": 1,
+                "description": "Tile size in pixels (if tile is true)"
+              },
+              "duration": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Display duration (ms)"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "pattern"],
+            "properties": {
+              "type": { "const": "inline" },
+              "pattern": {
+                "type": "object",
+                "description": "Inline pattern definition (XSG pattern format)"
+              },
+              "duration": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Display duration (ms)"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "generator": {
+      "type": "object",
+      "description": "Random pattern generator",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable random pattern generation"
+        },
+        "count": {
+          "type": "number",
+          "minimum": 1,
+          "default": 10,
+          "description": "Number of patterns to generate"
+        },
+        "duration": {
+          "type": "number",
+          "minimum": 0,
+          "default": 3000,
+          "description": "Default duration per generated pattern (ms)"
+        },
+        "constraints": {
+          "type": "object",
+          "description": "Generation constraints",
+          "properties": {
+            "presets": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Allowed presets"
+            },
+            "layers": {
+              "type": "object",
+              "properties": {
+                "min": { "type": "number", "minimum": 0 },
+                "max": { "type": "number", "minimum": 0 }
+              },
+              "description": "Layer count range"
+            },
+            "colors": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{6}$"
+              },
+              "description": "Color palette"
+            }
+          }
+        }
+      }
+    }
+  }
+}

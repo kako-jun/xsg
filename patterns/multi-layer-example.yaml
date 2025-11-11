@@ -1,0 +1,56 @@
+# Multi-layer Pattern Example
+# Demonstrates: Multiple layers with different node types
+
+canvas:
+  width: 1920
+  height: 1080
+
+nodes:
+  # Layer 1: Background (solid color)
+  - id: bg-solid
+    type: background
+    preset: solid
+    params:
+      color: "#1a1a1a"
+
+  # Layer 2: Rectangle (bottom-left)
+  - id: rect-1
+    type: rect
+    x: 100
+    y: 100
+    width: 400
+    height: 300
+    fill: "#FF6B6B"
+    opacity: 0.8
+
+  # Layer 3: Circle (top-right)
+  - id: circle-1
+    type: circle
+    x: calc(100% - 300px)
+    y: 200
+    diameter: 200
+    fill: "#4ECDC4"
+    opacity: 0.8
+
+  # Layer 4: Ellipse (center)
+  - id: ellipse-1
+    type: ellipse
+    x: 50%
+    y: 50%
+    width: 400
+    height: 200
+    fill: "#FFE66D"
+    stroke: "#FF6B6B"
+    strokeWidth: 3
+    opacity: 0.7
+
+  # Layer 5: Diagonal line
+  - id: diag-line
+    type: line
+    x1: 0
+    y1: 0
+    x2: 100%
+    y2: 100%
+    stroke: "#FFFFFF"
+    strokeWidth: 2
+    opacity: 0.5

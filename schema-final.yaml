@@ -1,0 +1,383 @@
+# ============================================
+# XSG Pattern Format v1.0 - Final Schema
+# ============================================
+# 直交性チェック済み、競合解決済み
+#
+# 設計原則:
+#   1. 排他的指定はoneOfで制御
+#   2. 優先度ルールを明示
+#   3. デフォルト値を明確化
+#   4. エラーケースを定義
+#
+# 標準準拠:
+#   - p5.js: プロパティ名
+#   - JSON Canvas: 構造
+#   - CSS: ぼかし、座標
+#   - WAAPI: アニメーション
+# ============================================
+
+# メタデータ
+canvas:
+  width: 1920
+  height: 1080
+
+# ノード配列
+nodes:
+  # ============================================
+  # Background（必ず最初）
+  # ============================================
+
+  # ✅ 正しい: presetを使用（fillは指定しない）
+  - id: bg-checker
+    type: background
+    preset: checker
+    params:
+      size: 50
+      color1: "#000000"
+      color2: "#FFFFFF"
+
+  # ❌ 間違い: presetとfillを同時指定
+  # - id: bg-bad
+  #   type: background
+  #   preset: checker
+  #   fill: "#FF0000"  # これは無視される！
+
+  # ✅ 正しい: カスタム描画（presetなし）
+  - id: bg-custom
+    type: background
+    fill: "#FFFFFF"
+
+  # ============================================
+  # Line Node - 排他的指定
+  # ============================================
+
+  # ✅ 正しい: Option 1（p5.js標準）
+  - id: line-standard
+    type: line
+    x1: 0
+    y1: 0
+    x2: 1920
+    y2: 1080
+    stroke: "#FFFFFF"
+    strokeWidth: 3
+
+  # ✅ 正しい: Option 2（移植元互換）
+  - id: line-legacy
+    type: line
+    x: 960
+    y: 0
+    direction: vertical
+    length: 1080
+    stroke: "#FF0000"
+    strokeWidth: 5
+
+  # ❌ 間違い: 両方を同時指定
+  # - id: line-bad
+  #   type: line
+  #   x1: 0        # Option 1
+  #   y1: 0
+  #   x2: 1920
+  #   y2: 1080
+  #   x: 960       # Option 2（これは無視される！）
+  #   y: 0
+  #   direction: vertical
+
+  # ============================================
+  # Animation - 排他的指定
+  # ============================================
+
+  # ✅ 正しい: keyframes形式
+  - id: anim-keyframes
+    type: rect
+    x: 100
+    y: 100
+    width: 50
+    height: 50
+    fill: "#FF0000"
+    animation:
+      keyframes:
+        - x: 100
+          opacity: 0
+        - x: 1820
+          opacity: 1
+      duration: 3000
+      iterations: Infinity
+
+  # ✅ 正しい: props形式
+  - id: anim-props
+    type: rect
+    x: 0
+    y: 540
+    width: 100
+    height: 100
+    fill: "#0000FF"
+    animation:
+      props:
+        x: [0, 1920]
+      duration: 3000
+      iterations: Infinity
+
+  # ❌ 間違い: 両方を同時指定
+  # - id: anim-bad
+  #   type: rect
+  #   animation:
+  #     keyframes:    # これが優先される
+  #       - x: 0
+  #       - x: 1920
+  #     props:        # これは無視される！
+  #       x: [0, 1920]
+
+  # ============================================
+  # Image - サイズ指定の優先度
+  # ============================================
+
+  # ✅ 正しい: 優先度1（width/height明示）
+  - id: image-explicit
+    type: image
+    src: "./images/fg/crosstalk.png"
+    x: 960
+    y: 540
+    width: 400      # 最優先
+    height: 300
+    # scale: 1.5    # これは無視される
+    # fit: contain  # これも無視される
+
+  # ✅ 正しい: 優先度2（scale）
+  - id: image-scale
+    type: image
+    src: "./images/fg/crosstalk.png"
+    x: 960
+    y: 540
+    scale: 1.5      # width/heightがないのでこれが使われる
+    # fit: contain  # これは無視される
+
+  # ✅ 正しい: 優先度3（fit）
+  - id: image-fit
+    type: image
+    src: "./images/fg/crosstalk.png"
+    x: 960
+    y: 540
+    fit: contain    # width/heightもscaleもないのでこれが使われる
+
+  # ✅ 正しい: デフォルト（元サイズ）
+  - id: image-default
+    type: image
+    src: "./images/fg/crosstalk.png"
+    x: 960
+    y: 540
+    # サイズ指定なし = 元サイズ
+
+  # ============================================
+  # blink + animation - 独立だが注意点あり
+  # ============================================
+
+  # ✅ 正しい: 移動しながら点滅
+  - id: moving-blinking
+    type: circle
+    x: 0
+    y: 540
+    diameter: 10
+    fill: "#FF0000"
+    blink: 500
+    animation:
+      props:
+        x: [0, 1920]  # opacityはアニメートしない
+      duration: 3000
+      iterations: Infinity
+
+  # ⚠️ 注意: opacityの競合
+  - id: opacity-conflict
+    type: circle
+    x: 0
+    y: 540
+    diameter: 10
+    fill: "#00FF00"
+    blink: 500          # visibility切り替え
+    animation:
+      keyframes:
+        - x: 0
+          opacity: 0    # これが優先される（blinkは無効化される）
+        - x: 1920
+          opacity: 1
+      duration: 3000
+
+  # ============================================
+  # 初期値 vs アニメーション値
+  # ============================================
+
+  # ⚠️ 注意: 初期値は無視される
+  - id: initial-vs-animation
+    type: rect
+    x: 500            # この初期値は無視される
+    y: 500
+    width: 50
+    height: 50
+    fill: "#FF00FF"
+    opacity: 1.0      # この初期値も無視される
+    animation:
+      keyframes:
+        - x: 100      # これが初期値として使われる
+          opacity: 0  # これも初期値として使われる
+        - x: 1820
+          opacity: 1
+      duration: 5000
+
+  # ✅ 推奨: 初期値を指定しない
+  - id: animation-only
+    type: rect
+    # x, yは指定しない（keyframes[0]が初期値）
+    width: 50
+    height: 50
+    fill: "#FFFF00"
+    animation:
+      keyframes:
+        - x: 100
+          y: 100
+        - x: 1820
+          y: 980
+      duration: 5000
+
+  # ============================================
+  # stroke + fill - 完全に独立
+  # ============================================
+
+  # ✅ 正しい: 両方指定
+  - id: stroke-and-fill
+    type: rect
+    x: 100
+    y: 100
+    width: 200
+    height: 100
+    fill: "#FF0000"      # 塗りつぶし
+    stroke: "#000000"    # 枠線
+    strokeWidth: 5
+
+  # ✅ 正しい: fillのみ
+  - id: fill-only
+    type: rect
+    x: 350
+    y: 100
+    width: 200
+    height: 100
+    fill: "#00FF00"
+
+  # ✅ 正しい: strokeのみ
+  - id: stroke-only
+    type: rect
+    x: 600
+    y: 100
+    width: 200
+    height: 100
+    stroke: "#0000FF"
+    strokeWidth: 3
+
+  # ============================================
+  # 座標指定のバリエーション - 型で区別
+  # ============================================
+
+  # ✅ 絶対値
+  - id: coord-absolute
+    type: circle
+    x: 100
+    y: 100
+    diameter: 50
+    fill: "#FF0000"
+
+  # ✅ パーセント
+  - id: coord-percent
+    type: circle
+    x: "50%"
+    y: "50%"
+    diameter: 50
+    fill: "#00FF00"
+
+  # ✅ calc()
+  - id: coord-calc
+    type: circle
+    x: "calc(50% + 100px)"
+    y: "calc(50% - 50px)"
+    diameter: 50
+    fill: "#0000FF"
+
+  # ============================================
+  # 完全な例: 移植元パターンの再現
+  # ============================================
+
+  - id: legacy-example-bg
+    type: background
+    preset: grayscale
+    params:
+      steps: 16
+      direction: horizontal
+      reverse: false
+      flatSteps: [0, 15]
+      invertedSteps: [7, 8]
+
+  - id: legacy-example-dot
+    type: circle
+    x: "50%"
+    y: "50%"
+    diameter: 1
+    fill: "#FF0000"
+    blink: 500
+
+  - id: legacy-example-window
+    type: rect
+    x: 0
+    y: 540
+    width: 100
+    height: 100
+    fill: "#0000FF"
+    blur: 3
+    animation:
+      props:
+        x: [0, 1920]
+      duration: 19200
+      iterations: Infinity
+      easing: linear
+
+  - id: legacy-example-image
+    type: image
+    src: "./images/fg/crosstalk.png"
+    x: 960
+    y: 540
+    scale: 1.5
+    fit: fill
+    opacity: 0.5
+    rotate: 45
+    blur: 2
+
+# ============================================
+# 注意事項・ベストプラクティス
+# ============================================
+#
+# 1. Line Node:
+#    - x1,y1,x2,y2 OR x,y,direction,length のどちらか一方のみ指定
+#    - 両方指定した場合は x1,y1,x2,y2 が優先される
+#
+# 2. Animation:
+#    - keyframes OR props のどちらか一方のみ指定
+#    - 両方指定した場合は keyframes が優先される
+#
+# 3. Image サイズ:
+#    - 優先度: width/height > scale > fit > デフォルト
+#    - 意図を明確にするため、一つだけ指定することを推奨
+#
+# 4. Background:
+#    - preset を使う場合は fill/stroke を指定しない
+#    - カスタム描画する場合は preset を指定しない
+#
+# 5. blink + animation:
+#    - 独立して動作するが、animation.opacity がある場合は競合
+#    - animation.opacity が優先される（blink は無効化）
+#
+# 6. 初期値 vs アニメーション:
+#    - animation がある場合、keyframes[0] が初期値を上書き
+#    - 混乱を避けるため、animation 使用時は初期値を指定しないことを推奨
+#
+# 7. stroke + fill:
+#    - 完全に独立、両方使用可能
+#
+# 8. 座標指定:
+#    - 型で自動判別（number = 絶対値、string = % or calc()）
+# ============================================

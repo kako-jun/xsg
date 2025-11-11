@@ -1,0 +1,28 @@
+# Test Pattern Loop
+# Cycles through standard test patterns for display calibration
+
+playback:
+  order: sequence
+  loop: true
+  defaultDuration: 3000
+
+sources:
+  # SMPTE Color Bars
+  - type: pattern
+    path: "@/patterns/colorbar-simple.yaml"
+    duration: 3000
+
+  # Checkerboard
+  - type: pattern
+    path: "@/patterns/checker-with-dot.yaml"
+    duration: 3000
+
+  # Grayscale
+  - type: pattern
+    path: "@/patterns/grayscale-with-lines.yaml"
+    duration: 3000
+
+  # Multi-layer test
+  - type: pattern
+    path: "@/patterns/multi-layer-example.yaml"
+    duration: 5000

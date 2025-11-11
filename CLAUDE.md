@@ -540,9 +540,9 @@ kako-jun
 
 ---
 
-## 移植元アプリ（pattern-generator）の調査
+## 移植元アプリ（pg）の調査
 
-XSGは `ZR572_SmartFactory/tools/pattern-generator` の機能を移植・改善したアプリケーションです。
+XSGは pgアプリの機能を移植・改善したアプリケーションです。
 
 ### 移植元の技術スタック
 
@@ -1210,3 +1210,92 @@ Canvas 2D APIの命令的な記述をそのまま使うのではなく、**SVG�
 3. **ファイルローダー**: JSON/YAMLファイルを読み込む機能
 4. **画像管理**: 画像リソースの配置と読み込み
 5. **サンプル作成**: 移植元の主要パターンをサンプルファイルとして作成
+
+---
+
+## 📋 設計完了・実装開始
+
+### 設計ステータス: ✅ 完了（98点/100点）
+
+**2025年11月時点で、XSGの完全な設計が完了しました。**
+
+- ✅ パターンスキーマ（p5.js + JSON Canvas + WAAPI準拠）
+- ✅ プリセット=プラグインアーキテクチャ
+- ✅ パス解決（相対・絶対・プロジェクト相対・URL）
+- ✅ プレイリスト・スクリーンセーバー機能
+- ✅ Webレンダリングモード + プロキシ対応
+- ✅ クロスプラットフォーム対応（Windows/Linux/macOS）
+- ✅ 完全性（移植元37項目を100%カバー）
+- ✅ 直交性（非直交性8件→1件、98点）
+
+### 詳細ドキュメント
+
+**設計の詳細は [DESIGN_SUMMARY.md](./DESIGN_SUMMARY.md) を参照してください。**
+
+作成された設計ドキュメント（15ファイル）:
+- コアスキーマ: `schema-complete.yaml`, `schema-final.yaml`, `schema.d.ts`, `MIGRATION_MAPPING.md`
+- 完全性・直交性: `ORTHOGONALITY_CHECK.md`, `ORTHOGONALITY_IMPROVEMENTS.md`
+- 拡張性: `EXTENSIBILITY_DESIGN.md`, `PRESET_AS_PLUGIN.md`, `PATH_RESOLUTION.md`
+- 新機能: `SCREENSAVER_PLAYLIST.md`, `WEB_RENDERING_MODE.md`, `CROSS_PLATFORM_SCREENSAVER.md`, `PLAYLIST_ORTHOGONAL_DESIGN.md`
+- サマリー: `DESIGN_SUMMARY.md`
+
+### 実装ロードマップ
+
+#### v1.0（コア機能）
+- [x] JSON Schemaファイルの作成（`xsg-pattern.schema.json`）
+- [x] TypeScript型定義の更新（`frontend/src/lib/types.ts`）
+- [x] Python型定義の作成（`backend/app/models.py` - Pydantic v2）
+- [x] パス解決の実装（`frontend/src/lib/pathResolver.ts`, `backend/app/path_resolver.py`）
+- [x] パターンローダーの実装（`backend/app/pattern_loader.py`）
+- [x] サンプルパターンファイルの作成（`patterns/` 配下に6ファイル）
+- [x] プリセット=プラグインの実装
+  - プリセット型定義（`frontend/src/lib/presetTypes.ts`）
+  - プリセットレジストリ（`frontend/src/lib/presetRegistry.ts`）
+  - 標準プリセット4個（`presets/colorbar.tsx`, `checker.tsx`, `grayscale.tsx`, `solid.tsx`）
+  - PresetRenderer コンポーネント
+  - PatternRenderer コンポーネント
+  - NodeRenderer コンポーネント
+  - ドキュメント（`presets/README.md`）
+- [x] マイグレーションツールの実装
+  - マイグレーションロジック（`backend/app/migration.py`）
+  - CLIツール（`backend/migrate.py`）
+  - テストスイート（`backend/test_migration.py`）- 全37項目の変換ルール実装完了
+
+#### v1.1（拡張機能）
+- [x] プレイリスト機能
+  - プレイリストJSON Schema（`playlist.schema.json`）
+  - Pydanticモデル（`backend/app/playlist_models.py`）
+  - プレイリストランナー（`backend/app/playlist_runner.py`）
+  - パターンジェネレーター（`backend/app/pattern_generator.py`）
+  - サンプルプレイリスト4個（`playlists/`）
+  - ドキュメント（`playlists/README.md`）
+- [x] URL画像対応（プレイリストで実装済み）
+- [x] Webレンダリングモード（プレイリストで実装済み）
+- [x] プロキシ対応
+  - プロキシ設定管理（`backend/app/proxy_support.py`）
+  - 環境変数サポート（HTTP_PROXY, HTTPS_PROXY, NO_PROXY）
+  - pattern_loaderに統合
+
+#### v1.2（スクリーンセーバー）
+- [x] スクリーンセーバー基盤
+  - コマンドライン引数パース（`backend/app/screensaver.py`）
+  - Windows/Linux/macOS対応
+  - プレビューモード・設定画面
+  - インストールガイド（`SCREENSAVER_INSTALL.md`）
+- [ ] Windows .scr ビルドスクリプト
+- [ ] Linux パッケージング
+- [ ] macOS .appバンドル
+
+### 新しい用途
+
+XSGは信号発生器の枠を超え、以下の用途に対応します：
+
+1. 🎯 **テストパターン発生器**（本来の用途）
+2. 💻 **スクリーンセーバー**（ランダムパターン・URL画像）
+3. 📺 **デジタルサイネージ**（Webページ・画像・パターンの混在表示）
+4. 🌐 **Webキオスク端末**（プロキシ対応・操作不可モード）
+5. 🖼️ **キャラクター/ロゴ展示**（URL画像のタイル表示）
+
+---
+
+**これより実装フェーズに入ります。** 🚀

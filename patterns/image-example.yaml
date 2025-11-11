@@ -1,0 +1,44 @@
+# Image Pattern Example
+# Demonstrates: Different image path formats and sizing
+
+canvas:
+  width: 1920
+  height: 1080
+
+nodes:
+  # Background: White
+  - id: bg-white
+    type: background
+    preset: solid
+    params:
+      color: "#FFFFFF"
+
+  # Image 1: Project-relative path, cover fit
+  - id: img-1
+    type: image
+    src: "@/images/logo.png"
+    x: 100
+    y: 100
+    fit: contain
+    width: 400
+    height: 300
+
+  # Image 2: URL source, scaled
+  - id: img-2
+    type: image
+    src: "https://picsum.photos/400/300"
+    x: calc(50% + 50px)
+    y: 200
+    scale: 0.5
+
+  # Image 3: Relative path
+  - id: img-3
+    type: image
+    src: "../images/test.png"
+    x: 50%
+    y: 50%
+    width: 300
+    height: 300
+    blur: 5
+    rotate: 45
+    opacity: 0.7

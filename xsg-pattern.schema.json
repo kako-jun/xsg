@@ -1,0 +1,321 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/kako-jun/xsg/schemas/xsg-pattern.schema.json",
+  "title": "XSG Pattern Format",
+  "description": "Schema for XSG (Signal Generator) pattern files",
+  "version": "1.0.0",
+  "type": "object",
+  "required": ["canvas", "nodes"],
+  "properties": {
+    "canvas": {
+      "type": "object",
+      "required": ["width", "height"],
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Canvas width in pixels"
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Canvas height in pixels"
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "description": "Array of nodes (layers), rendered in order (first = back, last = front)",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/definitions/BackgroundNode" },
+          { "$ref": "#/definitions/RectNode" },
+          { "$ref": "#/definitions/CircleNode" },
+          { "$ref": "#/definitions/EllipseNode" },
+          { "$ref": "#/definitions/LineNode" },
+          { "$ref": "#/definitions/DirectedLineNode" },
+          { "$ref": "#/definitions/ImageNode" },
+          { "$ref": "#/definitions/PresetNode" }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "Coordinate": {
+      "oneOf": [
+        { "type": "number" },
+        { "type": "string", "pattern": "^(\\d+(\\.\\d+)?%|calc\\(.+\\))$" }
+      ],
+      "description": "Coordinate: number (pixels) or string (%, calc())"
+    },
+    "Color": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$",
+      "description": "Color in hex format (#RRGGBB)"
+    },
+    "BaseNode": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this node"
+        },
+        "type": {
+          "type": "string",
+          "description": "Node type"
+        },
+        "fill": {
+          "$ref": "#/definitions/Color",
+          "description": "Fill color (p5.js: fill())"
+        },
+        "stroke": {
+          "$ref": "#/definitions/Color",
+          "description": "Stroke color (p5.js: stroke())"
+        },
+        "strokeWidth": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Stroke width (p5.js: strokeWeight())"
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Opacity (CSS: opacity, 0-1)"
+        },
+        "blur": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Blur radius in pixels (CSS: filter: blur())"
+        },
+        "rotate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 360,
+          "description": "Rotation angle in degrees"
+        },
+        "blink": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Blink interval in milliseconds"
+        },
+        "animation": {
+          "$ref": "#/definitions/Animation"
+        }
+      }
+    },
+    "BackgroundNode": {
+      "allOf": [
+        { "$ref": "#/definitions/BaseNode" },
+        {
+          "type": "object",
+          "required": ["preset"],
+          "properties": {
+            "type": { "const": "background" },
+            "preset": {
+              "type": "string",
+              "description": "Preset name (from presets/ directory)"
+            },
+            "params": {
+              "type": "object",
+              "description": "Preset-specific parameters"
+            }
+          }
+        }
+      ]
+    },
+    "RectNode": {
+      "allOf": [
+        { "$ref": "#/definitions/BaseNode" },
+        {
+          "type": "object",
+          "required": ["x", "y", "width", "height"],
+          "properties": {
+            "type": { "const": "rect" },
+            "x": { "$ref": "#/definitions/Coordinate" },
+            "y": { "$ref": "#/definitions/Coordinate" },
+            "width": { "type": "number", "minimum": 0 },
+            "height": { "type": "number", "minimum": 0 }
+          }
+        }
+      ]
+    },
+    "CircleNode": {
+      "allOf": [
+        { "$ref": "#/definitions/BaseNode" },
+        {
+          "type": "object",
+          "required": ["x", "y", "diameter"],
+          "properties": {
+            "type": { "const": "circle" },
+            "x": { "$ref": "#/definitions/Coordinate" },
+            "y": { "$ref": "#/definitions/Coordinate" },
+            "diameter": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Circle diameter (p5.js: circle(x,y,d))"
+            }
+          }
+        }
+      ]
+    },
+    "EllipseNode": {
+      "allOf": [
+        { "$ref": "#/definitions/BaseNode" },
+        {
+          "type": "object",
+          "required": ["x", "y", "width", "height"],
+          "properties": {
+            "type": { "const": "ellipse" },
+            "x": { "$ref": "#/definitions/Coordinate" },
+            "y": { "$ref": "#/definitions/Coordinate" },
+            "width": { "type": "number", "minimum": 0 },
+            "height": { "type": "number", "minimum": 0 }
+          }
+        }
+      ]
+    },
+    "LineNode": {
+      "allOf": [
+        { "$ref": "#/definitions/BaseNode" },
+        {
+          "type": "object",
+          "required": ["x1", "y1", "x2", "y2"],
+          "properties": {
+            "type": { "const": "line" },
+            "x1": { "$ref": "#/definitions/Coordinate" },
+            "y1": { "$ref": "#/definitions/Coordinate" },
+            "x2": { "$ref": "#/definitions/Coordinate" },
+            "y2": { "$ref": "#/definitions/Coordinate" }
+          }
+        }
+      ]
+    },
+    "DirectedLineNode": {
+      "allOf": [
+        { "$ref": "#/definitions/BaseNode" },
+        {
+          "type": "object",
+          "required": ["x", "y", "direction", "length"],
+          "properties": {
+            "type": { "const": "directedLine" },
+            "x": { "$ref": "#/definitions/Coordinate" },
+            "y": { "$ref": "#/definitions/Coordinate" },
+            "direction": {
+              "enum": ["horizontal", "vertical"],
+              "description": "Line direction"
+            },
+            "length": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Line length in pixels"
+            }
+          }
+        }
+      ]
+    },
+    "ImageNode": {
+      "allOf": [
+        { "$ref": "#/definitions/BaseNode" },
+        {
+          "type": "object",
+          "required": ["src", "x", "y"],
+          "properties": {
+            "type": { "const": "image" },
+            "src": {
+              "type": "string",
+              "description": "Image source: local path, @/ (project-relative), or URL"
+            },
+            "x": { "$ref": "#/definitions/Coordinate" },
+            "y": { "$ref": "#/definitions/Coordinate" },
+            "width": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Image width (priority 1)"
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Image height (priority 1)"
+            },
+            "scale": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Image scale factor (priority 2, ignored if width/height specified)"
+            },
+            "fit": {
+              "enum": ["contain", "cover", "fill"],
+              "description": "Image fit mode (priority 3, ignored if width/height or scale specified)"
+            }
+          }
+        }
+      ]
+    },
+    "PresetNode": {
+      "allOf": [
+        { "$ref": "#/definitions/BaseNode" },
+        {
+          "type": "object",
+          "required": ["preset"],
+          "properties": {
+            "type": { "const": "preset" },
+            "preset": {
+              "type": "string",
+              "description": "Preset name (from presets/ directory)"
+            },
+            "params": {
+              "type": "object",
+              "description": "Preset-specific parameters"
+            }
+          }
+        }
+      ]
+    },
+    "Animation": {
+      "type": "object",
+      "required": ["duration"],
+      "properties": {
+        "keyframes": {
+          "type": "array",
+          "description": "Keyframes (WAAPI: Array of Objects format)",
+          "items": {
+            "type": "object"
+          }
+        },
+        "props": {
+          "type": "object",
+          "description": "Props (WAAPI: Object with Arrays format, sugar syntax)",
+          "additionalProperties": {
+            "type": "array"
+          }
+        },
+        "duration": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Animation duration in milliseconds"
+        },
+        "iterations": {
+          "oneOf": [
+            { "type": "number", "minimum": 1 },
+            { "type": "string", "const": "Infinity" }
+          ],
+          "description": "Number of iterations or 'Infinity'"
+        },
+        "easing": {
+          "enum": ["linear", "ease", "ease-in", "ease-out", "ease-in-out"],
+          "description": "Easing function (WAAPI)"
+        },
+        "delay": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Delay before animation starts (ms)"
+        },
+        "direction": {
+          "enum": ["normal", "reverse", "alternate", "alternate-reverse"],
+          "description": "Animation direction (WAAPI)"
+        }
+      }
+    }
+  }
+}

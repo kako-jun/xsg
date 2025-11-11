@@ -1,0 +1,23 @@
+# Checker Pattern with Pixel Defect
+# Demonstrates: Background preset + foreground circle (simulated dead pixel)
+
+canvas:
+  width: 1920
+  height: 1080
+
+nodes:
+  # Background: Checkerboard
+  - id: bg-checker
+    type: background
+    preset: checker
+    params:
+      size: 50
+
+  # Foreground: Red pixel defect at center
+  - id: defect-1
+    type: circle
+    x: 50%
+    y: 50%
+    diameter: 2
+    fill: "#FF0000"
+    opacity: 1.0
