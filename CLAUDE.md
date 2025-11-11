@@ -1230,14 +1230,14 @@ Canvas 2D APIの命令的な記述をそのまま使うのではなく、**SVG�
 
 ### 詳細ドキュメント
 
-**設計の詳細は [DESIGN_SUMMARY.md](./DESIGN_SUMMARY.md) を参照してください。**
+**設計の詳細は [design-summary.md](./.claude/docs/design-summary.md) を参照してください。**
 
 作成された設計ドキュメント（15ファイル）:
-- コアスキーマ: `schema-complete.yaml`, `schema-final.yaml`, `schema.d.ts`, `MIGRATION_MAPPING.md`
-- 完全性・直交性: `ORTHOGONALITY_CHECK.md`, `ORTHOGONALITY_IMPROVEMENTS.md`
-- 拡張性: `EXTENSIBILITY_DESIGN.md`, `PRESET_AS_PLUGIN.md`, `PATH_RESOLUTION.md`
-- 新機能: `SCREENSAVER_PLAYLIST.md`, `WEB_RENDERING_MODE.md`, `CROSS_PLATFORM_SCREENSAVER.md`, `PLAYLIST_ORTHOGONAL_DESIGN.md`
-- サマリー: `DESIGN_SUMMARY.md`
+- コアスキーマ: `schema-complete.yaml`, `schema-final.yaml`, `schema.d.ts`, [migration-mapping.md](./.claude/docs/migration-mapping.md)
+- 完全性・直交性: [orthogonality-check.md](./.claude/docs/orthogonality-check.md), [orthogonality-improvements.md](./.claude/docs/orthogonality-improvements.md)
+- 拡張性: [extensibility-design.md](./.claude/docs/extensibility-design.md), [preset-system.md](./.claude/docs/preset-system.md), [path-resolution.md](./.claude/docs/path-resolution.md)
+- 新機能: [screensaver-playlist.md](./.claude/docs/screensaver-playlist.md), [web-rendering.md](./.claude/docs/web-rendering.md), [cross-platform-screensaver.md](./.claude/docs/cross-platform-screensaver.md), [playlist-design.md](./.claude/docs/playlist-design.md)
+- サマリー: [design-summary.md](./.claude/docs/design-summary.md)
 
 ### 実装ロードマップ
 
@@ -1281,10 +1281,94 @@ Canvas 2D APIの命令的な記述をそのまま使うのではなく、**SVG�
   - コマンドライン引数パース（`backend/app/screensaver.py`）
   - Windows/Linux/macOS対応
   - プレビューモード・設定画面
-  - インストールガイド（`SCREENSAVER_INSTALL.md`）
-- [ ] Windows .scr ビルドスクリプト
-- [ ] Linux パッケージング
-- [ ] macOS .appバンドル
+  - インストールガイド（[screensaver-install.md](./.claude/docs/screensaver-install.md)）
+- [x] Windows .scr ビルドスクリプト（作成済み、.scr生成確認必要）
+- [x] Linux パッケージング（作成済み）
+- [x] macOS .appバンドル（作成済み）
+
+### 🚧 既知の未実装項目（実装漏れメモ）
+
+#### Critical（本番利用を妨げる）
+
+1. **プリセットマイグレーション未完了** ⚠️
+   - **状況**: 16+のパターンコンポーネントが `frontend/src/components/patterns/` に残存
+   - **設計**: `/presets/` に統一すべきだが旧場所と二重管理
+   - **影響**: 設計思想に反する、混乱を招く
+   - **工数**: 1-2日
+   - **対象ファイル**:
+     - ARIBColorBar.tsx, ColorBar.tsx, EBUColorBar.tsx
+     - Convergence.tsx, CrossHatch.tsx, CrossHatch2px.tsx
+     - GrayScale.tsx, HorizontalGradient.tsx, VerticalGradient.tsx
+     - Multiburst.tsx, PixelDefect.tsx, Pluge.tsx, Staircase.tsx
+     - 他すべてを `/presets/` へ移動
+
+2. **Webレンダリングモード未実装** ❌
+   - **状況**: [web-rendering.md](./.claude/docs/web-rendering.md) で詳細設計されているが実装なし
+   - **未実装機能**:
+     - `--url` コマンドライン引数
+     - readonly mode（JavaScript注入によるインタラクション無効化）
+     - URL rendering機能本体
+   - **影響**: XSGをWebキオスクやダッシュボード表示として使えない
+   - **工数**: 3-5日
+   - **実装場所**: `backend/app/main.py` に `run_url_mode()` 追加
+
+3. **スクリーンセーバーパッケージング確認不足** ⚠️
+   - **状況**: ビルドスクリプトは存在するが、実際の `.scr` ファイル生成未確認
+   - **確認事項**:
+     - `backend/build_windows.bat` で `.scr` ファイルが生成されるか
+     - Windows環境でスクリーンセーバーとして登録・動作するか
+     - インストーラーの必要性
+   - **影響**: Windowsスクリーンセーバーとして配布できない可能性
+   - **工数**: 1日（テスト＋修正）
+
+#### Important（機能完成度）
+
+4. **アニメーション実装不明確** ⚠️
+   - **状況**: WAAPI形式の `animation` がスキーマ定義されているがレンダリング実装未確認
+   - **確認場所**: `frontend/src/components/NodeRenderer.tsx`
+   - **影響**: アニメーションパターンが動作しない可能性
+   - **工数**: 2-3日
+
+5. **画像タイル表示未実装** ❌
+   - **状況**: 画像を繰り返しパターンとして表示する機能が未実装
+   - **使用例**: 背景に画像を敷き詰める
+   - **影響**: 画像ベースのテストパターンが作れない
+   - **工数**: 1日
+
+6. **マイグレーションCLIツール公開不足** ⚠️
+   - **状況**: `backend/app/migration.py` は存在するがCLIとして使いにくい
+   - **改善**: `backend/migrate.py` をドキュメント化、使用例追加
+   - **工数**: 半日
+
+#### Nice-to-Have（将来実装）
+
+7. **プラグインシステム** ❌（v1.1+で予定）
+   - 設計済みだが実装なし
+   - 工数: 1-2週間
+
+8. **レイヤーグループ** ❌（オプション機能）
+   - 複雑なレイヤー管理用
+   - 工数: 3-5日
+
+9. **テストスイート** ❌
+   - ユニットテストが未整備
+   - PathResolver, PlaylistRunner, PatternGenerator等
+   - 工数: 1-2週間
+
+### 実装優先度の推奨
+
+**v1.0リリース前に対応すべき:**
+1. プリセットマイグレーション（設計一貫性）
+2. .scrビルド確認（配布可能性）
+
+**v1.1で対応:**
+3. Webレンダリングモード（新用途開拓）
+4. アニメーション実装
+5. 画像タイル表示
+
+**v1.2以降:**
+6. プラグインシステム
+7. テストスイート
 
 ### 新しい用途
 
