@@ -21,7 +21,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, RootModel, confloat, conint, constr
 
@@ -118,7 +118,7 @@ class BaseNode(BaseModel):
 
 class BackgroundNode(BaseNode):
     type: Literal['background'] = 'background'
-    preset: str = Field(..., description='Preset name (from presets/ directory)')
+    preset: Optional[str] = Field(None, description='Preset name (from presets/ directory)')
     params: Optional[Dict[str, Any]] = Field(
         None, description='Preset-specific parameters'
     )
@@ -128,8 +128,8 @@ class RectNode(BaseNode):
     type: Literal['rect'] = 'rect'
     x: Coordinate
     y: Coordinate
-    width: confloat(ge=0.0)
-    height: confloat(ge=0.0)
+    width: Coordinate
+    height: Coordinate
 
 
 class CircleNode(BaseNode):
@@ -200,15 +200,18 @@ class XSGPattern(BaseModel):
     """XSG Pattern definition"""
     canvas: Canvas
     nodes: List[
-        Union[
-            BackgroundNode,
-            RectNode,
-            CircleNode,
-            EllipseNode,
-            LineNode,
-            DirectedLineNode,
-            ImageNode,
-            PresetNode,
+        Annotated[
+            Union[
+                BackgroundNode,
+                RectNode,
+                CircleNode,
+                EllipseNode,
+                LineNode,
+                DirectedLineNode,
+                ImageNode,
+                PresetNode,
+            ],
+            Field(discriminator='type')
         ]
     ] = Field(
         ...,
