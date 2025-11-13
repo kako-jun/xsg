@@ -73,37 +73,61 @@ npm run format       # Prettierフォーマット
 
 ### パターンの実装
 
-全てのテストパターンは `src/components/patterns/` に配置されています。
+全てのテストパターンは **YAML形式** で `patterns/` および `frontend/public/patterns/` に配置されています。
 
-**実装例（ColorBar.tsx）:**
+**実装例（gradient.yaml）:**
 
-```tsx
-import { useEffect, useRef } from 'react';
+```yaml
+# Gradient Pattern
+# Automatically generates gradient steps from start to end color
 
-export default function ColorBar() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+canvas:
+  width: 1920
+  height: 1080
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+# Parameters
+params:
+  steps:
+    type: number
+    default: 16
+    min: 2
+    max: 256
+    description: "Number of gradient steps"
+  direction:
+    type: string
+    default: "horizontal"
+    description: "Gradient direction: horizontal or vertical"
+  startColor:
+    type: color
+    default: "#000000"
+    description: "Start color"
+  endColor:
+    type: color
+    default: "#FFFFFF"
+    description: "End color"
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+nodes:
+  - id: gradient
+    type: gradient
+    steps: "{{steps}}"
+    direction: "{{direction}}"
+    startColor: "{{startColor}}"
+    endColor: "{{endColor}}"
+```
 
-    // 描画ロジック
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      // カラーバーを描画
-    };
+**テンプレート継承の例（grayscale.yaml）:**
 
-    resize();
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-  }, []);
+```yaml
+# Grayscale Gradient Pattern
+# Alias for horizontal-gradient
 
-  return <canvas ref={canvasRef} className="w-full h-full" />;
-}
+extends: horizontal-gradient.yaml
+```
+
+**パラメータ付きURL:**
+```
+http://localhost:3000/?pattern=gradient&steps=21
+http://localhost:3000/?pattern=gradient&startColor=%23FF0000&endColor=%230000FF
 ```
 
 ## バックエンド（FastAPI + PyWebView）
@@ -481,6 +505,11 @@ XSGでは、**Pythonバックエンドが完全にパターンを制御**しま�
 - ✅ コマンドライン引数でパターン指定
 - ✅ API経由のパターン制御
 - ✅ マルチディスプレイ対応（位置ベース指定）
+- ✅ **YAMLパターンシステム**（TypeScriptコンポーネントから移行）
+- ✅ **テンプレート継承**（`extends` キーワード）
+- ✅ **パラメータ展開**（`{{paramName}}` 構文、URLクエリパラメータ対応）
+- ✅ **gradient自動生成**（開始色・終了色・ステップ数から自動生成）
+- ✅ **CSS Grid風 `unit: fr`**（等分割モード）
 
 ### 今後の実装
 - 🔄 OSレベルのガンマ補正制御
@@ -488,6 +517,25 @@ XSGでは、**Pythonバックエンドが完全にパターンを制御**しま�
 - 🔄 パターンアニメーション
 - 🔄 設定ファイルの保存/読み込み
 - 🔄 より高度なテストパターン（Zone Plate、Needleなど）
+
+### 最近の実装（2025-11-13）
+
+#### YAMLパターンシステムへの移行
+- TypeScript presetコンポーネント（1,912行）を削除
+- 宣言的YAMLパターン形式に統一
+- ユーザーがTypeScript知識なしでパターン作成可能に
+
+#### gradient自動生成機能
+- 開始色・終了色・ステップ数を指定するだけで自動生成
+- 端数処理を改善（整数ピクセル幅に自動分配、ぼけない）
+- 任意の色グラデーション対応（例: 赤→青）
+- 647行のコード削減（884行削除、237行追加）
+
+#### テンプレート継承とパラメータ化
+- `extends` キーワードでパターン継承
+- チェーン継承対応（grayscale → horizontal-gradient → gradient）
+- パラメータプロパティの個別マージ（プロパティ消失バグ修正）
+- URLパラメータで実行時カスタマイズ可能
 
 ## トラブルシューティング
 
