@@ -1,0 +1,53 @@
+# PLUGE Pattern
+# Picture Line-Up Generation Equipment - for black level adjustment
+
+canvas:
+  width: 1920
+  height: 1080
+
+nodes:
+  # Black background
+  - id: bg
+    type: rect
+    x: 0
+    y: 0
+    width: 1920
+    height: 1080
+    fill: "#000000"
+
+  # Center section (1/3 height)
+  # Below black (-2%): rgb(3,3,3)
+  - id: below-black
+    type: rect
+    x: 672
+    y: 360
+    width: 288
+    height: 360
+    fill: "#030303"
+
+  # Black reference (0%): rgb(16,16,16)
+  - id: black-ref
+    type: rect
+    x: 960
+    y: 360
+    width: 288
+    height: 360
+    fill: "#101010"
+
+  # Above black (+2%): rgb(21,21,21)
+  - id: above-black-2
+    type: rect
+    x: 1248
+    y: 360
+    width: 288
+    height: 360
+    fill: "#151515"
+
+  # Above black (+4%): rgb(26,26,26)
+  - id: above-black-4
+    type: rect
+    x: 1536
+    y: 360
+    width: 288
+    height: 360
+    fill: "#1A1A1A"

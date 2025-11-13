@@ -1,0 +1,73 @@
+# CrossHatch Pattern
+# White background with black grid lines (equal division)
+
+canvas:
+  width: 1920
+  height: 1080
+
+# Parameters
+params:
+  strokeWidth:
+    type: number
+    default: 1
+    min: 1
+    max: 10
+    description: "Line width in pixels"
+  stroke:
+    type: color
+    default: "#000000"
+    description: "Line color"
+  fill:
+    type: color
+    default: "#FFFFFF"
+    description: "Background color"
+  divisionsX:
+    type: number
+    default: 39
+    min: 1
+    max: 100
+    description: "Number of vertical divisions"
+  divisionsY:
+    type: number
+    default: 22
+    min: 1
+    max: 100
+    description: "Number of horizontal divisions"
+
+nodes:
+  # Background
+  - id: bg
+    type: rect
+    x: 0
+    y: 0
+    width: 1920
+    height: 1080
+    fill: "{{fill}}"
+
+  # Horizontal lines
+  - id: line-h
+    type: line
+    x1: 0
+    y1: 0
+    x2: 1920
+    y2: 0
+    stroke: "{{stroke}}"
+    strokeWidth: "{{strokeWidth}}"
+    repeat:
+      mode: grid
+      countY: "{{divisionsY}}"
+      unit: fr
+
+  # Vertical lines
+  - id: line-v
+    type: line
+    x1: 0
+    y1: 0
+    x2: 0
+    y2: 1080
+    stroke: "{{stroke}}"
+    strokeWidth: "{{strokeWidth}}"
+    repeat:
+      mode: grid
+      countX: "{{divisionsX}}"
+      unit: fr

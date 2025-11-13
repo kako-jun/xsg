@@ -30,6 +30,55 @@ export interface Canvas {
 }
 
 // ============================================================================
+// Repeat
+// ============================================================================
+
+/**
+ * Simple repeat mode (CSS/Canvas API style, for images)
+ */
+export type SimpleRepeat = "repeat" | "repeat-x" | "repeat-y" | "no-repeat";
+
+/**
+ * Grid repeat configuration
+ */
+export interface GridRepeat {
+  /** Repeat mode */
+  mode: "grid";
+  /** Number of repetitions horizontally */
+  countX?: number;
+  /** Number of repetitions vertically */
+  countY?: number;
+  /** Horizontal spacing between elements (fixed pixels) */
+  spacingX?: number;
+  /** Vertical spacing between elements (fixed pixels) */
+  spacingY?: number;
+  /** Unit type: "fr" for fractional (equal division), undefined for fixed spacing */
+  unit?: "fr";
+}
+
+/**
+ * Tile repeat configuration
+ */
+export interface TileRepeat {
+  /** Repeat mode */
+  mode: "tile";
+  /** Width of each tile */
+  tileWidth: number;
+  /** Height of each tile */
+  tileHeight: number;
+}
+
+/**
+ * Advanced repeat configuration
+ */
+export type AdvancedRepeat = GridRepeat | TileRepeat;
+
+/**
+ * Repeat definition (CSS/Canvas API + advanced configuration)
+ */
+export type Repeat = SimpleRepeat | AdvancedRepeat;
+
+// ============================================================================
 // Animation (Web Animations API)
 // ============================================================================
 
@@ -95,6 +144,8 @@ export interface BaseNode {
   blink?: number;
   /** Animation definition */
   animation?: Animation;
+  /** Repeat definition (CSS/Canvas API + advanced configuration) */
+  repeat?: Repeat;
 }
 
 // ============================================================================
@@ -235,13 +286,33 @@ export type PatternNode =
 // ============================================================================
 
 /**
+ * Parameter definition for pattern templates
+ */
+export interface ParamDef {
+  /** Parameter type */
+  type: "number" | "string" | "color" | "boolean";
+  /** Default value */
+  default?: any;
+  /** Minimum value (for numbers) */
+  min?: number;
+  /** Maximum value (for numbers) */
+  max?: number;
+  /** Description */
+  description?: string;
+}
+
+/**
  * XSG Pattern definition
  */
 export interface XSGPattern {
+  /** Extends another pattern (template inheritance) */
+  extends?: string;
   /** Canvas dimensions */
-  canvas: Canvas;
+  canvas?: Canvas;
+  /** Parameter definitions (optional, for template patterns) */
+  params?: Record<string, ParamDef>;
   /** Array of nodes (layers), rendered in order (first = back, last = front) */
-  nodes: PatternNode[];
+  nodes?: PatternNode[];
 }
 
 // ============================================================================

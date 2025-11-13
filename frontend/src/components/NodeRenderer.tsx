@@ -14,6 +14,7 @@ import type {
   DirectedLineNode,
   ImageNode,
   Coordinate,
+  Repeat,
 } from "../lib/types";
 import { evaluateCoordinate } from "../lib/pathResolver";
 
@@ -78,6 +79,91 @@ function evalCoord(coord: Coordinate, containerSize: number): number {
 }
 
 /**
+ * Calculate repeat offsets based on repeat configuration
+ */
+interface RepeatOffset {
+  x: number;
+  y: number;
+}
+
+function calculateRepeatOffsets(
+  repeat: Repeat | undefined,
+  canvas: HTMLCanvasElement,
+  nodeWidth?: number,
+  nodeHeight?: number
+): RepeatOffset[] {
+  if (!repeat) {
+    return [{ x: 0, y: 0 }];
+  }
+
+  // Simple repeat (for images)
+  if (typeof repeat === "string") {
+    const offsets: RepeatOffset[] = [];
+    const w = nodeWidth || 0;
+    const h = nodeHeight || 0;
+
+    if (repeat === "no-repeat") {
+      return [{ x: 0, y: 0 }];
+    }
+
+    const repeatX = repeat === "repeat" || repeat === "repeat-x";
+    const repeatY = repeat === "repeat" || repeat === "repeat-y";
+
+    const countX = repeatX ? Math.ceil(canvas.width / w) : 1;
+    const countY = repeatY ? Math.ceil(canvas.height / h) : 1;
+
+    for (let iy = 0; iy < countY; iy++) {
+      for (let ix = 0; ix < countX; ix++) {
+        offsets.push({ x: ix * w, y: iy * h });
+      }
+    }
+
+    return offsets;
+  }
+
+  // Advanced repeat (grid or tile)
+  const offsets: RepeatOffset[] = [];
+
+  if (repeat.mode === "grid") {
+    const countX = repeat.countX || 1;
+    const countY = repeat.countY || 1;
+
+    let spacingX: number;
+    let spacingY: number;
+
+    // Unit: fr (fractional) - equal division
+    if (repeat.unit === "fr") {
+      spacingX = canvas.width / countX;
+      spacingY = canvas.height / countY;
+    }
+    // Unit: undefined - fixed pixel spacing
+    else {
+      spacingX = repeat.spacingX || 0;
+      spacingY = repeat.spacingY || 0;
+    }
+
+    for (let iy = 0; iy < countY; iy++) {
+      for (let ix = 0; ix < countX; ix++) {
+        offsets.push({ x: ix * spacingX, y: iy * spacingY });
+      }
+    }
+  } else if (repeat.mode === "tile") {
+    const tileWidth = repeat.tileWidth;
+    const tileHeight = repeat.tileHeight;
+    const countX = Math.ceil(canvas.width / tileWidth);
+    const countY = Math.ceil(canvas.height / tileHeight);
+
+    for (let iy = 0; iy < countY; iy++) {
+      for (let ix = 0; ix < countX; ix++) {
+        offsets.push({ x: ix * tileWidth, y: iy * tileHeight });
+      }
+    }
+  }
+
+  return offsets;
+}
+
+/**
  * Render Rectangle
  */
 function renderRect(
@@ -85,22 +171,29 @@ function renderRect(
   node: RectNode,
   canvas: HTMLCanvasElement
 ) {
-  const x = evalCoord(node.x, canvas.width);
-  const y = evalCoord(node.y, canvas.height);
+  const baseX = evalCoord(node.x, canvas.width);
+  const baseY = evalCoord(node.y, canvas.height);
   const width = node.width;
   const height = node.height;
 
-  // Fill
-  if (node.fill) {
-    ctx.fillStyle = node.fill;
-    ctx.fillRect(x, y, width, height);
-  }
+  const offsets = calculateRepeatOffsets(node.repeat, canvas, width, height);
 
-  // Stroke
-  if (node.stroke && node.strokeWidth) {
-    ctx.strokeStyle = node.stroke;
-    ctx.lineWidth = node.strokeWidth;
-    ctx.strokeRect(x, y, width, height);
+  for (const offset of offsets) {
+    const x = baseX + offset.x;
+    const y = baseY + offset.y;
+
+    // Fill
+    if (node.fill) {
+      ctx.fillStyle = node.fill;
+      ctx.fillRect(x, y, width, height);
+    }
+
+    // Stroke
+    if (node.stroke && node.strokeWidth) {
+      ctx.strokeStyle = node.stroke;
+      ctx.lineWidth = node.strokeWidth;
+      ctx.strokeRect(x, y, width, height);
+    }
   }
 }
 
@@ -112,24 +205,36 @@ function renderCircle(
   node: CircleNode,
   canvas: HTMLCanvasElement
 ) {
-  const x = evalCoord(node.x, canvas.width);
-  const y = evalCoord(node.y, canvas.height);
+  const baseX = evalCoord(node.x, canvas.width);
+  const baseY = evalCoord(node.y, canvas.height);
   const radius = node.diameter / 2;
 
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  const offsets = calculateRepeatOffsets(
+    node.repeat,
+    canvas,
+    node.diameter,
+    node.diameter
+  );
 
-  // Fill
-  if (node.fill) {
-    ctx.fillStyle = node.fill;
-    ctx.fill();
-  }
+  for (const offset of offsets) {
+    const x = baseX + offset.x;
+    const y = baseY + offset.y;
 
-  // Stroke
-  if (node.stroke && node.strokeWidth) {
-    ctx.strokeStyle = node.stroke;
-    ctx.lineWidth = node.strokeWidth;
-    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+
+    // Fill
+    if (node.fill) {
+      ctx.fillStyle = node.fill;
+      ctx.fill();
+    }
+
+    // Stroke
+    if (node.stroke && node.strokeWidth) {
+      ctx.strokeStyle = node.stroke;
+      ctx.lineWidth = node.strokeWidth;
+      ctx.stroke();
+    }
   }
 }
 
@@ -141,25 +246,37 @@ function renderEllipse(
   node: EllipseNode,
   canvas: HTMLCanvasElement
 ) {
-  const x = evalCoord(node.x, canvas.width);
-  const y = evalCoord(node.y, canvas.height);
+  const baseX = evalCoord(node.x, canvas.width);
+  const baseY = evalCoord(node.y, canvas.height);
   const radiusX = node.width / 2;
   const radiusY = node.height / 2;
 
-  ctx.beginPath();
-  ctx.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
+  const offsets = calculateRepeatOffsets(
+    node.repeat,
+    canvas,
+    node.width,
+    node.height
+  );
 
-  // Fill
-  if (node.fill) {
-    ctx.fillStyle = node.fill;
-    ctx.fill();
-  }
+  for (const offset of offsets) {
+    const x = baseX + offset.x;
+    const y = baseY + offset.y;
 
-  // Stroke
-  if (node.stroke && node.strokeWidth) {
-    ctx.strokeStyle = node.stroke;
-    ctx.lineWidth = node.strokeWidth;
-    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
+
+    // Fill
+    if (node.fill) {
+      ctx.fillStyle = node.fill;
+      ctx.fill();
+    }
+
+    // Stroke
+    if (node.stroke && node.strokeWidth) {
+      ctx.strokeStyle = node.stroke;
+      ctx.lineWidth = node.strokeWidth;
+      ctx.stroke();
+    }
   }
 }
 
@@ -171,20 +288,37 @@ function renderLine(
   node: LineNode,
   canvas: HTMLCanvasElement
 ) {
-  const x1 = evalCoord(node.x1, canvas.width);
-  const y1 = evalCoord(node.y1, canvas.height);
-  const x2 = evalCoord(node.x2, canvas.width);
-  const y2 = evalCoord(node.y2, canvas.height);
+  const baseX1 = evalCoord(node.x1, canvas.width);
+  const baseY1 = evalCoord(node.y1, canvas.height);
+  const baseX2 = evalCoord(node.x2, canvas.width);
+  const baseY2 = evalCoord(node.y2, canvas.height);
 
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
+  const lineWidth = Math.abs(baseX2 - baseX1);
+  const lineHeight = Math.abs(baseY2 - baseY1);
 
-  // Stroke
-  if (node.stroke && node.strokeWidth) {
-    ctx.strokeStyle = node.stroke;
-    ctx.lineWidth = node.strokeWidth;
-    ctx.stroke();
+  const offsets = calculateRepeatOffsets(
+    node.repeat,
+    canvas,
+    lineWidth || 1,
+    lineHeight || 1
+  );
+
+  for (const offset of offsets) {
+    const x1 = baseX1 + offset.x;
+    const y1 = baseY1 + offset.y;
+    const x2 = baseX2 + offset.x;
+    const y2 = baseY2 + offset.y;
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+
+    // Stroke
+    if (node.stroke && node.strokeWidth) {
+      ctx.strokeStyle = node.stroke;
+      ctx.lineWidth = node.strokeWidth;
+      ctx.stroke();
+    }
   }
 }
 
@@ -196,28 +330,42 @@ function renderDirectedLine(
   node: DirectedLineNode,
   canvas: HTMLCanvasElement
 ) {
-  const x = evalCoord(node.x, canvas.width);
-  const y = evalCoord(node.y, canvas.height);
+  const baseX = evalCoord(node.x, canvas.width);
+  const baseY = evalCoord(node.y, canvas.height);
   const length = node.length;
 
-  let x2 = x;
-  let y2 = y;
+  const lineWidth = node.direction === "horizontal" ? length : 0;
+  const lineHeight = node.direction === "vertical" ? length : 0;
 
-  if (node.direction === "horizontal") {
-    x2 = x + length;
-  } else {
-    y2 = y + length;
-  }
+  const offsets = calculateRepeatOffsets(
+    node.repeat,
+    canvas,
+    lineWidth || 1,
+    lineHeight || 1
+  );
 
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x2, y2);
+  for (const offset of offsets) {
+    const x = baseX + offset.x;
+    const y = baseY + offset.y;
+    let x2 = x;
+    let y2 = y;
 
-  // Stroke
-  if (node.stroke && node.strokeWidth) {
-    ctx.strokeStyle = node.stroke;
-    ctx.lineWidth = node.strokeWidth;
-    ctx.stroke();
+    if (node.direction === "horizontal") {
+      x2 = x + length;
+    } else {
+      y2 = y + length;
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x2, y2);
+
+    // Stroke
+    if (node.stroke && node.strokeWidth) {
+      ctx.strokeStyle = node.stroke;
+      ctx.lineWidth = node.strokeWidth;
+      ctx.stroke();
+    }
   }
 }
 
@@ -229,8 +377,8 @@ function renderImage(
   node: ImageNode,
   canvas: HTMLCanvasElement
 ) {
-  const x = evalCoord(node.x, canvas.width);
-  const y = evalCoord(node.y, canvas.height);
+  const baseX = evalCoord(node.x, canvas.width);
+  const baseY = evalCoord(node.y, canvas.height);
 
   const img = new Image();
   img.onload = () => {
@@ -280,7 +428,20 @@ function renderImage(
       drawHeight = img.height;
     }
 
-    ctx.drawImage(img, x, y, drawWidth, drawHeight);
+    // Calculate repeat offsets with actual image dimensions
+    const offsets = calculateRepeatOffsets(
+      node.repeat,
+      canvas,
+      drawWidth,
+      drawHeight
+    );
+
+    // Draw image at each offset position
+    for (const offset of offsets) {
+      const x = baseX + offset.x;
+      const y = baseY + offset.y;
+      ctx.drawImage(img, x, y, drawWidth, drawHeight);
+    }
   };
 
   img.src = node.src;

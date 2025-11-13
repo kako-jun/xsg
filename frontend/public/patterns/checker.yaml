@@ -1,0 +1,75 @@
+# Checkerboard Pattern
+# Checkerboard with configurable colors (50x50px squares)
+
+canvas:
+  width: 1920
+  height: 1080
+
+# Parameters
+params:
+  color1:
+    type: color
+    default: "#000000"
+    description: "First color (top-left square)"
+  color2:
+    type: color
+    default: "#FFFFFF"
+    description: "Second color (alternating)"
+
+nodes:
+  # Using repeat grid mode
+  - id: checker-black
+    type: rect
+    x: 0
+    y: 0
+    width: 50
+    height: 50
+    fill: "{{color1}}"
+    repeat:
+      mode: grid
+      countX: 19
+      countY: 11
+      spacingX: 100
+      spacingY: 100
+
+  - id: checker-white
+    type: rect
+    x: 50
+    y: 0
+    width: 50
+    height: 50
+    fill: "{{color2}}"
+    repeat:
+      mode: grid
+      countX: 19
+      countY: 11
+      spacingX: 100
+      spacingY: 100
+
+  - id: checker-white-offset
+    type: rect
+    x: 0
+    y: 50
+    width: 50
+    height: 50
+    fill: "{{color2}}"
+    repeat:
+      mode: grid
+      countX: 19
+      countY: 10
+      spacingX: 100
+      spacingY: 100
+
+  - id: checker-black-offset
+    type: rect
+    x: 50
+    y: 50
+    width: 50
+    height: 50
+    fill: "{{color1}}"
+    repeat:
+      mode: grid
+      countX: 19
+      countY: 10
+      spacingX: 100
+      spacingY: 100

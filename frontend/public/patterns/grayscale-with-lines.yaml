@@ -1,0 +1,35 @@
+# Grayscale Pattern with Test Lines
+# Demonstrates: Background preset + multiple line nodes
+
+canvas:
+  width: 1920
+  height: 1080
+
+nodes:
+  # Background: 16-step grayscale
+  - id: bg-grayscale
+    type: background
+    preset: grayscale
+    params:
+      steps: 16
+      direction: horizontal
+
+  # Horizontal line at 50%
+  - id: h-line
+    type: directedLine
+    x: 0
+    y: 50%
+    direction: horizontal
+    length: 1920
+    stroke: "#00FF00"
+    strokeWidth: 1
+
+  # Vertical line at 50%
+  - id: v-line
+    type: directedLine
+    x: 50%
+    y: 0
+    direction: vertical
+    length: 1080
+    stroke: "#00FF00"
+    strokeWidth: 1

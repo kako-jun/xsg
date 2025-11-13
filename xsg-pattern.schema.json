@@ -102,6 +102,9 @@
         },
         "animation": {
           "$ref": "#/definitions/Animation"
+        },
+        "repeat": {
+          "$ref": "#/definitions/Repeat"
         }
       }
     },
@@ -316,6 +319,61 @@
           "description": "Animation direction (WAAPI)"
         }
       }
+    },
+    "Repeat": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["repeat", "repeat-x", "repeat-y", "no-repeat"],
+          "description": "Simple repeat (CSS/Canvas API style, primarily for images)"
+        },
+        {
+          "type": "object",
+          "description": "Advanced repeat configuration (for shapes and custom patterns)",
+          "properties": {
+            "mode": {
+              "enum": ["grid", "tile"],
+              "description": "Repeat mode: 'grid' = fixed count, 'tile' = fill area with pattern"
+            },
+            "countX": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Number of repetitions horizontally (grid mode)"
+            },
+            "countY": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Number of repetitions vertically (grid mode)"
+            },
+            "spacingX": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Horizontal spacing between elements in pixels (grid mode, fixed size)"
+            },
+            "spacingY": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Vertical spacing between elements in pixels (grid mode, fixed size)"
+            },
+            "unit": {
+              "type": "string",
+              "enum": ["fr"],
+              "description": "Unit type: 'fr' for fractional unit (equal division), omit for fixed pixel spacing (grid mode)"
+            },
+            "tileWidth": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Width of each tile (tile mode)"
+            },
+            "tileHeight": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Height of each tile (tile mode)"
+            }
+          },
+          "required": ["mode"]
+        }
+      ]
     }
   }
 }

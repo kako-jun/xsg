@@ -1,0 +1,85 @@
+# Multiburst Pattern (Simplified)
+# Note: Full multiburst requires complex frequency generation
+# This is a simplified version showing alternating black/white bars
+
+canvas:
+  width: 1920
+  height: 1080
+
+# Parameters
+params:
+  bgColor:
+    type: color
+    default: "#808080"
+    description: "Background color"
+  barColor1:
+    type: color
+    default: "#FFFFFF"
+    description: "First bar color (light)"
+  barColor2:
+    type: color
+    default: "#000000"
+    description: "Second bar color (dark)"
+
+nodes:
+  # Background
+  - id: bg
+    type: rect
+    x: 0
+    y: 0
+    width: 1920
+    height: 1080
+    fill: "{{bgColor}}"
+
+  # Simplified burst pattern (vertical bars in center area)
+  # Section 1: Wide bars
+  - id: burst1-white
+    type: rect
+    x: 0
+    y: 216
+    width: 137
+    height: 648
+    fill: "{{barColor1}}"
+    repeat:
+      mode: grid
+      countX: 2
+      spacingX: 274
+
+  - id: burst1-black
+    type: rect
+    x: 137
+    y: 216
+    width: 137
+    height: 648
+    fill: "{{barColor2}}"
+    repeat:
+      mode: grid
+      countX: 2
+      spacingX: 274
+
+  # Section 2: Medium bars
+  - id: burst2-white
+    type: rect
+    x: 274
+    y: 216
+    width: 69
+    height: 648
+    fill: "{{barColor1}}"
+    repeat:
+      mode: grid
+      countX: 4
+      spacingX: 137
+
+  - id: burst2-black
+    type: rect
+    x: 343
+    y: 216
+    width: 68
+    height: 648
+    fill: "{{barColor2}}"
+    repeat:
+      mode: grid
+      countX: 4
+      spacingX: 137
+
+  # Additional sections can be added for finer frequencies

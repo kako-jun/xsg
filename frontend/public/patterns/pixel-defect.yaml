@@ -1,0 +1,71 @@
+# Pixel Defect Pattern
+# Background with simulated dead pixels (black) and stuck pixels (colored)
+# Note: Original uses random placement, this uses fixed positions
+
+canvas:
+  width: 1920
+  height: 1080
+
+# Parameters
+params:
+  bgColor:
+    type: color
+    default: "#FFFFFF"
+    description: "Background color"
+
+nodes:
+  # Background
+  - id: bg
+    type: rect
+    x: 0
+    y: 0
+    width: 1920
+    height: 1080
+    fill: "{{bgColor}}"
+
+  # Sample dead pixels (black dots) at various positions
+  - id: dead1
+    type: circle
+    x: 320
+    y: 240
+    diameter: 1
+    fill: "#000000"
+
+  - id: dead2
+    type: circle
+    x: 850
+    y: 450
+    diameter: 1
+    fill: "#000000"
+
+  - id: dead3
+    type: circle
+    x: 1450
+    y: 720
+    diameter: 1
+    fill: "#000000"
+
+  # Sample stuck pixels (colored dots)
+  - id: stuck-red
+    type: circle
+    x: 600
+    y: 300
+    diameter: 1
+    fill: "#FF0000"
+
+  - id: stuck-green
+    type: circle
+    x: 1200
+    y: 600
+    diameter: 1
+    fill: "#00FF00"
+
+  - id: stuck-blue
+    type: circle
+    x: 400
+    y: 900
+    diameter: 1
+    fill: "#0000FF"
+
+  # Add more sample defects as needed
+  # (Full pattern would have 50+ dots at various positions)

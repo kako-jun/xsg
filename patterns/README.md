@@ -6,18 +6,25 @@ This directory contains example pattern files demonstrating the new XSG pattern 
 
 ### Basic Patterns
 
-**colorbar-simple.yaml**
-- Simple SMPTE color bar pattern
-- Demonstrates: Background preset usage
+**colorbar.yaml**
+- SMPTE color bar pattern (75% intensity)
+- Demonstrates: Basic rect nodes with precise color values
 
-**checker-with-dot.yaml**
-- Checkerboard with simulated pixel defect
-- Demonstrates: Background + foreground circle
+**checker.yaml**
+- Checkerboard pattern
+- Demonstrates: Repeat grid with alternating colors
 
-**grayscale-with-lines.yaml**
-- Grayscale gradient with crosshair lines
-- Demonstrates: Background + multiple directed lines
-- Uses percentage coordinates
+**grayscale.yaml**
+- Grayscale gradient (16 steps, horizontal)
+- Demonstrates: Multiple rect nodes in sequence
+
+**convergence.yaml**
+- Convergence test pattern with grid and circles
+- Demonstrates: Repeat grid with lines and circles
+
+**crosshatch.yaml**
+- Crosshatch grid pattern
+- Demonstrates: Repeat grid with horizontal and vertical lines
 
 ### Advanced Patterns
 
@@ -83,14 +90,39 @@ See [DESIGN_SUMMARY.md](../DESIGN_SUMMARY.md) for complete format documentation.
 - Unlimited layers supported
 
 **Node Types:**
-- `background` - Preset-based background
+- `background` - Pattern-based background (TSX patterns)
 - `rect` - Rectangle
 - `circle` - Circle (diameter-based)
 - `ellipse` - Ellipse
 - `line` - Line (two-point)
 - `directedLine` - Line (direction + length)
 - `image` - Image
-- `preset` - Custom preset
+- `pattern` - Custom TSX pattern
+
+**Repeat Feature:**
+All node types support the `repeat` property for grid/tile rendering:
+
+```yaml
+# Simple repeat (CSS/Canvas API style, for images)
+repeat: "repeat"        # Tile in both directions
+repeat: "repeat-x"      # Tile horizontally only
+repeat: "repeat-y"      # Tile vertically only
+repeat: "no-repeat"     # No repeat (default)
+
+# Grid repeat (fixed count with spacing)
+repeat:
+  mode: grid
+  countX: 10        # Number of instances horizontally
+  countY: 8         # Number of instances vertically
+  spacingX: 100     # Horizontal spacing in pixels
+  spacingY: 100     # Vertical spacing in pixels
+
+# Tile repeat (fill area with pattern)
+repeat:
+  mode: tile
+  tileWidth: 64     # Tile width in pixels
+  tileHeight: 64    # Tile height in pixels
+```
 
 ## Creating Your Own Patterns
 
@@ -107,7 +139,41 @@ canvas:
   height: 1080
 
 nodes:
-  - id: my-bg
-    type: background
-    preset: colorbar
+  - id: my-rect
+    type: rect
+    x: 0
+    y: 0
+    width: 1920
+    height: 1080
+    fill: "#000000"
+```
+
+Example with repeat:
+
+```yaml
+canvas:
+  width: 1920
+  height: 1080
+
+nodes:
+  - id: bg
+    type: rect
+    x: 0
+    y: 0
+    width: 1920
+    height: 1080
+    fill: "#000000"
+
+  - id: dots
+    type: circle
+    x: 50
+    y: 50
+    diameter: 10
+    fill: "#FFFFFF"
+    repeat:
+      mode: grid
+      countX: 19
+      countY: 11
+      spacingX: 100
+      spacingY: 100
 ```

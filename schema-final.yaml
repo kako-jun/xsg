@@ -347,6 +347,57 @@ nodes:
     rotate: 45
     blur: 2
 
+  # ============================================
+  # Repeat Examples（繰り返しパターン）
+  # ============================================
+
+  # 画像をタイル表示（CSS/Canvas API style）
+  - id: image-tiled
+    type: image
+    src: "./images/bg/texture.png"
+    repeat: repeat        # 縦横繰り返し
+
+  # 図形をグリッド配置
+  - id: grid-dots
+    type: circle
+    x: 0
+    y: 0
+    diameter: 5
+    fill: "#FF0000"
+    repeat:
+      mode: grid
+      countX: 20          # 横20個
+      countY: 15          # 縦15個
+      spacingX: 100       # 横間隔100px
+      spacingY: 72        # 縦間隔72px
+
+  # 線をグリッド配置（クロスハッチ）
+  - id: crosshatch-h
+    type: line
+    x1: 0
+    y1: 0
+    x2: 1920
+    y2: 0
+    stroke: "#000000"
+    strokeWidth: 1
+    repeat:
+      mode: grid
+      countY: 20
+      spacingY: 54
+
+  - id: crosshatch-v
+    type: line
+    x1: 0
+    y1: 0
+    x2: 0
+    y2: 1080
+    stroke: "#000000"
+    strokeWidth: 1
+    repeat:
+      mode: grid
+      countX: 30
+      spacingX: 64
+
 # ============================================
 # 注意事項・ベストプラクティス
 # ============================================
@@ -380,4 +431,10 @@ nodes:
 #
 # 8. 座標指定:
 #    - 型で自動判別（number = 絶対値、string = % or calc()）
+#
+# 9. Repeat（繰り返し）:
+#    - CSS/Canvas API準拠: repeat / repeat-x / repeat-y / no-repeat
+#    - Grid mode: countX/countY で固定個数配置
+#    - Tile mode: tileWidth/tileHeight でパターンタイル配置
+#    - 画像・図形どちらでも使用可能
 # ============================================

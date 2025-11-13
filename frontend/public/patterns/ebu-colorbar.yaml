@@ -1,0 +1,179 @@
+# EBU Color Bars Pattern
+# European broadcast standard (EBU)
+
+canvas:
+  width: 1920
+  height: 1080
+
+nodes:
+  # Top section (75%) - 7 bars
+  - id: top-white
+    type: rect
+    x: 0
+    y: 0
+    width: 274.3
+    height: 810
+    fill: "#FFFFFF"
+
+  - id: top-yellow
+    type: rect
+    x: 274.3
+    y: 0
+    width: 274.3
+    height: 810
+    fill: "#FFFF00"
+
+  - id: top-cyan
+    type: rect
+    x: 548.6
+    y: 0
+    width: 274.3
+    height: 810
+    fill: "#00FFFF"
+
+  - id: top-green
+    type: rect
+    x: 822.9
+    y: 0
+    width: 274.3
+    height: 810
+    fill: "#00FF00"
+
+  - id: top-magenta
+    type: rect
+    x: 1097.2
+    y: 0
+    width: 274.3
+    height: 810
+    fill: "#FF00FF"
+
+  - id: top-red
+    type: rect
+    x: 1371.5
+    y: 0
+    width: 274.3
+    height: 810
+    fill: "#FF0000"
+
+  - id: top-blue
+    type: rect
+    x: 1645.8
+    y: 0
+    width: 274.2
+    height: 810
+    fill: "#0000FF"
+
+  # Middle section (8%) - 7 bars
+  - id: mid-blue
+    type: rect
+    x: 0
+    y: 810
+    width: 274.3
+    height: 86.4
+    fill: "#0000FF"
+
+  - id: mid-black1
+    type: rect
+    x: 274.3
+    y: 810
+    width: 274.3
+    height: 86.4
+    fill: "#000000"
+
+  - id: mid-magenta
+    type: rect
+    x: 548.6
+    y: 810
+    width: 274.3
+    height: 86.4
+    fill: "#FF00FF"
+
+  - id: mid-black2
+    type: rect
+    x: 822.9
+    y: 810
+    width: 274.3
+    height: 86.4
+    fill: "#000000"
+
+  - id: mid-cyan
+    type: rect
+    x: 1097.2
+    y: 810
+    width: 274.3
+    height: 86.4
+    fill: "#00FFFF"
+
+  - id: mid-black3
+    type: rect
+    x: 1371.5
+    y: 810
+    width: 274.3
+    height: 86.4
+    fill: "#000000"
+
+  - id: mid-white
+    type: rect
+    x: 1645.8
+    y: 810
+    width: 274.2
+    height: 86.4
+    fill: "#FFFFFF"
+
+  # Bottom section (17%) - Left part (4 bars)
+  - id: bot-i
+    type: rect
+    x: 0
+    y: 896.4
+    width: 360
+    height: 183.6
+    fill: "#00214C"
+
+  - id: bot-white
+    type: rect
+    x: 360
+    y: 896.4
+    width: 360
+    height: 183.6
+    fill: "#FFFFFF"
+
+  - id: bot-q
+    type: rect
+    x: 720
+    y: 896.4
+    width: 360
+    height: 183.6
+    fill: "#32006A"
+
+  - id: bot-black
+    type: rect
+    x: 1080
+    y: 896.4
+    width: 360
+    height: 183.6
+    fill: "#000000"
+
+  # Bottom section - Right part (PLUGE - 3 bars)
+  - id: pluge-below
+    type: rect
+    x: 1440
+    y: 896.4
+    width: 160
+    height: 183.6
+    fill: "#000000"
+
+  - id: pluge-black
+    type: rect
+    x: 1600
+    y: 896.4
+    width: 160
+    height: 183.6
+    fill: "#000000"
+
+  - id: pluge-above
+    type: rect
+    x: 1760
+    y: 896.4
+    width: 160
+    height: 183.6
+    fill: "#111111"

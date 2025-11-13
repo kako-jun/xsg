@@ -1,0 +1,64 @@
+# SMPTE Color Bars Pattern (75% intensity)
+# Standard test pattern for display calibration
+
+canvas:
+  width: 1920
+  height: 1080
+
+nodes:
+  # 7 vertical color bars
+  - id: bar-white
+    type: rect
+    x: 0
+    y: 0
+    width: 274.3
+    height: 1080
+    fill: "#C0C0C0"
+
+  - id: bar-yellow
+    type: rect
+    x: 274.3
+    y: 0
+    width: 274.3
+    height: 1080
+    fill: "#C0C000"
+
+  - id: bar-cyan
+    type: rect
+    x: 548.6
+    y: 0
+    width: 274.3
+    height: 1080
+    fill: "#00C0C0"
+
+  - id: bar-green
+    type: rect
+    x: 822.9
+    y: 0
+    width: 274.3
+    height: 1080
+    fill: "#00C000"
+
+  - id: bar-magenta
+    type: rect
+    x: 1097.2
+    y: 0
+    width: 274.3
+    height: 1080
+    fill: "#C000C0"
+
+  - id: bar-red
+    type: rect
+    x: 1371.5
+    y: 0
+    width: 274.3
+    height: 1080
+    fill: "#C00000"
+
+  - id: bar-blue
+    type: rect
+    x: 1645.8
+    y: 0
+    width: 274.2
+    height: 1080
+    fill: "#0000C0"

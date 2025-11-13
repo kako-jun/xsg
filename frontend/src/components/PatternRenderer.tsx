@@ -1,122 +1,119 @@
 /**
  * Pattern Renderer Component
  *
- * Renders a complete XSG pattern from YAML/JSON data.
- * Supports all node types: background, rect, circle, ellipse, line, directedLine, image, preset
+ * Dynamically loads and renders a pattern by name.
  */
 
-import { useEffect, useState } from "react";
-import type { XSGPattern, PatternNode } from "../lib/types";
-import PresetRenderer from "./PresetRenderer";
-import NodeRenderer from "./NodeRenderer";
+import { useEffect, useState, Suspense } from "react";
+import type { PatternComponent } from "../lib/patternTypes";
+import { getPatternRegistry, loadPattern } from "../lib/patternRegistry";
 
 export interface PatternRendererProps {
-  /** Pattern data (loaded from YAML/JSON) */
-  pattern: XSGPattern;
+  /** Pattern name/ID */
+  pattern: string;
+  /** Pattern parameters */
+  params?: Record<string, any>;
+  /** Canvas dimensions */
+  canvas?: {
+    width: number;
+    height: number;
+  };
   /** Fallback UI while loading */
   fallback?: React.ReactNode;
+  /** Error UI */
+  onError?: (error: Error) => React.ReactNode;
 }
 
 /**
  * Pattern Renderer
  *
- * Renders all nodes in a pattern definition.
- * Nodes are rendered in order (first = back, last = front).
+ * Loads and renders a pattern component dynamically.
  */
 export default function PatternRenderer({
   pattern,
+  params = {},
+  canvas,
   fallback = <div className="w-full h-full bg-gray-800" />,
+  onError,
 }: PatternRendererProps) {
-  const [mounted, setMounted] = useState(false);
+  const [Component, setComponent] = useState<PatternComponent | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    let mounted = true;
 
-  if (!mounted) {
+    async function load() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Check registry first
+        const registry = getPatternRegistry();
+        let component = registry.getComponent(pattern);
+
+        // If not in registry, try to load it
+        if (!component) {
+          const module = await loadPattern(pattern);
+          if (module) {
+            component = module.default;
+          }
+        }
+
+        if (!component) {
+          throw new Error(`Pattern not found: ${pattern}`);
+        }
+
+        if (mounted) {
+          setComponent(() => component!);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (mounted) {
+          const error = err instanceof Error ? err : new Error(String(err));
+          setError(error);
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
+  }, [pattern]);
+
+  if (loading) {
     return <>{fallback}</>;
   }
 
-  const { canvas, nodes } = pattern;
-
-  return (
-    <div
-      className="relative"
-      style={{
-        width: "100vw",
-        height: "100vh",
-        overflow: "hidden",
-      }}
-    >
-      {/* Render all nodes in order */}
-      {nodes.map((node, index) => (
-        <NodeLayer
-          key={node.id || `node-${index}`}
-          node={node}
-          canvas={canvas}
-          zIndex={index}
-        />
-      ))}
-    </div>
-  );
-}
-
-/**
- * Node Layer Component
- *
- * Renders a single node as an absolutely positioned layer.
- */
-function NodeLayer({
-  node,
-  canvas,
-  zIndex,
-}: {
-  node: PatternNode;
-  canvas: { width: number; height: number };
-  zIndex: number;
-}) {
-  // Common layer styles
-  const layerStyle: React.CSSProperties = {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    zIndex,
-    opacity: node.opacity ?? 1,
-    filter: node.blur ? `blur(${node.blur}px)` : undefined,
-    transform: node.rotate ? `rotate(${node.rotate}deg)` : undefined,
-  };
-
-  // Render based on node type
-  if (node.type === "background") {
+  if (error) {
+    if (onError) {
+      return <>{onError(error)}</>;
+    }
     return (
-      <div style={layerStyle}>
-        <PresetRenderer
-          preset={node.preset}
-          params={node.params}
-          canvas={canvas}
-        />
+      <div className="w-full h-full flex items-center justify-center bg-red-900 text-white">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Pattern Error</h2>
+          <p className="text-sm">{error.message}</p>
+          <p className="text-xs mt-4 opacity-50">Pattern: {pattern}</p>
+        </div>
       </div>
     );
   }
 
-  if (node.type === "preset") {
+  if (!Component) {
     return (
-      <div style={layerStyle}>
-        <PresetRenderer
-          preset={node.preset}
-          params={node.params}
-          canvas={canvas}
-        />
+      <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white">
+        <p>Pattern not found: {pattern}</p>
       </div>
     );
   }
 
-  // Other node types (rect, circle, etc.)
   return (
-    <div style={layerStyle}>
-      <NodeRenderer node={node} canvas={canvas} />
-    </div>
+    <Suspense fallback={fallback}>
+      <Component params={params} canvas={canvas} />
+    </Suspense>
   );
 }

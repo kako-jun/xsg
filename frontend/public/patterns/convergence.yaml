@@ -1,0 +1,104 @@
+# Convergence Pattern
+# Grid pattern with circles at intersections and center crosshair
+
+canvas:
+  width: 1920
+  height: 1080
+
+# Parameters
+params:
+  divisionsX:
+    type: number
+    default: 20
+    min: 5
+    max: 50
+    description: "Number of vertical divisions"
+  divisionsY:
+    type: number
+    default: 11
+    min: 5
+    max: 30
+    description: "Number of horizontal divisions"
+  circleDiameter:
+    type: number
+    default: 6
+    min: 2
+    max: 20
+    description: "Circle diameter at intersections"
+  strokeWidth:
+    type: number
+    default: 1
+    min: 1
+    max: 5
+    description: "Grid line width"
+
+nodes:
+  # Black background
+  - id: bg
+    type: rect
+    x: 0
+    y: 0
+    width: 1920
+    height: 1080
+    fill: "#000000"
+
+  # Horizontal grid lines
+  - id: line-h
+    type: line
+    x1: 0
+    y1: 0
+    x2: 1920
+    y2: 0
+    stroke: "#FFFFFF"
+    strokeWidth: "{{strokeWidth}}"
+    repeat:
+      mode: grid
+      countY: "{{divisionsY}}"
+      unit: fr
+
+  # Vertical grid lines
+  - id: line-v
+    type: line
+    x1: 0
+    y1: 0
+    x2: 0
+    y2: 1080
+    stroke: "#FFFFFF"
+    strokeWidth: "{{strokeWidth}}"
+    repeat:
+      mode: grid
+      countX: "{{divisionsX}}"
+      unit: fr
+
+  # Circles at grid intersections
+  - id: circles
+    type: circle
+    x: 0
+    y: 0
+    diameter: "{{circleDiameter}}"
+    fill: "#FFFFFF"
+    repeat:
+      mode: grid
+      countX: "{{divisionsX}}"
+      countY: "{{divisionsY}}"
+      unit: fr
+
+  # Center crosshair (horizontal)
+  - id: crosshair-h
+    type: line
+    x1: 910
+    y1: 540
+    x2: 1010
+    y2: 540
+    stroke: "#FF0000"
+    strokeWidth: 2
+
+  # Center crosshair (vertical)
+  - id: crosshair-v
+    type: line
+    x1: 960
+    y1: 490
+    x2: 960
+    y2: 590
+    stroke: "#FF0000"
+    strokeWidth: 2

@@ -1,0 +1,22 @@
+# Solid Color Pattern
+# Solid fill with configurable color
+
+canvas:
+  width: 1920
+  height: 1080
+
+# Parameters
+params:
+  color:
+    type: color
+    default: "#000000"
+    description: "Fill color"
+
+nodes:
+  - id: solid
+    type: rect
+    x: 0
+    y: 0
+    width: 1920
+    height: 1080
+    fill: "{{color}}"

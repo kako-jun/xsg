@@ -1,0 +1,72 @@
+# ARIB Color Bars Pattern (100% intensity)
+# Japanese broadcast standard (ARIB)
+
+canvas:
+  width: 1920
+  height: 1080
+
+nodes:
+  # 8 vertical color bars
+  - id: bar-white
+    type: rect
+    x: 0
+    y: 0
+    width: 240
+    height: 1080
+    fill: "#FFFFFF"
+
+  - id: bar-yellow
+    type: rect
+    x: 240
+    y: 0
+    width: 240
+    height: 1080
+    fill: "#FFFF00"
+
+  - id: bar-cyan
+    type: rect
+    x: 480
+    y: 0
+    width: 240
+    height: 1080
+    fill: "#00FFFF"
+
+  - id: bar-green
+    type: rect
+    x: 720
+    y: 0
+    width: 240
+    height: 1080
+    fill: "#00FF00"
+
+  - id: bar-magenta
+    type: rect
+    x: 960
+    y: 0
+    width: 240
+    height: 1080
+    fill: "#FF00FF"
+
+  - id: bar-red
+    type: rect
+    x: 1200
+    y: 0
+    width: 240
+    height: 1080
+    fill: "#FF0000"
+
+  - id: bar-blue
+    type: rect
+    x: 1440
+    y: 0
+    width: 240
+    height: 1080
+    fill: "#0000FF"
+
+  - id: bar-black
+    type: rect
+    x: 1680
+    y: 0
+    width: 240
+    height: 1080
+    fill: "#000000"
