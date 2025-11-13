@@ -1,0 +1,35 @@
+# Gradient Pattern
+# Automatically generates gradient steps from start to end color
+
+canvas:
+  width: 1920
+  height: 1080
+
+# Parameters
+params:
+  steps:
+    type: number
+    default: 16
+    min: 2
+    max: 256
+    description: "Number of gradient steps"
+  direction:
+    type: string
+    default: "horizontal"
+    description: "Gradient direction: horizontal or vertical"
+  startColor:
+    type: color
+    default: "#000000"
+    description: "Start color (black by default)"
+  endColor:
+    type: color
+    default: "#FFFFFF"
+    description: "End color (white by default)"
+
+nodes:
+  - id: gradient
+    type: gradient
+    steps: "{{steps}}"
+    direction: "{{direction}}"
+    startColor: "{{startColor}}"
+    endColor: "{{endColor}}"

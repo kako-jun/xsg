@@ -51,16 +51,15 @@ export default function PatternDisplay({ pattern }: PatternDisplayProps) {
           ebucolorbar: "ebu-colorbar.yaml",
           arib: "arib-colorbar.yaml",
           aribcolorbar: "arib-colorbar.yaml",
+          gradient: "gradient.yaml",
           grayscale: "grayscale.yaml",
           greyscale: "grayscale.yaml",
           gray: "grayscale.yaml",
           grey: "grayscale.yaml",
           staircase: "staircase.yaml",
           stairs: "staircase.yaml",
-          verticalgradient: "vertical-gradient.yaml",
-          vgradient: "vertical-gradient.yaml",
-          horizontalgradient: "horizontal-gradient.yaml",
-          hgradient: "horizontal-gradient.yaml",
+          "vertical-gradient": "vertical-gradient.yaml",
+          "horizontal-gradient": "horizontal-gradient.yaml",
           checker: "checker.yaml",
           checkerboard: "checker.yaml",
           crosshatch: "crosshatch.yaml",
@@ -76,7 +75,7 @@ export default function PatternDisplay({ pattern }: PatternDisplayProps) {
           dotdefect: "pixel-defect.yaml",
         };
 
-        const filename = patternMap[pattern.toLowerCase()] || "colorbar.yaml";
+        const filename = patternMap[pattern.toLowerCase()] || "solid.yaml";
         const patternPath = `/patterns/${filename}`;
 
         const response = await fetch(patternPath);

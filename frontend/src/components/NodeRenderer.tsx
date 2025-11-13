@@ -13,6 +13,7 @@ import type {
   LineNode,
   DirectedLineNode,
   ImageNode,
+  GradientNode,
   Coordinate,
   Repeat,
 } from "../lib/types";
@@ -64,6 +65,9 @@ export default function NodeRenderer({ node, canvas }: NodeRendererProps) {
         break;
       case "image":
         renderImage(ctx, node as ImageNode, canvasEl);
+        break;
+      case "gradient":
+        renderGradient(ctx, node as GradientNode, canvasEl);
         break;
     }
   }, [node, canvas]);
@@ -445,4 +449,66 @@ function renderImage(
   };
 
   img.src = node.src;
+}
+
+/**
+ * Render Gradient
+ * Automatically generates gradient steps
+ */
+function renderGradient(
+  ctx: CanvasRenderingContext2D,
+  node: GradientNode,
+  canvas: HTMLCanvasElement
+) {
+  const steps = node.steps || 16;
+  const direction = node.direction || "horizontal";
+  const startColor = parseColor(node.startColor || "#000000");
+  const endColor = parseColor(node.endColor || "#FFFFFF");
+
+  // Generate gradient steps
+  for (let i = 0; i < steps; i++) {
+    // Calculate position with fractional distribution
+    // This ensures remainders are distributed evenly, not at edges
+    const isHorizontal = direction === "horizontal";
+    const totalSize = isHorizontal ? canvas.width : canvas.height;
+
+    const start = Math.floor((i / steps) * totalSize);
+    const end = Math.floor(((i + 1) / steps) * totalSize);
+    const size = end - start;
+
+    // Interpolate color
+    const t = i / (steps - 1);
+    const r = Math.round(startColor.r + (endColor.r - startColor.r) * t);
+    const g = Math.round(startColor.g + (endColor.g - startColor.g) * t);
+    const b = Math.round(startColor.b + (endColor.b - startColor.b) * t);
+    const color = `rgb(${r}, ${g}, ${b})`;
+
+    // Draw rectangle
+    ctx.fillStyle = color;
+    if (isHorizontal) {
+      ctx.fillRect(start, 0, size, canvas.height);
+    } else {
+      ctx.fillRect(0, start, canvas.width, size);
+    }
+  }
+}
+
+/**
+ * Parse hex color to RGB
+ */
+interface RGB {
+  r: number;
+  g: number;
+  b: number;
+}
+
+function parseColor(color: string): RGB {
+  // Remove # if present
+  const hex = color.startsWith("#") ? color.slice(1) : color;
+
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+
+  return { r, g, b };
 }

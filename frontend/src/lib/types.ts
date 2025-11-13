@@ -269,6 +269,21 @@ export interface PresetNode extends BaseNode {
 }
 
 /**
+ * Gradient node - automatically generates gradient steps
+ */
+export interface GradientNode extends BaseNode {
+  type: "gradient";
+  /** Number of gradient steps */
+  steps: number;
+  /** Gradient direction */
+  direction: "horizontal" | "vertical";
+  /** Start color (hex format) */
+  startColor: string;
+  /** End color (hex format) */
+  endColor: string;
+}
+
+/**
  * Union type of all possible pattern nodes
  */
 export type PatternNode =
@@ -279,7 +294,8 @@ export type PatternNode =
   | LineNode
   | DirectedLineNode
   | ImageNode
-  | PresetNode;
+  | PresetNode
+  | GradientNode;
 
 // ============================================================================
 // Main Pattern Interface

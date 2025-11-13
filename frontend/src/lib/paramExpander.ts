@@ -143,11 +143,25 @@ export async function resolveExtends(pattern: XSGPattern): Promise<XSGPattern> {
   const resolvedBase = await resolveExtends(basePattern);
 
   // Merge base and child patterns
+  // Params: merge each parameter individually (child properties override base)
+  const mergedParams: Record<string, ParamDef> = { ...resolvedBase.params };
+  if (pattern.params) {
+    for (const [key, childParam] of Object.entries(pattern.params)) {
+      if (key in mergedParams) {
+        // Merge child param properties with base param
+        mergedParams[key] = { ...mergedParams[key], ...childParam };
+      } else {
+        // New param from child
+        mergedParams[key] = childParam;
+      }
+    }
+  }
+
   const merged: XSGPattern = {
     // Canvas: child overrides base
     canvas: pattern.canvas || resolvedBase.canvas,
-    // Params: merge (child overrides base)
-    params: { ...resolvedBase.params, ...pattern.params },
+    // Params: merged
+    params: mergedParams,
     // Nodes: child overrides base (or use base if child has none)
     nodes: pattern.nodes || resolvedBase.nodes || [],
   };
