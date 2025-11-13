@@ -10,6 +10,7 @@ node_modules/
 # Frontend build (Vite)
 frontend/dist/
 frontend/.vite/
+frontend/public/patterns/
 
 # Backend build (PyInstaller)
 backend/build/

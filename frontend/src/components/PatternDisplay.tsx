@@ -1,14 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import yaml from "js-yaml";
 import NodeRenderer from "./NodeRenderer";
 import PatternMenu from "./PatternMenu";
-import {
-  expandParams,
-  parseQueryParams,
-  resolveExtends,
-} from "../lib/paramExpander";
 import type { XSGPattern } from "../lib/types";
 
 interface PatternDisplayProps {
@@ -42,52 +36,53 @@ export default function PatternDisplay({ pattern }: PatternDisplayProps) {
       setError(null);
 
       try {
-        // Map common pattern names to filenames
+        // Map common pattern names to pattern IDs
         const patternMap: Record<string, string> = {
-          colorbar: "colorbar.yaml",
-          colorbars: "colorbar.yaml",
-          smpte: "colorbar.yaml",
-          ebu: "ebu-colorbar.yaml",
-          ebucolorbar: "ebu-colorbar.yaml",
-          arib: "arib-colorbar.yaml",
-          aribcolorbar: "arib-colorbar.yaml",
-          gradient: "gradient.yaml",
-          grayscale: "grayscale.yaml",
-          greyscale: "grayscale.yaml",
-          gray: "grayscale.yaml",
-          grey: "grayscale.yaml",
-          staircase: "staircase.yaml",
-          stairs: "staircase.yaml",
-          "vertical-gradient": "vertical-gradient.yaml",
-          "horizontal-gradient": "horizontal-gradient.yaml",
-          checker: "checker.yaml",
-          checkerboard: "checker.yaml",
-          crosshatch: "crosshatch.yaml",
-          grid: "crosshatch.yaml",
-          pluge: "pluge.yaml",
-          solid: "solid.yaml",
-          multiburst: "multiburst.yaml",
-          burst: "multiburst.yaml",
-          convergence: "convergence.yaml",
-          align: "convergence.yaml",
-          pixeldefect: "pixel-defect.yaml",
-          deadpixel: "pixel-defect.yaml",
-          dotdefect: "pixel-defect.yaml",
+          colorbar: "colorbar",
+          colorbars: "colorbar",
+          smpte: "colorbar",
+          ebu: "ebu-colorbar",
+          ebucolorbar: "ebu-colorbar",
+          arib: "arib-colorbar",
+          aribcolorbar: "arib-colorbar",
+          gradient: "gradient",
+          grayscale: "grayscale",
+          greyscale: "grayscale",
+          gray: "grayscale",
+          grey: "grayscale",
+          staircase: "staircase",
+          stairs: "staircase",
+          "vertical-gradient": "vertical-gradient",
+          "horizontal-gradient": "horizontal-gradient",
+          checker: "checker",
+          checkerboard: "checker",
+          crosshatch: "crosshatch",
+          grid: "crosshatch",
+          pluge: "pluge",
+          solid: "solid",
+          multiburst: "multiburst",
+          burst: "multiburst",
+          convergence: "convergence",
+          align: "convergence",
+          pixeldefect: "pixel-defect",
+          deadpixel: "pixel-defect",
+          dotdefect: "pixel-defect",
         };
 
-        const filename = patternMap[pattern.toLowerCase()] || "solid.yaml";
-        const patternPath = `/patterns/${filename}`;
+        const patternId = patternMap[pattern.toLowerCase()] || "solid";
 
-        const response = await fetch(patternPath);
-        const yamlText = await response.text();
-        let data = yaml.load(yamlText) as XSGPattern;
+        // Fetch from backend API (with query parameters for expansion)
+        const queryString = window.location.search.slice(1); // Remove leading '?'
+        const apiUrl = `http://localhost:8000/api/patterns/${patternId}${
+          queryString ? `?${queryString}` : ""
+        }`;
 
-        // Resolve template inheritance (extends)
-        data = await resolveExtends(data);
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to load pattern: ${response.statusText}`);
+        }
 
-        // Expand parameters from URL query
-        const queryParams = parseQueryParams(window.location.search);
-        data = expandParams(data, queryParams);
+        const data = (await response.json()) as XSGPattern;
 
         setPatternData(data);
       } catch (err) {
@@ -126,12 +121,10 @@ export default function PatternDisplay({ pattern }: PatternDisplayProps) {
       );
     }
 
-    const canvas = patternData.canvas || { width: 1920, height: 1080 };
-
     return (
       <>
         {patternData.nodes.map((node: any) => (
-          <NodeRenderer key={node.id} node={node} canvas={canvas} />
+          <NodeRenderer key={node.id} node={node} />
         ))}
       </>
     );

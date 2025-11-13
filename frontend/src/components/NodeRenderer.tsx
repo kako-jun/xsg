@@ -21,7 +21,6 @@ import { evaluateCoordinate } from "../lib/pathResolver";
 
 export interface NodeRendererProps {
   node: PatternNode;
-  canvas: { width: number; height: number };
 }
 
 /**
@@ -29,48 +28,61 @@ export interface NodeRendererProps {
  *
  * Renders a single node using Canvas 2D API.
  */
-export default function NodeRenderer({ node, canvas }: NodeRendererProps) {
+export default function NodeRenderer({ node }: NodeRendererProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvasEl = canvasRef.current;
     if (!canvasEl) return;
 
-    const ctx = canvasEl.getContext("2d");
-    if (!ctx) return;
+    const renderPattern = () => {
+      const ctx = canvasEl.getContext("2d");
+      if (!ctx) return;
 
-    // Set canvas size
-    canvasEl.width = window.innerWidth;
-    canvasEl.height = window.innerHeight;
+      // Set canvas size to current window size
+      canvasEl.width = window.innerWidth;
+      canvasEl.height = window.innerHeight;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+      // Clear canvas
+      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
-    // Render based on node type
-    switch (node.type) {
-      case "rect":
-        renderRect(ctx, node as RectNode, canvasEl);
-        break;
-      case "circle":
-        renderCircle(ctx, node as CircleNode, canvasEl);
-        break;
-      case "ellipse":
-        renderEllipse(ctx, node as EllipseNode, canvasEl);
-        break;
-      case "line":
-        renderLine(ctx, node as LineNode, canvasEl);
-        break;
-      case "directedLine":
-        renderDirectedLine(ctx, node as DirectedLineNode, canvasEl);
-        break;
-      case "image":
-        renderImage(ctx, node as ImageNode, canvasEl);
-        break;
-      case "gradient":
-        renderGradient(ctx, node as GradientNode, canvasEl);
-        break;
-    }
-  }, [node, canvas]);
+      // Render based on node type
+      switch (node.type) {
+        case "rect":
+          renderRect(ctx, node as RectNode, canvasEl);
+          break;
+        case "circle":
+          renderCircle(ctx, node as CircleNode, canvasEl);
+          break;
+        case "ellipse":
+          renderEllipse(ctx, node as EllipseNode, canvasEl);
+          break;
+        case "line":
+          renderLine(ctx, node as LineNode, canvasEl);
+          break;
+        case "directedLine":
+          renderDirectedLine(ctx, node as DirectedLineNode, canvasEl);
+          break;
+        case "image":
+          renderImage(ctx, node as ImageNode, canvasEl);
+          break;
+        case "gradient":
+          renderGradient(ctx, node as GradientNode, canvasEl);
+          break;
+      }
+    };
+
+    // Initial render
+    renderPattern();
+
+    // Re-render on window resize
+    window.addEventListener("resize", renderPattern);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("resize", renderPattern);
+    };
+  }, [node]);
 
   return <canvas ref={canvasRef} className="w-full h-full" />;
 }

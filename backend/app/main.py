@@ -14,7 +14,7 @@ from typing import List, Optional
 import httpx
 import uvicorn
 import webview
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -146,14 +146,55 @@ async def get_patterns():
 
 
 @app.get("/api/patterns/{pattern_id}")
-async def get_pattern(pattern_id: str):
-    """Get specific pattern information"""
-    # In real implementation, this would return pattern-specific data
-    return {
-        "id": pattern_id,
-        "status": "available",
-        "message": f"Pattern {pattern_id} is ready",
-    }
+async def get_pattern(pattern_id: str, request: Request):
+    """
+    Get pattern with extends resolution and parameter expansion
+
+    Returns expanded pattern ready for rendering
+    """
+    from pathlib import Path
+    import yaml
+    from .models import XSGPattern
+    from .pattern_expander import expand_pattern
+
+    try:
+        # 1. Load YAML file as dict (no validation yet)
+        # patterns/ is in project root, one level up from backend/
+        project_root = Path(__file__).parent.parent.parent
+        pattern_file = project_root / "patterns" / f"{pattern_id}.yaml"
+
+        if not pattern_file.exists():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Pattern '{pattern_id}' not found at {pattern_file}"
+            )
+
+        with open(pattern_file, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        # 2. Get URL query parameters
+        query_params = dict(request.query_params)
+
+        # 3. Expand pattern (dict-based, no validation until after expansion)
+        from .pattern_expander import expand_pattern_dict
+        expanded_data = expand_pattern_dict(data, query_params)
+
+        # 4. Validate expanded data with Pydantic
+        expanded_pattern = XSGPattern(**expanded_data)
+
+        # 5. Return as JSON
+        return expanded_pattern.model_dump(mode="json", exclude_none=True)
+
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Pattern file not found: {pattern_id}.yaml"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load pattern: {str(e)}"
+        )
 
 
 @app.get("/api/pattern/current")

@@ -196,25 +196,62 @@ class PresetNode(BaseNode):
     )
 
 
+class GradientNode(BaseNode):
+    type: Literal['gradient'] = 'gradient'
+    steps: conint(ge=2) = Field(..., description='Number of gradient steps')
+    direction: Direction = Field(..., description='Gradient direction')
+    startColor: constr(pattern=r'^#[0-9A-Fa-f]{6}$') = Field(
+        ..., description='Start color (hex format)'
+    )
+    endColor: constr(pattern=r'^#[0-9A-Fa-f]{6}$') = Field(
+        ..., description='End color (hex format)'
+    )
+
+
+class ParamType(Enum):
+    number = 'number'
+    string = 'string'
+    color = 'color'
+    boolean = 'boolean'
+
+
+class ParamDef(BaseModel):
+    """Parameter definition for pattern templates"""
+    type: ParamType = Field(..., description='Parameter type')
+    default: Optional[Any] = Field(None, description='Default value')
+    min: Optional[float] = Field(None, description='Minimum value (for numbers)')
+    max: Optional[float] = Field(None, description='Maximum value (for numbers)')
+    description: Optional[str] = Field(None, description='Description')
+
+
 class XSGPattern(BaseModel):
     """XSG Pattern definition"""
-    canvas: Canvas
-    nodes: List[
-        Annotated[
-            Union[
-                BackgroundNode,
-                RectNode,
-                CircleNode,
-                EllipseNode,
-                LineNode,
-                DirectedLineNode,
-                ImageNode,
-                PresetNode,
-            ],
-            Field(discriminator='type')
+    extends: Optional[str] = Field(
+        None, description='Extends another pattern (template inheritance)'
+    )
+    canvas: Optional[Canvas] = Field(None, description='Canvas dimensions')
+    params: Optional[Dict[str, ParamDef]] = Field(
+        None, description='Parameter definitions (optional, for template patterns)'
+    )
+    nodes: Optional[
+        List[
+            Annotated[
+                Union[
+                    BackgroundNode,
+                    RectNode,
+                    CircleNode,
+                    EllipseNode,
+                    LineNode,
+                    DirectedLineNode,
+                    ImageNode,
+                    PresetNode,
+                    GradientNode,
+                ],
+                Field(discriminator='type'),
+            ]
         ]
     ] = Field(
-        ...,
+        None,
         description='Array of nodes (layers), rendered in order (first = back, last = front)',
     )
 
@@ -229,4 +266,5 @@ PatternNode = Union[
     DirectedLineNode,
     ImageNode,
     PresetNode,
+    GradientNode,
 ]
