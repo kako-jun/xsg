@@ -89,23 +89,21 @@ fn load_pattern_info(path: &Path) -> Result<PatternInfo> {
         .to_string();
 
     // Extract name and category from YAML
-    let name = yaml
-        .get("name")
-        .and_then(|v| v.as_str())
-        .unwrap_or_else(|| {
-            // Default: convert pattern-id to Title Case
-            pattern_id.replace("-", " ").split_whitespace()
-                .map(|word| {
-                    let mut chars = word.chars();
-                    match chars.next() {
-                        None => String::new(),
-                        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
-                    }
-                })
-                .collect::<Vec<_>>()
-                .join(" ")
-        })
-        .to_string();
+    let name = if let Some(name_str) = yaml.get("name").and_then(|v| v.as_str()) {
+        name_str.to_string()
+    } else {
+        // Default: convert pattern-id to Title Case
+        pattern_id.replace("-", " ").split_whitespace()
+            .map(|word| {
+                let mut chars = word.chars();
+                match chars.next() {
+                    None => String::new(),
+                    Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
 
     let category = yaml
         .get("category")

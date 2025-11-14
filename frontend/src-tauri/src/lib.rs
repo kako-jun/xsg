@@ -1,5 +1,6 @@
 mod patterns;
 mod pattern_loader;
+mod pattern_expander;
 
 use patterns::{load_patterns, PatternsResponse};
 use pattern_loader::load_pattern_with_params;
