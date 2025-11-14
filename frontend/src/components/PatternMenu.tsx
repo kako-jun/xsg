@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 
 interface PatternMenuItem {
   id: string;
@@ -6,17 +7,20 @@ interface PatternMenuItem {
   category: string;
 }
 
+interface PatternsResponse {
+  patterns: PatternMenuItem[];
+}
+
 export default function PatternMenu() {
   const [isVisible, setIsVisible] = useState(false);
   const [patterns, setPatterns] = useState<PatternMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load patterns from API
+  // Load patterns from Tauri backend
   useEffect(() => {
     const loadPatterns = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/patterns");
-        const data = await response.json();
+        const data = await invoke<PatternsResponse>("get_patterns");
         setPatterns(data.patterns || []);
       } catch (error) {
         console.error("Failed to load patterns:", error);
@@ -59,28 +63,9 @@ export default function PatternMenu() {
   }, []);
 
   const handlePatternSelect = async (pattern: string) => {
-    try {
-      // Call backend API to change pattern
-      const response = await fetch("http://localhost:8000/api/pattern", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          pattern: pattern,
-          params: {},
-        }),
-      });
-
-      if (!response.ok) {
-        console.error("Failed to change pattern:", await response.text());
-      }
-    } catch (error) {
-      console.error("Error calling pattern API:", error);
-      // Fallback to direct URL navigation if API fails
-      window.location.href = `?pattern=${pattern}`;
-    }
-
+    // TODO: Implement set_pattern Tauri command in Phase 2
+    // For now, directly navigate to pattern URL
+    window.location.href = `?pattern=${pattern}`;
     setIsVisible(false);
   };
 

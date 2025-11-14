@@ -72,18 +72,22 @@ export default function PatternDisplay({ pattern }: PatternDisplayProps) {
 
         const patternId = patternMap[pattern.toLowerCase()] || "solid";
 
-        // Fetch from backend API (with query parameters for expansion)
-        const queryString = window.location.search.slice(1); // Remove leading '?'
-        const apiUrl = `http://localhost:8000/api/patterns/${patternId}${
-          queryString ? `?${queryString}` : ""
-        }`;
+        // Parse query parameters
+        const searchParams = new URLSearchParams(window.location.search);
+        const params: Record<string, string> = {};
+        searchParams.forEach((value, key) => {
+          if (key !== "pattern") {
+            // Exclude 'pattern' itself
+            params[key] = value;
+          }
+        });
 
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-          throw new Error(`Failed to load pattern: ${response.statusText}`);
-        }
-
-        const data = (await response.json()) as XSGPattern;
+        // Use Tauri invoke instead of fetch
+        const { invoke } = await import("@tauri-apps/api/core");
+        const data = (await invoke("get_pattern", {
+          patternId,
+          params,
+        })) as XSGPattern;
 
         setPatternData(data);
       } catch (err) {

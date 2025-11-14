@@ -1,0 +1,28 @@
+[package]
+name = "xsg"
+version = "1.0.0"
+description = "XSG - Professional Signal Generator for Display Calibration"
+authors = ["kako-jun"]
+license = "MIT"
+repository = "https://github.com/kako-jun/xsg"
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.1", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+log = "0.4"
+tauri = { version = "2.9.2", features = [] }
+tauri-plugin-log = "2.0"
+anyhow = "1.0"
+glob = "0.3"
