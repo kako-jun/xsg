@@ -516,11 +516,59 @@ XSGでは、**Pythonバックエンドが完全にパターンを制御**しま�
 - ✅ **パターンメタデータ**（`name`と`category`フィールドでカテゴリ分類）
 
 ### 今後の実装
-- 🔄 OSレベルのガンマ補正制御
+
+#### ディスプレイキャリブレーション機能（優先度：高）
+
+テストパターンを正確に表示するために、表示パイプライン全体の設定を確認・制御する機能。
+
+**UI設計**:
+- タブ形式（Pattern Menu / Calibration Settings）
+- 各設定項目の現在値表示
+- 手動ボタンで制御（自動適用なし）
+- 元の値を保存してオフ/オンを切り替え可能
+
+**制御可能な項目**:
+- ✅ **OSガンマ補正**: 現在値表示 + リセットボタン（1.0に設定）
+  - Windows: `SetDeviceGammaRamp()`
+  - macOS: `CGSetDisplayTransferByTable()`
+  - Linux: `xrandr --gamma`
+  - 元の値を保存し、復元可能にする
+- ✅ **ナイトモード/ブルーライトカット**: 現在値表示 + オフボタン
+  - Windows: Night Light（Windows.System.Display API）
+  - macOS: Night Shift（CoreBrightness、非公式）
+  - Linux: Redshift/f.luxプロセス制御
+  - オン/オフ状態を保存し、復元可能にする
+
+**案内のみの項目**（制御不可）:
+- ⚠️ **HDR設定**: 現在値表示 + 案内「Windows設定でHDRをオフにしてください」
+- ⚠️ **グラボLUT/フィルタ**: 案内「GPUコントロールパネル（NVIDIA/AMD/Intel）で設定を確認してください」
+- ℹ️ **ディスプレイ輝度**: 案内「輝度を100%に設定してください」
+- ℹ️ **色温度**: 案内「色温度を6500K（D65）に設定してください」
+- ℹ️ **ディスプレイモード**: 案内「sRGBモードに設定してください（利用可能な場合）」
+- ℹ️ **コントラスト**: 案内「コントラストを標準値に設定してください」
+
+**実装手順**:
+1. Phase 1（表示のみ）: 現在値の取得と表示
+2. Phase 2（制御機能）: ガンマ/ナイトモードの制御実装
+3. Phase 3（状態保存）: 元の値を保存・復元する機能
+
+**API設計**:
+```python
+GET  /api/calibration              # 全設定の現在値取得
+POST /api/calibration/gamma/reset  # ガンマを1.0にリセット
+POST /api/calibration/gamma/restore # ガンマを元の値に復元
+POST /api/calibration/night-mode/disable # ナイトモードをオフ
+POST /api/calibration/night-mode/restore # ナイトモードを元の状態に復元
+```
+
+---
+
+#### その他の今後の実装
 - 🔄 カスタムパターンエディタ
 - 🔄 パターンアニメーション
 - 🔄 設定ファイルの保存/読み込み
 - 🔄 より高度なテストパターン（Zone Plate、Needleなど）
+- 🔄 残りのパターンYAMLファイルへのメタデータ追加
 
 ### 最近の実装（2025-11-13）
 
