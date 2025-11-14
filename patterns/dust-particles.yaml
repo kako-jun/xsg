@@ -1,3 +1,6 @@
+name: "Dust Particles"
+category: "Effects"
+
 canvas:
   width: 1920
   height: 1080

@@ -1,6 +1,9 @@
 # Checker Pattern with Pixel Defect
 # Demonstrates: Background preset + foreground circle (simulated dead pixel)
 
+name: "Checker with Pixel Defect"
+category: "Examples"
+
 canvas:
   width: 1920
   height: 1080

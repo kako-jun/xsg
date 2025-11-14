@@ -1,6 +1,9 @@
 # Grayscale Pattern with Test Lines
 # Demonstrates: Background preset + multiple line nodes
 
+name: "Grayscale with Lines"
+category: "Examples"
+
 canvas:
   width: 1920
   height: 1080

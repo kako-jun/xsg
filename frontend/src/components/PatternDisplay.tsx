@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import NodeRenderer from "./NodeRenderer";
 import PatternMenu from "./PatternMenu";
+import CalibrationSettings from "./CalibrationSettings";
 import type { XSGPattern } from "../lib/types";
 
 interface PatternDisplayProps {
@@ -138,6 +139,7 @@ export default function PatternDisplay({ pattern }: PatternDisplayProps) {
     >
       {renderContent()}
       <PatternMenu />
+      <CalibrationSettings />
     </div>
   );
 }

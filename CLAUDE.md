@@ -513,53 +513,26 @@ XSGでは、**Pythonバックエンドが完全にパターンを制御**しま�
 - ✅ **バックエンドでのパターン処理**（extends解決・パラメータ展開をPython側に移行）
 - ✅ **完全レスポンシブ対応**（ウィンドウリサイズ追従、1920x1080ハードコーディング削除）
 - ✅ **動的パターンメニュー**（画面タップ操作、API経由でパターン一覧取得）
-- ✅ **パターンメタデータ**（`name`と`category`フィールドでカテゴリ分類）
+- ✅ **パターンメタデータ**（全25パターンに`name`と`category`完備、カテゴリ分類）
+- ✅ **ディスプレイキャリブレーション Phase 1 & 2**（現在値表示＋制御機能）
+  - ガンマ補正検出・制御（Windows/Linux、macOS準備済み）
+  - ナイトモード検出・無効化（Windows/Linux/macOS）
+  - HDR検出（Windows）、GPU検出（全プラットフォーム）
+  - リセット/復元機能（元の値を自動保存）
+- ✅ **Webレンダリングモード**（`--url`引数で任意のURL表示）
+  - フルスクリーン・フレームレス表示
+  - Readonlyモード（`--readonly`でJS無効化）
+  - プロキシ自動対応（OSの設定を継承）
+  - マルチディスプレイ対応
 
 ### 今後の実装
 
-#### ディスプレイキャリブレーション機能（優先度：高）
+#### ディスプレイキャリブレーション Phase 3（優先度：中）
 
-テストパターンを正確に表示するために、表示パイプライン全体の設定を確認・制御する機能。
-
-**UI設計**:
-- タブ形式（Pattern Menu / Calibration Settings）
-- 各設定項目の現在値表示
-- 手動ボタンで制御（自動適用なし）
-- 元の値を保存してオフ/オンを切り替え可能
-
-**制御可能な項目**:
-- ✅ **OSガンマ補正**: 現在値表示 + リセットボタン（1.0に設定）
-  - Windows: `SetDeviceGammaRamp()`
-  - macOS: `CGSetDisplayTransferByTable()`
-  - Linux: `xrandr --gamma`
-  - 元の値を保存し、復元可能にする
-- ✅ **ナイトモード/ブルーライトカット**: 現在値表示 + オフボタン
-  - Windows: Night Light（Windows.System.Display API）
-  - macOS: Night Shift（CoreBrightness、非公式）
-  - Linux: Redshift/f.luxプロセス制御
-  - オン/オフ状態を保存し、復元可能にする
-
-**案内のみの項目**（制御不可）:
-- ⚠️ **HDR設定**: 現在値表示 + 案内「Windows設定でHDRをオフにしてください」
-- ⚠️ **グラボLUT/フィルタ**: 案内「GPUコントロールパネル（NVIDIA/AMD/Intel）で設定を確認してください」
-- ℹ️ **ディスプレイ輝度**: 案内「輝度を100%に設定してください」
-- ℹ️ **色温度**: 案内「色温度を6500K（D65）に設定してください」
-- ℹ️ **ディスプレイモード**: 案内「sRGBモードに設定してください（利用可能な場合）」
-- ℹ️ **コントラスト**: 案内「コントラストを標準値に設定してください」
-
-**実装手順**:
-1. Phase 1（表示のみ）: 現在値の取得と表示
-2. Phase 2（制御機能）: ガンマ/ナイトモードの制御実装
-3. Phase 3（状態保存）: 元の値を保存・復元する機能
-
-**API設計**:
-```python
-GET  /api/calibration              # 全設定の現在値取得
-POST /api/calibration/gamma/reset  # ガンマを1.0にリセット
-POST /api/calibration/gamma/restore # ガンマを元の値に復元
-POST /api/calibration/night-mode/disable # ナイトモードをオフ
-POST /api/calibration/night-mode/restore # ナイトモードを元の状態に復元
-```
+**残りの実装:**
+- macOSのガンマ制御実装（CoreGraphics API使用）
+- macOSのNight Shift制御実装（CoreBrightnessまたはAppleScript）
+- Windowsナイトモード制御（WinRT API使用、現在は手動案内のみ）
 
 ---
 
@@ -568,7 +541,7 @@ POST /api/calibration/night-mode/restore # ナイトモードを元の状態に�
 - 🔄 パターンアニメーション
 - 🔄 設定ファイルの保存/読み込み
 - 🔄 より高度なテストパターン（Zone Plate、Needleなど）
-- 🔄 残りのパターンYAMLファイルへのメタデータ追加
+- 🔄 .scrビルド確認とテスト（Windowsスクリーンセーバー）
 
 ### 最近の実装（2025-11-13）
 
@@ -589,7 +562,49 @@ POST /api/calibration/night-mode/restore # ナイトモードを元の状態に�
 - パラメータプロパティの個別マージ（プロパティ消失バグ修正）
 - URLパラメータで実行時カスタマイズ可能
 
-### 最近の実装（2025-11-14）
+### 最近の実装
+
+#### 2025-11-14（午後）
+
+**パターンメタデータ完全化:**
+- 全25個のYAMLパターンファイルにメタデータ追加完了
+- 新カテゴリ「Examples」「Effects」を導入
+- カテゴリ分類：Color Bars, Geometric, Grayscale & Gradients, Professional, Solid Colors, Examples, Effects
+
+**ディスプレイキャリブレーション Phase 2:**
+- バックエンド制御機能実装（`backend/app/calibration.py`に300行追加）
+  - ガンマ制御：Windows（`SetDeviceGammaRamp`）、Linux（`xrandr`）対応
+  - ナイトモード無効化：Windows（手動案内）、Linux（Redshift/f.lux終了）対応
+  - 自動保存・復元機能（元の値を自動的に保存）
+- APIエンドポイント追加（`backend/app/main.py`）
+  - `POST /api/calibration/gamma/reset` - ガンマを1.0にリセット
+  - `POST /api/calibration/gamma/restore` - ガンマを元に戻す
+  - `POST /api/calibration/night-mode/disable` - ナイトモードを無効化
+- フロントエンドUI実装（`frontend/src/components/CalibrationSettings.tsx`）
+  - 制御ボタン追加（Reset to 1.0、Restore Original、Disable Night Mode）
+  - アクションメッセージ表示（成功/失敗の通知）
+  - ボタン実行後の自動ステータス更新
+  - Cキーで開閉
+
+**Webレンダリングモード実装:**
+- `--url`引数で任意のURLをフルスクリーン表示
+- `--readonly`引数でJavaScript無効化（CSSインジェクション）
+- 新機能 `create_url_windows()` 実装（`backend/app/main.py`）
+- プロキシ自動対応（PyWebViewがOSのプロキシ設定を継承）
+- 新しい用途：Webキオスク、デジタルサイネージ、ダッシュボード表示
+
+**使用例:**
+```bash
+# キャリブレーション
+uv run python -m app.main --dev  # Cキーで開く
+
+# Webレンダリングモード
+uv run python -m app.main --url https://example.com --readonly
+uv run python -m app.main --url "https://source.unsplash.com/random/1920x1080" --readonly
+uv run python -m app.main --url https://grafana.example.com --display left
+```
+
+#### 2025-11-14（午前）
 
 #### パターン処理のバックエンド移行
 - YAMLのextends解決とパラメータ展開をPython側で実装

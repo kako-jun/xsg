@@ -259,6 +259,102 @@ async def get_gamma():
     return {"gamma": 2.2, "enabled": True}
 
 
+@app.get("/api/calibration")
+async def get_calibration():
+    """
+    Get display calibration status
+
+    Phase 1: Read-only status reporting
+    - Gamma: Current value and if it's default (1.0)
+    - Night Mode: Enabled/disabled
+    - HDR: Enabled/disabled (Windows only)
+    - GPU: Vendor detection
+
+    Returns comprehensive calibration information for display in UI
+    """
+    from .calibration import get_calibration_status
+
+    try:
+        status = get_calibration_status()
+        return status.to_dict()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get calibration status: {str(e)}"
+        )
+
+
+@app.post("/api/calibration/gamma/reset")
+async def calibration_gamma_reset():
+    """
+    Reset gamma to 1.0 (linear)
+
+    Phase 2: Control function
+    Saves current gamma before resetting, allowing restoration
+    """
+    from .calibration import reset_gamma
+
+    try:
+        result = reset_gamma()
+        if result.success:
+            return {"success": True, "message": result.message}
+        else:
+            return {"success": False, "message": result.message}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to reset gamma: {str(e)}"
+        )
+
+
+@app.post("/api/calibration/gamma/restore")
+async def calibration_gamma_restore():
+    """
+    Restore gamma to saved value
+
+    Phase 2: Control function
+    Restores gamma to the value saved before reset
+    """
+    from .calibration import restore_gamma
+
+    try:
+        result = restore_gamma()
+        if result.success:
+            return {"success": True, "message": result.message}
+        else:
+            return {"success": False, "message": result.message}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to restore gamma: {str(e)}"
+        )
+
+
+@app.post("/api/calibration/night-mode/disable")
+async def calibration_night_mode_disable():
+    """
+    Disable night mode / blue light filter
+
+    Phase 2: Control function
+    - Windows: Provides manual instructions (API limitations)
+    - Linux: Kills Redshift/f.lux processes
+    - macOS: Provides manual instructions (unofficial API)
+    """
+    from .calibration import disable_night_mode
+
+    try:
+        result = disable_night_mode()
+        if result.success:
+            return {"success": True, "message": result.message}
+        else:
+            return {"success": False, "message": result.message}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to disable night mode: {str(e)}"
+        )
+
+
 # ============================================================================
 # Static file serving (for production build)
 # ============================================================================
@@ -463,6 +559,88 @@ def start_api_server(host: str = "127.0.0.1", port: int = 8000):
     uvicorn.run(app, host=host, port=port, log_level="info")
 
 
+def create_url_windows(
+    url: str,
+    display_spec: str = "all",
+    readonly: bool = False,
+):
+    """
+    Create PyWebView windows displaying arbitrary URL (Web Rendering Mode)
+
+    Args:
+        url: URL to display
+        display_spec: Display selection specification
+        readonly: If True, disable JavaScript interaction
+    """
+    global webview_windows
+
+    print(f"[URL] Web Rendering Mode")
+    print(f"[URL] Target URL: {url}")
+    print(f"[URL] Readonly: {readonly}")
+
+    # Get all displays and select based on spec
+    all_displays = get_display_info()
+    selected_displays = select_displays(display_spec, all_displays)
+
+    if not selected_displays:
+        print(f"[ERROR] No displays matched specification: {display_spec}")
+        sys.exit(1)
+
+    print(f"[INFO] Creating windows on {len(selected_displays)} display(s)")
+
+    # Create window for each selected display
+    windows = []
+
+    for i, display in enumerate(selected_displays):
+        print(
+            f"[INFO] Display {i+1}/{len(selected_displays)}: "
+            f"{display['width']}x{display['height']} at ({display['x']}, {display['y']})"
+        )
+
+        window = webview.create_window(
+            title=f"XSG - Web Renderer ({i+1})",
+            url=url,
+            x=display["x"],
+            y=display["y"],
+            width=display["width"],
+            height=display["height"],
+            fullscreen=False,  # Use manual positioning instead
+            frameless=True,  # Remove title bar
+            resizable=False,
+            # Note: readonly mode can be implemented via JavaScript injection
+            # See: https://pywebview.flowrl.com/guide/api.html#evaluate-js
+        )
+        windows.append(window)
+
+    # Store window references globally
+    webview_windows = windows
+
+    # If readonly mode, inject JavaScript to disable interactions after load
+    if readonly:
+        def on_loaded():
+            for window in webview_windows:
+                # Inject CSS to disable pointer events
+                js_code = """
+                (function() {
+                    var style = document.createElement('style');
+                    style.textContent = '* { pointer-events: none !important; user-select: none !important; }';
+                    document.head.appendChild(style);
+                    console.log('[XSG] Readonly mode activated');
+                })();
+                """
+                try:
+                    window.evaluate_js(js_code)
+                except Exception as e:
+                    print(f"[WARN] Failed to activate readonly mode: {e}")
+
+        # Execute after first window is loaded
+        if webview_windows:
+            webview_windows[0].events.loaded += on_loaded
+
+    # Start webview (blocks until all windows are closed)
+    webview.start()
+
+
 def create_desktop_windows(
     dev_mode: bool = False,
     api_url: str = "http://127.0.0.1:8000",
@@ -604,6 +782,17 @@ def main():
     parser.add_argument(
         "--api-only", action="store_true", help="Run API server only (no GUI)"
     )
+    parser.add_argument(
+        "--url",
+        type=str,
+        default=None,
+        help="Web rendering mode: display arbitrary URL (e.g., https://example.com)",
+    )
+    parser.add_argument(
+        "--readonly",
+        action="store_true",
+        help="Readonly mode: disable JavaScript interaction (for use with --url)",
+    )
 
     args = parser.parse_args()
 
@@ -646,8 +835,16 @@ def main():
         # API server only mode
         print("[API] Starting API server...")
         start_api_server(port=args.port)
+    elif args.url:
+        # Web rendering mode (URL mode)
+        # No API server needed for URL mode
+        create_url_windows(
+            url=args.url,
+            display_spec=args.display,
+            readonly=args.readonly,
+        )
     else:
-        # Desktop application mode
+        # Desktop application mode (pattern mode)
         # Start API server in background thread
         api_thread = threading.Thread(
             target=start_api_server,

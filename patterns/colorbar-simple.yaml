@@ -1,6 +1,9 @@
 # Simple Color Bar Pattern
 # Demonstrates: Background preset usage
 
+name: "Color Bars (Simple)"
+category: "Examples"
+
 canvas:
   width: 1920
   height: 1080

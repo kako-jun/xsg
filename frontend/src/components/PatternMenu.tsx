@@ -42,7 +42,7 @@ export default function PatternMenu() {
       // Toggle menu on screen tap (only if menu is not visible)
       // If menu is visible, clicking outside will close it
       const target = e.target as HTMLElement;
-      const isMenuClick = target.closest('[data-menu-content]');
+      const isMenuClick = target.closest("[data-menu-content]");
 
       if (!isMenuClick) {
         setIsVisible((prev) => !prev);
@@ -93,7 +93,10 @@ export default function PatternMenu() {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-      <div data-menu-content className="bg-gray-900 text-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+      <div
+        data-menu-content
+        className="bg-gray-900 text-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto"
+      >
         <div className="sticky top-0 bg-gray-800 px-6 py-4 border-b border-gray-700">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Pattern Selection</h2>

@@ -1,6 +1,9 @@
 # Animation Example
 # Demonstrates: WAAPI animations with props syntax
 
+name: "Animation Example"
+category: "Examples"
+
 canvas:
   width: 1920
   height: 1080

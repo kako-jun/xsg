@@ -1,6 +1,9 @@
 # Multi-layer Pattern Example
 # Demonstrates: Multiple layers with different node types
 
+name: "Multi-Layer Example"
+category: "Examples"
+
 canvas:
   width: 1920
   height: 1080

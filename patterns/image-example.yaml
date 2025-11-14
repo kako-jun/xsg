@@ -1,6 +1,9 @@
 # Image Pattern Example
 # Demonstrates: Different image path formats and sizing
 
+name: "Image Example"
+category: "Examples"
+
 canvas:
   width: 1920
   height: 1080
