@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "WebFetch(domain:jsoncanvas.org)"
+      "WebFetch(domain:jsoncanvas.org)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

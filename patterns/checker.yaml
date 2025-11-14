@@ -1,6 +1,9 @@
 # Checkerboard Pattern
 # Checkerboard with configurable colors (50x50px squares)
 
+name: "Checkerboard"
+category: "Geometric"
+
 canvas:
   width: 1920
   height: 1080

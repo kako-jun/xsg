@@ -1,6 +1,9 @@
 # Vertical Gradient Pattern
 # 16-step vertical grayscale gradient (black to white)
 
+name: "Vertical Gradient"
+category: "Grayscale & Gradients"
+
 extends: gradient.yaml
 
 # Override parameters

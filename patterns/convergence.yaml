@@ -1,6 +1,9 @@
 # Convergence Pattern
 # Grid pattern with circles at intersections and center crosshair
 
+name: "Convergence"
+category: "Geometric"
+
 canvas:
   width: 1920
   height: 1080

@@ -1,6 +1,9 @@
 # CrossHatch Pattern
 # White background with black grid lines (equal division)
 
+name: "Cross-hatch"
+category: "Geometric"
+
 canvas:
   width: 1920
   height: 1080

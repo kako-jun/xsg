@@ -1,6 +1,9 @@
 # ARIB Color Bars Pattern (100% intensity)
 # Japanese broadcast standard (ARIB)
 
+name: "ARIB Color Bars"
+category: "Color Bars"
+
 canvas:
   width: 1920
   height: 1080

@@ -1,6 +1,9 @@
 # EBU Color Bars Pattern
 # European broadcast standard (EBU)
 
+name: "EBU Color Bars"
+category: "Color Bars"
+
 canvas:
   width: 1920
   height: 1080

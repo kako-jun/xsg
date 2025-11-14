@@ -2,6 +2,9 @@
 # Background with simulated dead pixels (black) and stuck pixels (colored)
 # Note: Original uses random placement, this uses fixed positions
 
+name: "Pixel Defect"
+category: "Professional"
+
 canvas:
   width: 1920
   height: 1080

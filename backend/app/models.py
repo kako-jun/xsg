@@ -226,6 +226,8 @@ class ParamDef(BaseModel):
 
 class XSGPattern(BaseModel):
     """XSG Pattern definition"""
+    name: Optional[str] = Field(None, description='Pattern display name')
+    category: Optional[str] = Field(None, description='Pattern category for menu grouping')
     extends: Optional[str] = Field(
         None, description='Extends another pattern (template inheritance)'
     )

@@ -1,6 +1,9 @@
 # Staircase Pattern
 # 21-step grayscale gradient (0% to 100% in 5% steps)
 
+name: "Staircase"
+category: "Grayscale & Gradients"
+
 extends: gradient.yaml
 
 # Override parameters

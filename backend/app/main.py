@@ -115,33 +115,36 @@ async def root():
 
 @app.get("/api/patterns")
 async def get_patterns():
-    """Get all available test patterns"""
-    patterns = [
-        {
-            "id": "colorbar",
-            "name": "Color Bar",
-            "description": "SMPTE color bars",
-            "category": "basic",
-        },
-        {
-            "id": "gridpattern",
-            "name": "Grid Pattern",
-            "description": "Geometric grid pattern",
-            "category": "geometry",
-        },
-        {
-            "id": "checkerboard",
-            "name": "Checkerboard",
-            "description": "Black and white checkerboard",
-            "category": "geometry",
-        },
-        {
-            "id": "grayscale",
-            "name": "Grayscale Ramp",
-            "description": "8-step grayscale ramp",
-            "category": "calibration",
-        },
-    ]
+    """Get all available test patterns by scanning patterns/ directory"""
+    import yaml
+
+    project_root = Path(__file__).parent.parent.parent
+    patterns_dir = project_root / "patterns"
+
+    patterns = []
+
+    if not patterns_dir.exists():
+        return {"patterns": []}
+
+    for yaml_file in sorted(patterns_dir.glob("*.yaml")):
+        try:
+            with open(yaml_file, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+
+            # Extract metadata
+            pattern_id = yaml_file.stem  # filename without extension
+            name = data.get("name", pattern_id.replace("-", " ").title())
+            category = data.get("category", "Other")
+
+            patterns.append({
+                "id": pattern_id,
+                "name": name,
+                "category": category,
+            })
+        except Exception as e:
+            print(f"[WARNING] Failed to load pattern {yaml_file}: {e}")
+            continue
+
     return {"patterns": patterns}
 
 

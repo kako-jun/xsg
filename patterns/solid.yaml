@@ -1,6 +1,9 @@
 # Solid Color Pattern
 # Solid fill with configurable color
 
+name: "Solid Color"
+category: "Solid Colors"
+
 canvas:
   width: 1920
   height: 1080

@@ -1,6 +1,9 @@
 # Gradient Pattern
 # Automatically generates gradient steps from start to end color
 
+name: "Gradient"
+category: "Grayscale & Gradients"
+
 canvas:
   width: 1920
   height: 1080

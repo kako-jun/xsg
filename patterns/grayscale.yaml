@@ -1,4 +1,7 @@
 # Grayscale Gradient Pattern
 # Alias for horizontal-gradient
 
+name: "Grayscale"
+category: "Grayscale & Gradients"
+
 extends: horizontal-gradient.yaml

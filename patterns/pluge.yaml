@@ -1,6 +1,9 @@
 # PLUGE Pattern
 # Picture Line-Up Generation Equipment - for black level adjustment
 
+name: "PLUGE"
+category: "Professional"
+
 canvas:
   width: 1920
   height: 1080

@@ -2,6 +2,9 @@
 # Note: Full multiburst requires complex frequency generation
 # This is a simplified version showing alternating black/white bars
 
+name: "Multiburst"
+category: "Professional"
+
 canvas:
   width: 1920
   height: 1080

@@ -1,6 +1,9 @@
 # Horizontal Gradient Pattern
 # 16-step horizontal grayscale gradient (black to white)
 
+name: "Horizontal Gradient"
+category: "Grayscale & Gradients"
+
 extends: gradient.yaml
 
 # Override parameters

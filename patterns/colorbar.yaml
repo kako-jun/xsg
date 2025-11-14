@@ -1,6 +1,9 @@
 # SMPTE Color Bars Pattern (75% intensity)
 # Standard test pattern for display calibration
 
+name: "SMPTE Color Bars"
+category: "Color Bars"
+
 canvas:
   width: 1920
   height: 1080
