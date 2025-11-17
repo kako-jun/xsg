@@ -15,6 +15,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 
 interface GammaStatus {
   supported: boolean;
@@ -83,13 +84,7 @@ export default function CalibrationSettings() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch("http://localhost:8000/api/calibration");
-
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-
-        const data = await response.json();
+        const data = await invoke<CalibrationStatus>("get_calibration_status");
         setStatus(data);
       } catch (err) {
         console.error("Failed to load calibration status:", err);
@@ -105,11 +100,8 @@ export default function CalibrationSettings() {
   // Reload status after control actions
   const reloadStatus = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/calibration");
-      if (response.ok) {
-        const data = await response.json();
-        setStatus(data);
-      }
+      const data = await invoke<CalibrationStatus>("get_calibration_status");
+      setStatus(data);
     } catch (err) {
       console.error("Failed to reload status:", err);
     }
@@ -121,12 +113,7 @@ export default function CalibrationSettings() {
     setActionMessage(null);
 
     try {
-      const response = await fetch(
-        "http://localhost:8000/api/calibration/gamma/reset",
-        { method: "POST" }
-      );
-
-      const result = await response.json();
+      const result = await invoke<{ success: boolean; message: string }>("reset_gamma");
 
       if (result.success) {
         setActionMessage(`✓ ${result.message}`);
@@ -148,12 +135,7 @@ export default function CalibrationSettings() {
     setActionMessage(null);
 
     try {
-      const response = await fetch(
-        "http://localhost:8000/api/calibration/gamma/restore",
-        { method: "POST" }
-      );
-
-      const result = await response.json();
+      const result = await invoke<{ success: boolean; message: string }>("restore_gamma");
 
       if (result.success) {
         setActionMessage(`✓ ${result.message}`);
@@ -175,12 +157,7 @@ export default function CalibrationSettings() {
     setActionMessage(null);
 
     try {
-      const response = await fetch(
-        "http://localhost:8000/api/calibration/night-mode/disable",
-        { method: "POST" }
-      );
-
-      const result = await response.json();
+      const result = await invoke<{ success: boolean; message: string }>("disable_night_mode");
 
       if (result.success) {
         setActionMessage(`✓ ${result.message}`);
