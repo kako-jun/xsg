@@ -56,3 +56,4 @@ yarn-error.log*
 *.swp
 *.swo
 *~
+.claude/settings.local.json
