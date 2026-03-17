@@ -34,62 +34,55 @@ export type Color = string;
 // ============================================
 
 export type BackgroundPreset =
-  | 'solid'             // Solid
-  | 'crosshatch'        // Crosshatch
-  | 'checker'           // Mesh
-  | 'grayscale'         // Grayscale
-  | 'repeatCropImage'   // RepeatCropImage
-  | 'image';            // Image
+  | "solid" // Solid
+  | "crosshatch" // Crosshatch
+  | "checker" // Mesh
+  | "grayscale" // Grayscale
+  | "repeatCropImage" // RepeatCropImage
+  | "image"; // Image
 
 // ============================================
 // Foreground Presets
 // ============================================
 
-export type ForegroundPreset =
-  | 'pixeldefect'
-  | 'crosshatch';
+export type ForegroundPreset = "pixeldefect" | "crosshatch";
 
 // ============================================
 // Node Types
 // ============================================
 
 export type NodeType =
-  | 'background'
-  | 'rect'
-  | 'circle'
-  | 'ellipse'
-  | 'line'
-  | 'image'
-  | 'preset';
+  | "background"
+  | "rect"
+  | "circle"
+  | "ellipse"
+  | "line"
+  | "image"
+  | "preset";
 
 // ============================================
 // Direction（方向）
 // ============================================
 
-export type Direction = 'horizontal' | 'vertical';
+export type Direction = "horizontal" | "vertical";
 
 // ============================================
 // Image Fit（画像フィット）
 // ============================================
 
-export type ImageFit = 'contain' | 'cover' | 'fill';
+export type ImageFit = "contain" | "cover" | "fill";
 
 // ============================================
 // Animation（WAAPI準拠）
 // ============================================
 
-export type Easing =
-  | 'linear'
-  | 'ease'
-  | 'ease-in'
-  | 'ease-out'
-  | 'ease-in-out';
+export type Easing = "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out";
 
 export type AnimationDirection =
-  | 'normal'
-  | 'reverse'
-  | 'alternate'
-  | 'alternate-reverse';
+  | "normal"
+  | "reverse"
+  | "alternate"
+  | "alternate-reverse";
 
 export interface Keyframe {
   x?: Coordinate;
@@ -109,7 +102,7 @@ export interface Animation {
 
   // タイミング（WAAPI KeyframeEffectOptions）
   duration: number;
-  iterations?: number | 'Infinity';
+  iterations?: number | "Infinity";
   easing?: Easing;
   delay?: number;
   direction?: AnimationDirection;
@@ -143,7 +136,7 @@ export interface BaseNode {
 // ============================================
 
 export interface BackgroundNode extends BaseNode {
-  type: 'background';
+  type: "background";
   preset: BackgroundPreset;
   params?: BackgroundParams;
 }
@@ -161,24 +154,24 @@ export interface SolidParams {
 }
 
 export interface CrosshatchParams {
-  width: number;          // rect_width
-  height: number;         // rect_height
-  color1: Color;          // rgb_string
-  color2: Color;          // rgb_string2
+  width: number; // rect_width
+  height: number; // rect_height
+  color1: Color; // rgb_string
+  color2: Color; // rgb_string2
 }
 
 export interface CheckerParams {
-  size: number;           // rect_width/height（正方形）
+  size: number; // rect_width/height（正方形）
   color1: Color;
   color2: Color;
 }
 
 export interface GrayscaleParams {
-  steps: number;                // step_num
-  direction: Direction;         // grayscale_direction
-  reverse?: boolean;            // grayscale_inverse
-  flatSteps?: number[];         // flat_step_ids
-  invertedSteps?: number[];     // inverted_step_ids
+  steps: number; // step_num
+  direction: Direction; // grayscale_direction
+  reverse?: boolean; // grayscale_inverse
+  flatSteps?: number[]; // flat_step_ids
+  invertedSteps?: number[]; // inverted_step_ids
 }
 
 export interface RepeatCropImageParams {
@@ -199,7 +192,7 @@ export interface ImageParams {
 // ============================================
 
 export interface RectNode extends BaseNode {
-  type: 'rect';
+  type: "rect";
   x: Coordinate;
   y: Coordinate;
   width: number;
@@ -211,7 +204,7 @@ export interface RectNode extends BaseNode {
 // ============================================
 
 export interface CircleNode extends BaseNode {
-  type: 'circle';
+  type: "circle";
   x: Coordinate;
   y: Coordinate;
   diameter: number;
@@ -222,7 +215,7 @@ export interface CircleNode extends BaseNode {
 // ============================================
 
 export interface EllipseNode extends BaseNode {
-  type: 'ellipse';
+  type: "ellipse";
   x: Coordinate;
   y: Coordinate;
   width: number;
@@ -234,7 +227,7 @@ export interface EllipseNode extends BaseNode {
 // ============================================
 
 export interface LineNode extends BaseNode {
-  type: 'line';
+  type: "line";
 
   // Option 1: x1,y1,x2,y2で指定（p5.js標準）
   x1?: Coordinate;
@@ -245,8 +238,8 @@ export interface LineNode extends BaseNode {
   // Option 2: x,y,direction,lengthで指定（移植元互換）
   x?: Coordinate;
   y?: Coordinate;
-  direction?: Direction;    // line_direction
-  length?: number;          // line_length
+  direction?: Direction; // line_direction
+  length?: number; // line_length
 }
 
 // ============================================
@@ -254,14 +247,14 @@ export interface LineNode extends BaseNode {
 // ============================================
 
 export interface ImageNode extends BaseNode {
-  type: 'image';
-  src: string;              // image_id
+  type: "image";
+  src: string; // image_id
   x: Coordinate;
   y: Coordinate;
   width?: number;
   height?: number;
-  fit?: ImageFit;           // image_stretch
-  scale?: number;           // image_scale
+  fit?: ImageFit; // image_stretch
+  scale?: number; // image_scale
 }
 
 // ============================================
@@ -269,7 +262,7 @@ export interface ImageNode extends BaseNode {
 // ============================================
 
 export interface PresetNode extends BaseNode {
-  type: 'preset';
+  type: "preset";
   preset: ForegroundPreset;
   params?: Record<string, any>;
 }
@@ -311,19 +304,19 @@ export interface XSGPattern {
 
 export namespace Legacy {
   export type BackgroundType =
-    | 'Solid'
-    | 'Crosshatch'
-    | 'Mesh'
-    | 'Grayscale'
-    | 'RepeatCropImage'
-    | 'Image';
+    | "Solid"
+    | "Crosshatch"
+    | "Mesh"
+    | "Grayscale"
+    | "RepeatCropImage"
+    | "Image";
 
   export type ForegroundType =
-    | 'Dot'
-    | 'Line'
-    | 'Window'
-    | 'Image'
-    | 'Crosshatch';
+    | "Dot"
+    | "Line"
+    | "Window"
+    | "Image"
+    | "Crosshatch";
 
   export interface Background {
     type: BackgroundType;
@@ -341,7 +334,7 @@ export namespace Legacy {
 
     // Grayscale
     step_num?: number;
-    grayscale_direction?: 'h' | 'v';
+    grayscale_direction?: "h" | "v";
     grayscale_inverse?: boolean;
     flat_step_ids?: number[];
     inverted_step_ids?: number[];
@@ -349,7 +342,7 @@ export namespace Legacy {
     // Image
     image_id?: string;
     image_scale?: number;
-    image_stretch?: 'fill' | 'none';
+    image_stretch?: "fill" | "none";
 
     // RepeatCropImage
     crop_width?: number;
@@ -373,7 +366,7 @@ export namespace Legacy {
     blink_interval?: number;
 
     // Line
-    line_direction?: 'h' | 'v';
+    line_direction?: "h" | "v";
     line_length?: number;
     line_width?: number;
 
@@ -385,7 +378,7 @@ export namespace Legacy {
     // Image
     image_id?: string;
     image_scale?: number;
-    image_stretch?: 'fill' | 'none';
+    image_stretch?: "fill" | "none";
 
     // Crosshatch
     rect_width?: number;

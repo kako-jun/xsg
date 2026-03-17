@@ -126,18 +126,16 @@ nodes:
   #       - x: 1920
   #     props:        # これは無視される！
   #       x: [0, 1920]
-
   # ============================================
   # Image - サイズ指定の優先度
   # ============================================
-
   # ✅ 正しい: 優先度1（width/height明示）
   - id: image-explicit
     type: image
     src: "./images/fg/crosstalk.png"
     x: 960
     y: 540
-    width: 400      # 最優先
+    width: 400 # 最優先
     height: 300
     # scale: 1.5    # これは無視される
     # fit: contain  # これも無視される
@@ -148,7 +146,7 @@ nodes:
     src: "./images/fg/crosstalk.png"
     x: 960
     y: 540
-    scale: 1.5      # width/heightがないのでこれが使われる
+    scale: 1.5 # width/heightがないのでこれが使われる
     # fit: contain  # これは無視される
 
   # ✅ 正しい: 優先度3（fit）
@@ -157,7 +155,7 @@ nodes:
     src: "./images/fg/crosstalk.png"
     x: 960
     y: 540
-    fit: contain    # width/heightもscaleもないのでこれが使われる
+    fit: contain # width/heightもscaleもないのでこれが使われる
 
   # ✅ 正しい: デフォルト（元サイズ）
   - id: image-default
@@ -181,7 +179,7 @@ nodes:
     blink: 500
     animation:
       props:
-        x: [0, 1920]  # opacityはアニメートしない
+        x: [0, 1920] # opacityはアニメートしない
       duration: 3000
       iterations: Infinity
 
@@ -192,11 +190,11 @@ nodes:
     y: 540
     diameter: 10
     fill: "#00FF00"
-    blink: 500          # visibility切り替え
+    blink: 500 # visibility切り替え
     animation:
       keyframes:
         - x: 0
-          opacity: 0    # これが優先される（blinkは無効化される）
+          opacity: 0 # これが優先される（blinkは無効化される）
         - x: 1920
           opacity: 1
       duration: 3000
@@ -208,16 +206,16 @@ nodes:
   # ⚠️ 注意: 初期値は無視される
   - id: initial-vs-animation
     type: rect
-    x: 500            # この初期値は無視される
+    x: 500 # この初期値は無視される
     y: 500
     width: 50
     height: 50
     fill: "#FF00FF"
-    opacity: 1.0      # この初期値も無視される
+    opacity: 1.0 # この初期値も無視される
     animation:
       keyframes:
-        - x: 100      # これが初期値として使われる
-          opacity: 0  # これも初期値として使われる
+        - x: 100 # これが初期値として使われる
+          opacity: 0 # これも初期値として使われる
         - x: 1820
           opacity: 1
       duration: 5000
@@ -248,8 +246,8 @@ nodes:
     y: 100
     width: 200
     height: 100
-    fill: "#FF0000"      # 塗りつぶし
-    stroke: "#000000"    # 枠線
+    fill: "#FF0000" # 塗りつぶし
+    stroke: "#000000" # 枠線
     strokeWidth: 5
 
   # ✅ 正しい: fillのみ
@@ -355,7 +353,7 @@ nodes:
   - id: image-tiled
     type: image
     src: "./images/bg/texture.png"
-    repeat: repeat        # 縦横繰り返し
+    repeat: repeat # 縦横繰り返し
 
   # 図形をグリッド配置
   - id: grid-dots
@@ -366,10 +364,10 @@ nodes:
     fill: "#FF0000"
     repeat:
       mode: grid
-      countX: 20          # 横20個
-      countY: 15          # 縦15個
-      spacingX: 100       # 横間隔100px
-      spacingY: 72        # 縦間隔72px
+      countX: 20 # 横20個
+      countY: 15 # 縦15個
+      spacingX: 100 # 横間隔100px
+      spacingY: 72 # 縦間隔72px
 
   # 線をグリッド配置（クロスハッチ）
   - id: crosshatch-h

@@ -5,70 +5,70 @@ canvas:
   width: 1920
   height: 1080
 nodes:
-- id: bg-white
-  type: background
-  fill: '#FFFFFF'
-- id: rect-2
-  type: rect
-  x: 0
-  y: 0
-  width: "100%"
-  height: 200
-  fill: '#000000'
-  opacity: 0.3
-- id: rect-3
-  type: rect
-  x: 0
-  y: 880
-  width: "100%"
-  height: 200
-  fill: '#000000'
-  opacity: 0.3
-- id: rect-4
-  type: rect
-  x: 0
-  y: 0
-  width: 200
-  height: "100%"
-  fill: '#000000'
-  opacity: 0.3
-- id: rect-5
-  type: rect
-  x: 1720
-  y: 0
-  width: 200
-  height: "100%"
-  fill: '#000000'
-  opacity: 0.3
-- id: rect-6
-  type: rect
-  x: 0
-  y: 0
-  width: 300
-  height: 300
-  fill: '#000000'
-  opacity: 0.2
-- id: rect-7
-  type: rect
-  x: 1620
-  y: 0
-  width: 300
-  height: 300
-  fill: '#000000'
-  opacity: 0.2
-- id: rect-8
-  type: rect
-  x: 0
-  y: 780
-  width: 300
-  height: 300
-  fill: '#000000'
-  opacity: 0.2
-- id: rect-9
-  type: rect
-  x: 1620
-  y: 780
-  width: 300
-  height: 300
-  fill: '#000000'
-  opacity: 0.2
+  - id: bg-white
+    type: background
+    fill: "#FFFFFF"
+  - id: rect-2
+    type: rect
+    x: 0
+    y: 0
+    width: "100%"
+    height: 200
+    fill: "#000000"
+    opacity: 0.3
+  - id: rect-3
+    type: rect
+    x: 0
+    y: 880
+    width: "100%"
+    height: 200
+    fill: "#000000"
+    opacity: 0.3
+  - id: rect-4
+    type: rect
+    x: 0
+    y: 0
+    width: 200
+    height: "100%"
+    fill: "#000000"
+    opacity: 0.3
+  - id: rect-5
+    type: rect
+    x: 1720
+    y: 0
+    width: 200
+    height: "100%"
+    fill: "#000000"
+    opacity: 0.3
+  - id: rect-6
+    type: rect
+    x: 0
+    y: 0
+    width: 300
+    height: 300
+    fill: "#000000"
+    opacity: 0.2
+  - id: rect-7
+    type: rect
+    x: 1620
+    y: 0
+    width: 300
+    height: 300
+    fill: "#000000"
+    opacity: 0.2
+  - id: rect-8
+    type: rect
+    x: 0
+    y: 780
+    width: 300
+    height: 300
+    fill: "#000000"
+    opacity: 0.2
+  - id: rect-9
+    type: rect
+    x: 1620
+    y: 780
+    width: 300
+    height: 300
+    fill: "#000000"
+    opacity: 0.2

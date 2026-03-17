@@ -52,6 +52,7 @@ chmod +x build.sh
 ```
 
 このスクリプトは：
+
 1. プラットフォームを自動検出
 2. フロントエンドをビルド
 3. 適切なバックエンドビルドスクリプトを実行
@@ -70,12 +71,14 @@ cd ..
 #### 2. バックエンドをビルド
 
 **Windows:**
+
 ```bash
 cd backend
 build_windows.bat
 ```
 
 **Linux:**
+
 ```bash
 cd backend
 chmod +x build_linux.sh
@@ -83,6 +86,7 @@ chmod +x build_linux.sh
 ```
 
 **macOS:**
+
 ```bash
 cd backend
 chmod +x build_macos.sh
@@ -133,11 +137,13 @@ uv run python -m app.main --dev
 ### build_windows.bat
 
 **機能:**
+
 - PyInstallerで単一実行ファイルを作成
 - フロントエンド、パターン、プリセット、プレイリストを同梱
 - .exe → .scr に複製してスクリーンセーバー版を作成
 
 **オプション:**
+
 - アイコン: `frontend/public/favicon.ico`
 - ウィンドウなし起動（`--windowed`）
 - 単一ファイル（`--onefile`）
@@ -145,23 +151,27 @@ uv run python -m app.main --dev
 ### build_linux.sh
 
 **機能:**
+
 - PyInstallerで単一実行ファイルを作成
 - インストールスクリプト付きのtarballを作成
 - XScreenSaver統合サポート
 
 **インストーラーの機能:**
+
 - システム全体（`/usr/local/bin/`）またはユーザーのみ（`~/.local/bin/`）に対応
 - XScreenSaver自動設定（オプション）
 
 ### build_macos.sh
 
 **機能:**
+
 - PyInstallerで単一実行ファイルを作成
 - .appバンドルを作成
 - Info.plistとアイコンを設定
 - DMGインストーラーを作成（hdiutilが利用可能な場合）
 
 **.appバンドル構造:**
+
 ```
 XSG.app/
 ├── Contents/
@@ -180,6 +190,7 @@ XSG.app/
 ### アイコンの変更
 
 **Windows/macOS:**
+
 ```bash
 # frontend/public/favicon.ico を置き換えてから
 cd backend
@@ -198,6 +209,7 @@ Linuxではデスクトップエントリファイル（.desktop）でアイコ�
 ```
 
 例:
+
 ```bash
 --add-data "../my-custom-patterns:patterns" \
 ```
@@ -207,6 +219,7 @@ Linuxではデスクトップエントリファイル（.desktop）でアイコ�
 詳細は [PyInstaller Documentation](https://pyinstaller.org/) を参照。
 
 よく使うオプション:
+
 - `--onefile` - 単一実行ファイル
 - `--windowed` - コンソールウィンドウを非表示
 - `--name` - 実行ファイル名
@@ -221,6 +234,7 @@ Linuxではデスクトップエントリファイル（.desktop）でアイコ�
 **原因:** フロントエンドがビルドされていない
 
 **解決:**
+
 ```bash
 cd frontend
 npm install
@@ -232,6 +246,7 @@ npm run build
 **原因:** uvが正しくインストールされていない
 
 **解決:**
+
 ```bash
 pip install uv
 ```
@@ -243,15 +258,18 @@ pip install uv
 **解決:**
 
 **Windows:**
+
 - Visual Studio Build Toolsをインストール
 - .NET Framework 4.7.2以上をインストール
 
 **Linux:**
+
 ```bash
 sudo apt install build-essential python3-dev libwebkit2gtk-4.0-dev
 ```
 
 **macOS:**
+
 ```bash
 xcode-select --install
 ```
@@ -269,6 +287,7 @@ xcode-select --install
 **原因:** PyInstallerは全ての依存関係を同梱
 
 **対策:**
+
 - `--exclude-module` で不要なモジュールを除外
 - `--strip` でデバッグシンボルを削除（Linux/macOS）
 - UPXで圧縮（非推奨: ウイルス対策ソフトに検出される可能性）
@@ -278,6 +297,7 @@ xcode-select --install
 **原因:** PyInstallerの解析とパッケージング処理
 
 **対策:**
+
 - キャッシュを活用（2回目以降は高速）
 - SSDを使用
 - `--noconfirm` オプションを削除して対話モードにする

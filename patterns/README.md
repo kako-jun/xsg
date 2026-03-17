@@ -7,39 +7,47 @@ This directory contains example pattern files demonstrating the new XSG pattern 
 ### Basic Patterns
 
 **colorbar.yaml**
+
 - SMPTE color bar pattern (75% intensity)
 - Demonstrates: Basic rect nodes with precise color values
 
 **checker.yaml**
+
 - Checkerboard pattern
 - Demonstrates: Repeat grid with alternating colors
 
 **grayscale.yaml**
+
 - Grayscale gradient (16 steps, horizontal)
 - Demonstrates: Multiple rect nodes in sequence
 
 **convergence.yaml**
+
 - Convergence test pattern with grid and circles
 - Demonstrates: Repeat grid with lines and circles
 
 **crosshatch.yaml**
+
 - Crosshatch grid pattern
 - Demonstrates: Repeat grid with horizontal and vertical lines
 
 ### Advanced Patterns
 
 **multi-layer-example.yaml**
+
 - Complex multi-layer composition
 - Demonstrates: Rect, Circle, Ellipse, Line nodes
 - Uses calc() expressions for positioning
 - Shows opacity and stroke usage
 
 **animation-example.yaml**
+
 - Animated elements
 - Demonstrates: WAAPI animations (props syntax)
 - Shows blink property for simple on/off animation
 
 **image-example.yaml**
+
 - Image loading and display
 - Demonstrates: All 4 path formats (@/, relative, absolute, URL)
 - Shows image sizing options (fit, scale, width/height)
@@ -75,21 +83,25 @@ See [DESIGN_SUMMARY.md](../DESIGN_SUMMARY.md) for complete format documentation.
 ### Key Concepts
 
 **Coordinate Types:**
+
 - Absolute pixels: `100`
 - Percentage: `"50%"`
 - Calc expression: `"calc(50% + 10px)"`
 
 **Path Formats:**
+
 - Project-relative: `"@/images/test.png"`
 - Relative: `"../images/test.png"`
 - Absolute: `"/home/user/images/test.png"`
 - URL: `"https://example.com/test.png"`
 
 **Layer Rendering:**
+
 - Nodes are rendered in order (first = back, last = front)
 - Unlimited layers supported
 
 **Node Types:**
+
 - `background` - Pattern-based background (TSX patterns)
 - `rect` - Rectangle
 - `circle` - Circle (diameter-based)

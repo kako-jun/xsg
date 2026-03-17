@@ -139,7 +139,7 @@ pub fn run(pattern: String, display_spec: String, list_displays: bool) {
 
             // Build URL with pattern parameter
             let url = if cfg!(debug_assertions) {
-                format!("http://localhost:3001/?pattern={}", pattern)
+                format!("http://localhost:3000/?pattern={}", pattern)
             } else {
                 format!("tauri://localhost/?pattern={}", pattern)
             };

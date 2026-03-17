@@ -7,13 +7,14 @@
 ```yaml
 # ❌ 混在している（非直交）
 playlist:
-  mode: random  # 再生順序
+  mode: random # 再生順序
 items:
-  - generator: random  # データソース
+  - generator: random # データソース
     count: 10
 ```
 
 **問題:**
+
 - `playlist.mode: random` と `generator: random` の違いが分かりにくい
 - URLや画像を使う場合、ランダム生成は不要
 - 3つの概念が混在：データソース、再生順序、ループ
@@ -42,8 +43,8 @@ version: "1.0"
 
 # 再生設定（how + loop）
 playback:
-  order: sequence     # sequence | random | shuffle
-  loop: true          # true | false
+  order: sequence # sequence | random | shuffle
+  loop: true # true | false
   defaultDuration: 5000
 
 # データソース（what）
@@ -85,9 +86,9 @@ sources:
 
 # データソース（ランダム生成）
 generator:
-  enabled: true       # ランダム生成を有効化
-  count: 20           # 生成する数
-  duration: 3000      # デフォルト表示時間
+  enabled: true # ランダム生成を有効化
+  count: 20 # 生成する数
+  duration: 3000 # デフォルト表示時間
   constraints:
     presets:
       - checker
@@ -165,8 +166,8 @@ playback:
 ```yaml
 # URLからの画像をランダム再生
 playback:
-  order: random    # ランダム順序
-  loop: true       # ループ
+  order: random # ランダム順序
+  loop: true # ループ
 
 sources:
   - type: image
@@ -186,7 +187,7 @@ generator:
 ```yaml
 # 検査用：パターンを順番にループ
 playback:
-  order: sequence  # 順番通り
+  order: sequence # 順番通り
   loop: true
 
 sources:
@@ -231,7 +232,7 @@ generator:
 ```yaml
 # 会社ロゴ + ランダムパターン
 playback:
-  order: shuffle   # シャッフル
+  order: shuffle # シャッフル
   loop: true
 
 sources:
@@ -258,11 +259,11 @@ generator:
 
 ## 📊 直交性マトリックス
 
-| データソース | シーケンシャル | ランダム | シャッフル | ループ | ワンショット |
-|-------------|-------------|---------|----------|-------|------------|
-| **明示的なソースのみ** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **ランダム生成のみ** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **両方混在** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| データソース           | シーケンシャル | ランダム | シャッフル | ループ | ワンショット |
+| ---------------------- | -------------- | -------- | ---------- | ------ | ------------ |
+| **明示的なソースのみ** | ✅             | ✅       | ✅         | ✅     | ✅           |
+| **ランダム生成のみ**   | ✅             | ✅       | ✅         | ✅     | ✅           |
+| **両方混在**           | ✅             | ✅       | ✅         | ✅     | ✅           |
 
 **全ての組み合わせが直交しています。**
 
@@ -393,15 +394,15 @@ version: "1.0"
 
 # 再生設定（独立した軸）
 playback:
-  order: sequence | random | shuffle  # 再生順序
-  loop: boolean                       # ループ
-  defaultDuration: number             # デフォルト表示時間（ms）
+  order: sequence | random | shuffle # 再生順序
+  loop: boolean # ループ
+  defaultDuration: number # デフォルト表示時間（ms）
 
 # データソース（独立した軸）
 sources:
   - type: pattern | url | image | inline
     # type固有のプロパティ
-    duration: number  # Optional（上書き）
+    duration: number # Optional（上書き）
 
 # ランダム生成（独立した軸）
 generator:
@@ -420,23 +421,25 @@ generator:
 
 ## 🎯 直交性スコア
 
-| 機能 | 改善前 | 改善後 |
-|------|--------|--------|
-| データソースと再生順序 | ❌ 混在 | ✅ 分離 |
-| ランダム生成と再生順序 | ❌ 混在 | ✅ 分離 |
-| ループと再生順序 | ✅ 分離 | ✅ 分離 |
-| **直交性スコア** | **60/100** | **100/100** ✅ |
+| 機能                   | 改善前     | 改善後         |
+| ---------------------- | ---------- | -------------- |
+| データソースと再生順序 | ❌ 混在    | ✅ 分離        |
+| ランダム生成と再生順序 | ❌ 混在    | ✅ 分離        |
+| ループと再生順序       | ✅ 分離    | ✅ 分離        |
+| **直交性スコア**       | **60/100** | **100/100** ✅ |
 
 ---
 
 ## ✅ まとめ
 
 **改善点:**
+
 1. ✅ **データソース** - `sources` と `generator` に分離
 2. ✅ **再生順序** - `playback.order` で統一
 3. ✅ **ループ** - `playback.loop` で統一
 
 **直交性:**
+
 - ✅ データソースと再生順序は独立
 - ✅ ランダム生成と再生順序は独立
 - ✅ ループと再生順序は独立

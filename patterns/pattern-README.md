@@ -18,21 +18,24 @@
 
 ```tsx
 // patterns/my-pattern.tsx
-import type { PatternProps, PatternMetadata } from '../frontend/src/lib/patternTypes';
+import type {
+  PatternProps,
+  PatternMetadata,
+} from "../frontend/src/lib/patternTypes";
 
 // メタデータ（オプションだが推奨）
 export const metadata: PatternMetadata = {
-  name: 'My Pattern',
-  description: 'Description of my pattern',
-  category: 'custom',
-  tags: ['tag1', 'tag2'],
+  name: "My Pattern",
+  description: "Description of my pattern",
+  category: "custom",
+  tags: ["tag1", "tag2"],
   params: {
     myParam: {
-      type: 'number',
+      type: "number",
       default: 100,
       min: 0,
       max: 500,
-      description: 'Parameter description',
+      description: "Parameter description",
     },
   },
 };
@@ -42,7 +45,7 @@ export default function MyPattern({ params = {} }: PatternProps) {
   const myParam = params.myParam || 100;
 
   return (
-    <div className="w-full h-full" style={{ backgroundColor: '#000' }}>
+    <div className="w-full h-full" style={{ backgroundColor: "#000" }}>
       {/* Your pattern here */}
     </div>
   );
@@ -139,10 +142,11 @@ nodes:
   - id: bg-texture
     type: image
     src: "./texture.png"
-    repeat: repeat  # CSS/Canvas API style
+    repeat: repeat # CSS/Canvas API style
 ```
 
 **Repeat Modes:**
+
 - `repeat`, `repeat-x`, `repeat-y`, `no-repeat` (画像向け、CSS/Canvas API準拠)
 - `{ mode: "grid", countX, countY, spacingX, spacingY }` (固定個数グリッド配置)
 - `{ mode: "tile", tileWidth, tileHeight }` (タイル敷き詰め)
@@ -160,7 +164,7 @@ nodes:
   # Background pattern
   - id: bg
     type: background
-    pattern: my-pattern  # ファイル名（拡張子なし）
+    pattern: my-pattern # ファイル名（拡張子なし）
     params:
       myParam: 200
 
@@ -232,20 +236,23 @@ nodes:
 
 ```tsx
 // patterns/gradient.tsx
-import type { PatternProps, PatternMetadata } from '../frontend/src/lib/patternTypes';
+import type {
+  PatternProps,
+  PatternMetadata,
+} from "../frontend/src/lib/patternTypes";
 
 export const metadata: PatternMetadata = {
-  name: 'Linear Gradient',
-  category: 'custom',
+  name: "Linear Gradient",
+  category: "custom",
   params: {
-    color1: { type: 'color', default: '#FF0000' },
-    color2: { type: 'color', default: '#0000FF' },
-    angle: { type: 'number', default: 0, min: 0, max: 360 },
+    color1: { type: "color", default: "#FF0000" },
+    color2: { type: "color", default: "#0000FF" },
+    angle: { type: "number", default: 0, min: 0, max: 360 },
   },
 };
 
 export default function Gradient({ params = {} }: PatternProps) {
-  const { color1 = '#FF0000', color2 = '#0000FF', angle = 0 } = params;
+  const { color1 = "#FF0000", color2 = "#0000FF", angle = 0 } = params;
 
   return (
     <div
@@ -262,35 +269,38 @@ export default function Gradient({ params = {} }: PatternProps) {
 
 ```tsx
 // patterns/circle-grid.tsx
-import { useEffect, useRef } from 'react';
-import type { PatternProps, PatternMetadata } from '../frontend/src/lib/patternTypes';
+import { useEffect, useRef } from "react";
+import type {
+  PatternProps,
+  PatternMetadata,
+} from "../frontend/src/lib/patternTypes";
 
 export const metadata: PatternMetadata = {
-  name: 'Circle Grid',
-  category: 'custom',
+  name: "Circle Grid",
+  category: "custom",
   params: {
-    spacing: { type: 'number', default: 100, min: 10, max: 500 },
-    radius: { type: 'number', default: 30, min: 1, max: 200 },
-    color: { type: 'color', default: '#FFFFFF' },
+    spacing: { type: "number", default: 100, min: 10, max: 500 },
+    radius: { type: "number", default: 30, min: 1, max: 200 },
+    color: { type: "color", default: "#FFFFFF" },
   },
 };
 
 export default function CircleGrid({ params = {} }: PatternProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { spacing = 100, radius = 30, color = '#FFFFFF' } = params;
+  const { spacing = 100, radius = 30, color = "#FFFFFF" } = params;
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
 
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.fillStyle = color;
@@ -304,8 +314,8 @@ export default function CircleGrid({ params = {} }: PatternProps) {
     };
 
     resize();
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
   }, [spacing, radius, color]);
 
   return <canvas ref={canvasRef} className="w-full h-full" />;
@@ -345,9 +355,9 @@ XSGは起動時に `/patterns/` ディレクトリをスキャンし、すべて
 特定のパターンのみをロードすることも可能です：
 
 ```typescript
-import { loadPattern } from '@/lib/patternRegistry';
+import { loadPattern } from "@/lib/patternRegistry";
 
-const module = await loadPattern('my-pattern');
+const module = await loadPattern("my-pattern");
 ```
 
 ## デバッグ
@@ -355,11 +365,11 @@ const module = await loadPattern('my-pattern');
 パターンが正しく登録されているか確認：
 
 ```typescript
-import { getPatternRegistry } from '@/lib/patternRegistry';
+import { getPatternRegistry } from "@/lib/patternRegistry";
 
 const registry = getPatternRegistry();
-console.log('All patterns:', registry.getAll());
-console.log('Metadata:', registry.getMetadata('colorbar'));
+console.log("All patterns:", registry.getAll());
+console.log("Metadata:", registry.getMetadata("colorbar"));
 ```
 
 ## ベストプラクティス

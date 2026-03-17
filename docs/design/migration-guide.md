@@ -34,42 +34,42 @@ uv run python migrate.py --directory ../legacy_patterns/ --dry-run
 
 ### Background変換
 
-| 旧形式 | 新形式 |
-|--------|--------|
-| `type: "Solid"` | `preset: "solid"` |
-| `type: "Crosshatch"` | `preset: "crosshatch"` |
-| `type: "Mesh"` | `preset: "checker"` |
-| `type: "Grayscale"` | `preset: "grayscale"` |
-| `type: "Image"` | `preset: "image-background"` |
+| 旧形式                    | 新形式                        |
+| ------------------------- | ----------------------------- |
+| `type: "Solid"`           | `preset: "solid"`             |
+| `type: "Crosshatch"`      | `preset: "crosshatch"`        |
+| `type: "Mesh"`            | `preset: "checker"`           |
+| `type: "Grayscale"`       | `preset: "grayscale"`         |
+| `type: "Image"`           | `preset: "image-background"`  |
 | `type: "RepeatCropImage"` | `preset: "repeat-crop-image"` |
 
 ### Foreground変換
 
-| 旧形式 | 新形式 |
-|--------|--------|
-| `type: "Dot"` | `type: "circle"` (diameter: 2) |
-| `type: "Line"` | `type: "directedLine"` または `type: "line"` |
-| `type: "Window"` | `type: "rect"` |
-| `type: "Image"` | `type: "image"` |
-| `type: "Crosshatch"` | `type: "preset"` (preset: "crosshatch") |
+| 旧形式               | 新形式                                       |
+| -------------------- | -------------------------------------------- |
+| `type: "Dot"`        | `type: "circle"` (diameter: 2)               |
+| `type: "Line"`       | `type: "directedLine"` または `type: "line"` |
+| `type: "Window"`     | `type: "rect"`                               |
+| `type: "Image"`      | `type: "image"`                              |
+| `type: "Crosshatch"` | `type: "preset"` (preset: "crosshatch")      |
 
 ### プロパティ変換
 
-| 旧プロパティ | 新プロパティ |
-|-------------|------------|
+| 旧プロパティ                   | 新プロパティ      |
+| ------------------------------ | ----------------- |
 | `rgb_string: "RGB(255, 0, 0)"` | `fill: "#FF0000"` |
-| `alpha: 0.5` | `opacity: 0.5` |
-| `rotate: 45` | `rotate: 45` |
-| `blur_radius: 5` | `blur: 5` |
-| `blink_interval: 1000` | `blink: 1000` |
+| `alpha: 0.5`                   | `opacity: 0.5`    |
+| `rotate: 45`                   | `rotate: 45`      |
+| `blur_radius: 5`               | `blur: 5`         |
+| `blink_interval: 1000`         | `blink: 1000`     |
 
 ### 座標変換
 
-| 旧形式 | 新形式 |
-|--------|--------|
-| `100` | `100` (絶対値) |
-| `"50p"` | `"50%"` (パーセント) |
-| `"50pplus10"` | `"calc(50% + 10px)"` |
+| 旧形式         | 新形式               |
+| -------------- | -------------------- |
+| `100`          | `100` (絶対値)       |
+| `"50p"`        | `"50%"` (パーセント) |
+| `"50pplus10"`  | `"calc(50% + 10px)"` |
 | `"50pminus10"` | `"calc(50% - 10px)"` |
 
 ## 変換例
@@ -77,6 +77,7 @@ uv run python migrate.py --directory ../legacy_patterns/ --dry-run
 ### 例1: Solid Background + Dot
 
 **旧形式（input.json）:**
+
 ```json
 {
   "background": {
@@ -97,6 +98,7 @@ uv run python migrate.py --directory ../legacy_patterns/ --dry-run
 ```
 
 **新形式（output.yaml）:**
+
 ```yaml
 canvas:
   width: 1920
@@ -108,20 +110,21 @@ nodes:
     preset: solid
     opacity: 1.0
     params:
-      color: '#000000'
+      color: "#000000"
 
   - id: fg-dot-0
     type: circle
     x: 50%
     y: 50%
     diameter: 2
-    fill: '#FF0000'
+    fill: "#FF0000"
     opacity: 1.0
 ```
 
 ### 例2: Grayscale + Line
 
 **旧形式（input.json）:**
+
 ```json
 {
   "background": {
@@ -145,6 +148,7 @@ nodes:
 ```
 
 **新形式（output.yaml）:**
+
 ```yaml
 canvas:
   width: 1920
@@ -165,7 +169,7 @@ nodes:
     y: 50%
     direction: horizontal
     length: 1920
-    stroke: '#00FF00'
+    stroke: "#00FF00"
     strokeWidth: 2
 ```
 
@@ -222,6 +226,7 @@ uv run python migrate.py --directory legacy/ --dry-run
 旧形式の `window_speed` は、新形式のアニメーションに変換されません。
 
 手動で追加：
+
 ```yaml
 - id: moving-window
   type: rect
@@ -229,7 +234,7 @@ uv run python migrate.py --directory legacy/ --dry-run
   y: 0
   width: 100
   height: 100
-  fill: '#FFFFFF'
+  fill: "#FFFFFF"
   animation:
     props:
       x: [0, 1820]

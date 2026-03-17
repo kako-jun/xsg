@@ -400,14 +400,15 @@ uv run python -m app.main --file \
 ```
 
 **実装:**
+
 ```javascript
 // pointer-eventsで操作無効化
-document.body.style.pointerEvents = 'none';
-document.body.style.userSelect = 'none';
+document.body.style.pointerEvents = "none";
+document.body.style.userSelect = "none";
 
 // さらに厳密に（すべてのイベントを無効化）
-document.addEventListener('click', (e) => e.preventDefault(), true);
-document.addEventListener('contextmenu', (e) => e.preventDefault(), true);
+document.addEventListener("click", (e) => e.preventDefault(), true);
+document.addEventListener("contextmenu", (e) => e.preventDefault(), true);
 ```
 
 ### 2. サンドボックス
@@ -430,8 +431,8 @@ allowedDomains:
   - "127.0.0.1"
 
 items:
-  - url: "https://company.com/dashboard"  # ✅ OK
-  - url: "https://evil.com"                # ❌ ブロック
+  - url: "https://company.com/dashboard" # ✅ OK
+  - url: "https://evil.com" # ❌ ブロック
 ```
 
 ---
@@ -442,23 +443,23 @@ items:
 # XSG Pattern/Playlist Format v1.0
 
 # グローバル設定
-proxy: string               # HTTPプロキシ（オプション）
-allowedDomains: string[]    # 許可するドメイン（オプション）
+proxy: string # HTTPプロキシ（オプション）
+allowedDomains: string[] # 許可するドメイン（オプション）
 
 # プレイリストアイテム
 items:
   - # Option 1: パターンファイル（URL可）
-    pattern: string         # ローカルパスまたはURL
+    pattern: string # ローカルパスまたはURL
     duration: number
 
   - # Option 2: Webページ
-    url: string             # HTTP/HTTPS/file://
-    readonly: boolean       # 操作無効化（デフォルト: true）
+    url: string # HTTP/HTTPS/file://
+    readonly: boolean # 操作無効化（デフォルト: true）
     duration: number
 
   - # Option 3: 画像（URL可）
     image:
-      src: string           # ローカルパスまたはURL
+      src: string # ローカルパスまたはURL
       fit: string
     duration: number
 ```
@@ -468,11 +469,13 @@ items:
 ## 🚀 実装の優先順位
 
 ### v1.0（基本）
+
 1. ✅ **URL直接レンダリング** - `--url` 引数
 2. ✅ **readonlyモード** - 操作無効化
 3. ✅ **リモートファイル読み込み** - YAML URL対応
 
 ### v1.1（プロキシ）
+
 4. ✅ **プロキシ対応** - 環境変数 + 引数
 5. ✅ **プレイリストでWeb表示** - `url` アイテム
 6. ✅ **ホワイトリスト** - ドメイン制限
@@ -482,18 +485,21 @@ items:
 ## ✅ まとめ
 
 **新機能:**
+
 1. ✅ **URL直接レンダリング** - 任意のWebページを全画面表示
 2. ✅ **readonlyモード** - 操作を完全に無効化
 3. ✅ **リモートYAML** - YAMLファイル自体をURLで指定
 4. ✅ **プロキシ対応** - 企業ネットワーク対応
 
 **用途:**
+
 - 🌐 **Webダッシュボード表示** - 社内ダッシュボードを全画面表示
 - 📺 **デジタルサイネージ** - WebページとXSGパターンを混在
 - 🖼️ **スライドショー** - URL画像を自動切り替え
 - 🔐 **情報端末** - readonly + ホワイトリストで安全に表示
 
 **PyWebViewの本質を活かした設計:**
+
 - XSGは単なるテストパターン発生器ではなく、**汎用の全画面Webレンダラー**
 - プロキシ対応で企業環境でも使える
 - YAMLをURLで指定できるので、設定ファイルを一元管理可能

@@ -42,6 +42,7 @@
 ### 完了項目
 
 1. ✅ **Rust依存関係追加**
+
    ```toml
    serde_yaml = "0.9"
    anyhow = "1.0"
@@ -72,6 +73,7 @@
 ### 技術的なハイライト
 
 **Rustパターンローダー:**
+
 ```rust
 pub struct PatternInfo {
     pub id: String,
@@ -87,6 +89,7 @@ pub fn load_patterns() -> Result<Vec<PatternInfo>> {
 ```
 
 **Tauri Command:**
+
 ```rust
 #[tauri::command]
 fn get_patterns() -> Result<PatternsResponse, String> {
@@ -98,6 +101,7 @@ fn get_patterns() -> Result<PatternsResponse, String> {
 ```
 
 **フロントエンド:**
+
 ```typescript
 import { invoke } from "@tauri-apps/api/core";
 
@@ -133,6 +137,7 @@ setPatterns(data.patterns || []);
 ### 技術的なハイライト
 
 **Rustパターンローダー:**
+
 ```rust
 pub fn load_pattern_file(pattern_id: &str) -> Result<Value> {
     let patterns_dir = get_patterns_dir()?;
@@ -144,12 +149,13 @@ pub fn load_pattern_file(pattern_id: &str) -> Result<Value> {
 ```
 
 **フロントエンド:**
+
 ```typescript
 const { invoke } = await import("@tauri-apps/api/core");
-const data = await invoke("get_pattern", {
+const data = (await invoke("get_pattern", {
   patternId,
   params,
-}) as XSGPattern;
+})) as XSGPattern;
 ```
 
 ### 今後の実装（Phase 3）
@@ -187,6 +193,7 @@ const data = await invoke("get_pattern", {
 ### 技術的なハイライト
 
 **pattern_expander.rs の主要機能:**
+
 ```rust
 pub struct PatternExpander {
     patterns_dir: PathBuf,
@@ -215,6 +222,7 @@ impl PatternExpander {
 ```
 
 **pattern_loader.rs 統合:**
+
 ```rust
 pub fn load_pattern_with_params(
     pattern_id: &str,
@@ -277,6 +285,7 @@ pub fn load_pattern_with_params(
 ### 技術的なハイライト
 
 **ディスプレイ選択ロジック:**
+
 ```rust
 pub fn select_displays(display_spec: &str, all_displays: &[DisplayInfo]) -> Vec<DisplayInfo> {
     // "left", "right", "top", "bottom", "left-2", "primary", "all" をサポート
@@ -286,6 +295,7 @@ pub fn select_displays(display_spec: &str, all_displays: &[DisplayInfo]) -> Vec<
 ```
 
 **ウィンドウ作成:**
+
 ```rust
 WebviewWindowBuilder::new(app, &window_label, WebviewUrl::External(url.parse().unwrap()))
     .position(display.x as f64, display.y as f64)
@@ -307,11 +317,11 @@ WebviewWindowBuilder::new(app, &window_label, WebviewUrl::External(url.parse().u
 
 ### パフォーマンス（予測）
 
-| 指標 | Python実装 | Tauri実装（現在） | 改善率 |
-|------|-----------|-----------------|--------|
-| 起動時間 | 3-5秒 | 0.5-1秒（予測） | 75%高速化 |
-| メモリ | 150-200MB | 80-100MB（予測） | 45%削減 |
-| パターン読み込み | fetch API | IPC（高速） | 即時 |
+| 指標             | Python実装 | Tauri実装（現在） | 改善率    |
+| ---------------- | ---------- | ----------------- | --------- |
+| 起動時間         | 3-5秒      | 0.5-1秒（予測）   | 75%高速化 |
+| メモリ           | 150-200MB  | 80-100MB（予測）  | 45%削減   |
+| パターン読み込み | fetch API  | IPC（高速）       | 即時      |
 
 ### 実装状況
 
@@ -397,32 +407,32 @@ Phase 6 (パッケージング)   ░░░░░░░░░░░░░░░�
 **総ファイル数**: 13ファイル
 **総行数**: 約4,000行
 
-| ファイル | 行数 | 主な機能 | 移植状況 |
-|---------|------|---------|---------|
-| `main.py` | 870 | FastAPIエンドポイント、マルチディスプレイ、シングルトン制御 | ❌ 未着手 |
-| `calibration.py` | 823 | ガンマ制御、ナイトモード無効化、HDR/GPU検出 | ❌ 未着手 |
-| **`pattern_expander.py`** | **410** | **extends解決、パラメータ展開** | **❌ 最重要！** |
-| `pattern_generator.py` | 367 | グラデーション自動生成 | ❌ 未着手 |
-| `playlist_runner.py` | 257 | プレイリスト実行 | ❌ 未着手 |
-| `pattern_loader.py` | 225 | YAMLロード、パス解決 | ⚠️ 部分実装（extendsなし） |
-| `proxy_support.py` | 140 | プロキシ設定管理 | ❌ 未着手 |
-| `screensaver.py` | 138 | スクリーンセーバーモード | ❌ 未着手 |
-| `path_resolver.py` | 130 | パス解決（相対・絶対・URL） | ❌ 未着手 |
-| `playlist_models.py` | 97 | Pydanticモデル | ❌ 未着手 |
-| `models.py` | 88 | Pydanticモデル | ⚠️ 部分実装（Rust structで代替） |
-| `migration.py` | 61 | 旧形式からの移行 | N/A |
-| `__init__.py` | 0 | - | N/A |
+| ファイル                  | 行数    | 主な機能                                                    | 移植状況                         |
+| ------------------------- | ------- | ----------------------------------------------------------- | -------------------------------- |
+| `main.py`                 | 870     | FastAPIエンドポイント、マルチディスプレイ、シングルトン制御 | ❌ 未着手                        |
+| `calibration.py`          | 823     | ガンマ制御、ナイトモード無効化、HDR/GPU検出                 | ❌ 未着手                        |
+| **`pattern_expander.py`** | **410** | **extends解決、パラメータ展開**                             | **❌ 最重要！**                  |
+| `pattern_generator.py`    | 367     | グラデーション自動生成                                      | ❌ 未着手                        |
+| `playlist_runner.py`      | 257     | プレイリスト実行                                            | ❌ 未着手                        |
+| `pattern_loader.py`       | 225     | YAMLロード、パス解決                                        | ⚠️ 部分実装（extendsなし）       |
+| `proxy_support.py`        | 140     | プロキシ設定管理                                            | ❌ 未着手                        |
+| `screensaver.py`          | 138     | スクリーンセーバーモード                                    | ❌ 未着手                        |
+| `path_resolver.py`        | 130     | パス解決（相対・絶対・URL）                                 | ❌ 未着手                        |
+| `playlist_models.py`      | 97      | Pydanticモデル                                              | ❌ 未着手                        |
+| `models.py`               | 88      | Pydanticモデル                                              | ⚠️ 部分実装（Rust structで代替） |
+| `migration.py`            | 61      | 旧形式からの移行                                            | N/A                              |
+| `__init__.py`             | 0       | -                                                           | N/A                              |
 
 ### Tauri実装の現状
 
 **総ファイル数**: 3ファイル
 **総行数**: 約300行
 
-| ファイル | 行数 | 実装内容 | カバー率 |
-|---------|------|---------|---------|
-| `lib.rs` | 73 | Tauri Command登録 | 基本のみ |
-| `patterns.rs` | 141 | パターンメタデータスキャン | 完了 |
-| `pattern_loader.rs` | 86 | YAMLロード（**extendsとパラメータ展開はTODO**） | 25% |
+| ファイル            | 行数 | 実装内容                                        | カバー率 |
+| ------------------- | ---- | ----------------------------------------------- | -------- |
+| `lib.rs`            | 73   | Tauri Command登録                               | 基本のみ |
+| `patterns.rs`       | 141  | パターンメタデータスキャン                      | 完了     |
+| `pattern_loader.rs` | 86   | YAMLロード（**extendsとパラメータ展開はTODO**） | 25%      |
 
 ### 🚨 重大な移植ギャップ（優先度順）
 
@@ -440,12 +450,14 @@ Phase 6 (パッケージング)   ░░░░░░░░░░░░░░░�
   - ネストしたパラメータのマージ
 
 **現状**: Rustの `pattern_loader.rs` に以下のTODOコメントのみ
+
 ```rust
 // TODO: Phase 3 - Implement extends resolution
 // TODO: Phase 3 - Implement parameter expansion
 ```
 
 **推奨アクション**:
+
 1. `pattern_expander.py` のロジックをRustに移植（2-3日）
 2. extendsチェーン解決の実装
 3. パラメータ展開エンジンの実装
@@ -454,22 +466,26 @@ Phase 6 (パッケージング)   ░░░░░░░░░░░░░░░�
 #### P1（High）: マルチディスプレイ対応
 
 **未実装機能**:
+
 - ディスプレイ一覧取得（`--list-displays`）
 - 位置ベース指定（`left`, `right`, `top`, `bottom`）
 - 複数ディスプレイへの同時ウィンドウ作成
 
 **Pythonでの実装**:
+
 - `screeninfo` ライブラリでディスプレイ情報取得
 - `get_display_info()`, `group_displays_by_position()`, `select_displays()`
 - `create_windows()` で複数PyWebViewウィンドウ作成
 
 **Tauri での実装方法**:
+
 - Tauri 2.x Monitor API使用
 - `tauri::window::WindowBuilder` で各ディスプレイにウィンドウ作成
 
 #### P1（High）: ディスプレイキャリブレーション
 
 **未実装機能**:
+
 - ガンマ補正制御（Windows: `SetDeviceGammaRamp`, Linux: `xrandr`）
 - ナイトモード検出・無効化
 - HDR検出（Windows）
@@ -478,6 +494,7 @@ Phase 6 (パッケージング)   ░░░░░░░░░░░░░░░�
 **Pythonでの実装**: `calibration.py` (823行)
 
 **Tauri での実装方法**:
+
 - Windows: `windows-rs` クレート + Win32 API
 - Linux: `std::process::Command` で `xrandr` 実行
 - macOS: CoreGraphics FFI
@@ -515,12 +532,14 @@ Phase 6 (パッケージング)   ░░░░░░░░░░░░░░░�
 **Phase 3完了後の実装率**: **約50%**
 
 **完了した機能**:
+
 - ✅ パターンスキャン・基本ロード
 - ✅ **パターン展開機能**（extends + parameter expansion）
 - ✅ 型強制・パラメータマージ
 - ✅ **マルチディスプレイ対応**（複数ウィンドウ・位置ベース指定）
 
 **未実装の機能**:
+
 - ❌ キャリブレーション（ガンマ補正、ナイトモード制御）
 - ❌ プレイリスト機能
 - ❌ その他の機能（プロキシ、スクリーンセーバー等）
@@ -636,6 +655,7 @@ Phase 6 (パッケージング)   ░░░░░░░░░░░░░░░�
 ### 技術的なハイライト
 
 **Windows ガンマ制御（winapi）:**
+
 ```rust
 use winapi::um::wingdi::{GetDeviceGammaRamp, SetDeviceGammaRamp};
 use winapi::um::winuser::{GetDC, ReleaseDC};
@@ -658,6 +678,7 @@ unsafe {
 ```
 
 **Linux ガンマ制御（xrandr）:**
+
 ```rust
 let gamma_str = format!("{:.2}:{:.2}:{:.2}", gamma, gamma, gamma);
 Command::new("xrandr")
@@ -666,6 +687,7 @@ Command::new("xrandr")
 ```
 
 **グローバル状態管理（Mutex）:**
+
 ```rust
 static SAVED_GAMMA: Mutex<Option<SavedGamma>> = Mutex::new(None);
 
@@ -679,6 +701,7 @@ enum SavedGamma {
 ### 達成内容
 
 **Pythonバックエンド（calibration.py）の完全移植:**
+
 - ✅ Phase 1機能（検出）: 100%完了
 - ✅ Phase 2機能（制御）: 80%完了（Windows, Linux対応）
 - ⚠️ macOS: 検出・制御は未実装（CoreGraphics API必要）
@@ -699,12 +722,12 @@ enum SavedGamma {
 
 ### パフォーマンス（予測）
 
-| 指標 | Python実装 | Tauri実装（現在） | 改善率 |
-|------|-----------|-----------------|--------|
-| 起動時間 | 3-5秒 | 0.5-1秒（予測） | 75%高速化 |
-| メモリ | 150-200MB | 80-100MB（予測） | 45%削減 |
-| パターン読み込み | fetch API | IPC（高速） | 即時 |
-| ビルドサイズ | 50-100MB | 10-20MB（予測） | 70%削減 |
+| 指標             | Python実装 | Tauri実装（現在） | 改善率    |
+| ---------------- | ---------- | ----------------- | --------- |
+| 起動時間         | 3-5秒      | 0.5-1秒（予測）   | 75%高速化 |
+| メモリ           | 150-200MB  | 80-100MB（予測）  | 45%削減   |
+| パターン読み込み | fetch API  | IPC（高速）       | 即時      |
+| ビルドサイズ     | 50-100MB   | 10-20MB（予測）   | 70%削減   |
 
 ### 実装状況
 
@@ -790,6 +813,7 @@ Phase 6 (パッケージング)   ░░░░░░░░░░░░░░░�
 ### 技術的なハイライト
 
 **シングルトン制御（Tauri plugin）:**
+
 ```rust
 .plugin(tauri_plugin_single_instance::init(move |app, args, _cwd| {
     log::info!("Another instance attempted to start with args: {:?}", args);
@@ -802,6 +826,7 @@ Phase 6 (パッケージング)   ░░░░░░░░░░░░░░░�
 ```
 
 **プレイリストモデル（Rust serde）:**
+
 ```rust
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -818,6 +843,7 @@ pub enum PlaylistSource {
 ```
 
 **PlaylistRunner（playback order）:**
+
 ```rust
 match self.playlist.playback.order {
     Order::Sequence => { /* sequential playback */ }
@@ -829,6 +855,7 @@ match self.playlist.playback.order {
 ### 達成内容
 
 **Pythonバックエンドの主要機能移植:**
+
 - ✅ シングルトン制御: 100%完了
 - ✅ プレイリスト基本機能: 80%完了
   - ✅ モデル定義
@@ -841,12 +868,12 @@ match self.playlist.playback.order {
 
 ### パフォーマンス
 
-| 指標 | Python実装 | Tauri実装（現在） | 改善率 |
-|------|-----------|-----------------|--------|
-| 起動時間 | 3-5秒 | **0.5秒未満** | **90%高速化** |
-| メモリ | 150-200MB | **60-80MB** | **60%削減** |
-| バイナリサイズ | 50-100MB | **12MB** (MSI) | **85%削減** |
-| ビルド時間 | N/A (PyInstaller) | 3分19秒 | - |
+| 指標           | Python実装        | Tauri実装（現在） | 改善率        |
+| -------------- | ----------------- | ----------------- | ------------- |
+| 起動時間       | 3-5秒             | **0.5秒未満**     | **90%高速化** |
+| メモリ         | 150-200MB         | **60-80MB**       | **60%削減**   |
+| バイナリサイズ | 50-100MB          | **12MB** (MSI)    | **85%削減**   |
+| ビルド時間     | N/A (PyInstaller) | 3分19秒           | -             |
 
 ### 実装状況
 
@@ -868,6 +895,7 @@ Phase 6 (パッケージング)   ███████████████�
 ## 🎯 完成した機能一覧
 
 ### コア機能
+
 - ✅ パターンスキャン・ロード
 - ✅ パターン展開（extends + parameter expansion）
 - ✅ YAMLパターンシステム
@@ -875,6 +903,7 @@ Phase 6 (パッケージング)   ███████████████�
 - ✅ フルスクリーン・フレームレス表示
 
 ### キャリブレーション機能
+
 - ✅ ガンマ検出・制御（Windows/Linux）
 - ✅ ナイトモード検出・無効化
 - ✅ HDR検出（Windows）
@@ -882,11 +911,13 @@ Phase 6 (パッケージング)   ███████████████�
 - ✅ CalibrationSettings UI（Cキーで開閉）
 
 ### その他機能
+
 - ✅ シングルトン制御（多重起動防止）
 - ✅ プレイリスト基本機能
 - ✅ Windows MSIインストーラー
 
 ### パッケージング
+
 - ✅ Tauriビルド完了
 - ✅ Windows MSI: `XSG_1.0.0_x64_en-US.msi`
 - ✅ 実行ファイル: `xsg.exe`
@@ -896,6 +927,7 @@ Phase 6 (パッケージング)   ███████████████�
 ## ⚠️ 未実装・TODO
 
 ### 優先度: 中
+
 1. **パターンジェネレーター**
    - ランダムパターン生成（pattern_generator.py移植）
    - プレイリストgenerator機能の完成
@@ -908,6 +940,7 @@ Phase 6 (パッケージング)   ███████████████�
    - シングルトンインスタンスへのパターン切り替え送信
 
 ### 優先度: 低
+
 4. **Linux/macOS パッケージング**
    - Linux: AppImage/deb
    - macOS: dmg
@@ -926,30 +959,33 @@ Phase 6 (パッケージング)   ███████████████�
 
 ### 移行前後の比較
 
-| 項目 | Python + PyWebView | Tauri (Rust) | 達成度 |
-|------|-------------------|--------------|--------|
-| パターンシステム | ✅ | ✅ | 100% |
-| マルチディスプレイ | ✅ | ✅ | 100% |
-| キャリブレーション | ✅ | ✅ 80% (macOS TODO) | 80% |
-| プレイリスト | ✅ | ✅ 80% (generator TODO) | 80% |
-| シングルトン制御 | ✅ | ✅ | 100% |
-| パッケージング | ✅ PyInstaller | ✅ Tauri MSI | 100% |
-| **総合** | - | - | **95%** |
+| 項目               | Python + PyWebView | Tauri (Rust)            | 達成度  |
+| ------------------ | ------------------ | ----------------------- | ------- |
+| パターンシステム   | ✅                 | ✅                      | 100%    |
+| マルチディスプレイ | ✅                 | ✅                      | 100%    |
+| キャリブレーション | ✅                 | ✅ 80% (macOS TODO)     | 80%     |
+| プレイリスト       | ✅                 | ✅ 80% (generator TODO) | 80%     |
+| シングルトン制御   | ✅                 | ✅                      | 100%    |
+| パッケージング     | ✅ PyInstaller     | ✅ Tauri MSI            | 100%    |
+| **総合**           | -                  | -                       | **95%** |
 
 ### 技術的な成果
 
 **Rustコードベース:**
+
 - モジュール数: 11個
 - 総行数: 約2,500行
 - Tauriコマンド数: 8個
 - クレート依存数: 15個
 
 **パフォーマンス改善:**
+
 - 起動時間: 90%高速化
 - メモリ使用量: 60%削減
 - バイナリサイズ: 85%削減
 
 **クロスプラットフォーム対応:**
+
 - Windows: 完全対応
 - Linux: 完全対応（キャリブレーション含む）
 - macOS: 基本機能完全対応（キャリブレーションのみ一部TODO）
@@ -959,6 +995,7 @@ Phase 6 (パッケージング)   ███████████████�
 ## 📚 学んだこと（最終）
 
 ### Tauriの優れた点
+
 1. **パフォーマンス**: 起動時間・メモリ使用量が大幅改善
 2. **型安全性**: Rust + TypeScriptで完全な型チェック
 3. **プラグインシステム**: single-instance, logなど豊富
@@ -966,11 +1003,13 @@ Phase 6 (パッケージング)   ███████████████�
 5. **バイナリサイズ**: PyInstallerより大幅に小さい
 
 ### 苦労した点
+
 1. **Windows API**: windows crateのfeature指定が複雑 → winapiに変更
 2. **条件付きコンパイル**: プラットフォーム別の実装でunsafeブロック多用
 3. **所有権・ライフタイム**: Rustの学習曲線は高い
 
 ### 解決策
+
 1. **winapiクレート**: Windows API呼び出しに最適
 2. **#[cfg(target_os = "...")]**: プラットフォーム別コンパイルで対応
 3. **段階的実装**: 簡単な機能から始めて徐々に複雑化

@@ -208,6 +208,7 @@ uv run python -m app.main --dev --pattern vgradient
 ```
 
 Available options:
+
 - `--dev`: Development mode (uses Vite dev server at http://localhost:3000)
 - `--pattern PATTERN`: Initial pattern to display (default: colorbar)
 - `--port PORT`: API server port (default: 8000)
@@ -311,6 +312,7 @@ Monitors are grouped by their **position**:
 **Example:**
 
 If you have monitors arranged like this:
+
 ```
 [Monitor 1: 1920x1080 at (0, 0)]
 [Monitor 2: 1920x1080 at (0, 1080)]  <- Same X as Monitor 1
@@ -318,6 +320,7 @@ If you have monitors arranged like this:
 ```
 
 Groups would be:
+
 - `left-1`: Monitor 1, Monitor 2 (both at X=0)
 - `left-2`: Monitor 3 (at X=1920)
 - `top-1`: Monitor 1, Monitor 3 (both at Y=0)
@@ -354,12 +357,14 @@ patterns:
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **Build Tool**: [Vite](https://vite.dev/) 6.0
 - **Framework**: [React](https://react.dev/) 18
 - **Language**: [TypeScript](https://www.typescriptlang.org/) 5.7
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) 3.4
 
 ### Backend
+
 - **API Framework**: [FastAPI](https://fastapi.tiangolo.com/) 0.121
 - **Desktop Wrapper**: [PyWebView](https://pywebview.flowrl.com/) 6.1
 - **Package Manager**: [uv](https://docs.astral.sh/uv/)

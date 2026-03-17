@@ -3,16 +3,19 @@
 ## 🎯 新しい用途
 
 ### 1. スクリーンセーバー
+
 - ランダムパターン生成
 - 自動切り替え
 - Windowsスクリーンセーバー（.scr）対応
 
 ### 2. デジタルサイネージ
+
 - プレイリスト再生
 - URL画像のタイル表示
 - キャラクター/ロゴの全画面表示
 
 ### 3. 検査ツール
+
 - テストパターンの自動切り替え
 - タイマー機能
 
@@ -28,9 +31,9 @@ version: "1.0"
 
 # プレイリスト設定
 playlist:
-  mode: sequence          # sequence | random | shuffle
-  loop: true              # ループ再生
-  defaultDuration: 5000   # デフォルト表示時間（ms）
+  mode: sequence # sequence | random | shuffle
+  loop: true # ループ再生
+  defaultDuration: 5000 # デフォルト表示時間（ms）
 
 # アイテム
 items:
@@ -63,7 +66,7 @@ items:
 
   # 5. ランダム生成
   - generator: random
-    count: 5              # 5個生成
+    count: 5 # 5個生成
     duration: 3000
 ```
 
@@ -81,18 +84,18 @@ playlist:
 items:
   # ランダム生成
   - generator: random
-    count: 10             # 10個生成
+    count: 10 # 10個生成
     duration: 5000
     constraints:
       # 制約条件
-      presets:            # 使用するプリセット
+      presets: # 使用するプリセット
         - checker
         - colorbar
         - grayscale
-      layers:             # レイヤー数
+      layers: # レイヤー数
         min: 1
         max: 5
-      colors:             # カラーパレット
+      colors: # カラーパレット
         - "#FF0000"
         - "#00FF00"
         - "#0000FF"
@@ -262,6 +265,7 @@ class PlaylistRunner:
 ### .scrファイルの仕組み
 
 Windowsスクリーンセーバーは**実質的に.exe**です：
+
 - `.scr` = `.exe` をリネームしたもの
 - `C:\Windows\System32\` に配置
 - コマンドライン引数で動作を制御
@@ -386,6 +390,7 @@ items:
 ```
 
 **起動:**
+
 ```bash
 # スクリーンセーバーとして
 XSG.scr /s
@@ -501,20 +506,20 @@ version: "1.0"
 playlist:
   mode: sequence | random | shuffle
   loop: boolean
-  defaultDuration: number  # ms
+  defaultDuration: number # ms
 
 items:
   - # Option 1: パターンファイル
-    pattern: string        # パスまたはURL
+    pattern: string # パスまたはURL
     duration: number
 
   - # Option 2: インラインパターン
-    inline: XSGPattern     # 通常のパターン定義
+    inline: XSGPattern # 通常のパターン定義
     duration: number
 
   - # Option 3: 画像
     image:
-      src: string          # パスまたはURL
+      src: string # パスまたはURL
       fit: contain | cover | fill
       tile: boolean
       tileSize: number
@@ -537,16 +542,19 @@ items:
 ## 🚀 実装の優先順位
 
 ### v1.0（必須）
+
 1. ✅ **プレイリスト基本形式** - YAML定義
 2. ✅ **自動切り替え** - タイマー機能
 3. ✅ **sequence/random/shuffle** - 再生モード
 
 ### v1.1（推奨）
+
 4. ✅ **ランダム生成** - ジェネレーター関数
 5. ✅ **URL画像対応** - HTTP/HTTPS
 6. ✅ **タイル表示** - 画像の繰り返し
 
 ### v1.2（スクリーンセーバー）
+
 7. ✅ **Windowsスクリーンセーバー対応** - .scr
 8. ✅ **設定画面** - プレイリスト選択
 9. ✅ **プレビュー** - 小ウィンドウ表示
@@ -556,17 +564,20 @@ items:
 ## 🎯 メリット
 
 ### 1. 新しい用途
+
 - ✅ スクリーンセーバー
 - ✅ デジタルサイネージ
 - ✅ キャラクター展示
 - ✅ ロゴ表示
 
 ### 2. 柔軟性
+
 - ✅ プレイリストで自由に組み合わせ
 - ✅ ランダム生成で無限バリエーション
 - ✅ URL画像でネットから直接表示
 
 ### 3. 実用性
+
 - ✅ 検査作業の効率化（自動切り替え）
 - ✅ スクリーンセーバーとして常時表示
 - ✅ デジタルサイネージとして商用利用
@@ -576,12 +587,14 @@ items:
 ## ✅ まとめ
 
 **新機能:**
+
 1. ✅ **プレイリスト** - 複数パターンの自動切り替え
 2. ✅ **ランダム生成** - 無限バリエーション
 3. ✅ **URL画像** - ネットから直接表示
 4. ✅ **スクリーンセーバー** - Windowsネイティブ対応
 
 **用途:**
+
 - 🎯 テストパターン検査（本来の用途）
 - 🖼️ キャラクター/ロゴ表示
 - 💻 スクリーンセーバー

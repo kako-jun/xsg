@@ -46,11 +46,11 @@ xsg/
 ```yaml
 nodes:
   - type: image
-    src: "./images/fg/crosstalk.png"    # ❌ 解決失敗
+    src: "./images/fg/crosstalk.png" # ❌ 解決失敗
     # 実際のパス: patterns/images/fg/crosstalk.png（存在しない）
 
   - type: image
-    src: "../images/fg/crosstalk.png"   # ✅ 解決成功
+    src: "../images/fg/crosstalk.png" # ✅ 解決成功
     # 実際のパス: images/fg/crosstalk.png
 ```
 
@@ -59,7 +59,7 @@ nodes:
 ```yaml
 nodes:
   - type: image
-    src: "../../images/fg/crosstalk.png"  # ✅ 解決成功
+    src: "../../images/fg/crosstalk.png" # ✅ 解決成功
     # 実際のパス: images/fg/crosstalk.png
 ```
 
@@ -73,13 +73,13 @@ nodes:
 # @/ = プロジェクトルート
 - type: image
   src: "@/images/fg/crosstalk.png"
-
 # どのYAMLファイルからでも同じパスで参照可能
 ```
 
 ### プロジェクトルートの検出方法
 
 **優先順位:**
+
 1. `--project-root` コマンドライン引数
 2. `XSG_PROJECT_ROOT` 環境変数
 3. `package.json` が存在するディレクトリ
@@ -245,7 +245,7 @@ xsg/
 # patterns/test.yaml
 nodes:
   - type: image
-    src: "@/images/fg/crosstalk.png"   # ✅ 推奨（どこからでも同じ）
+    src: "@/images/fg/crosstalk.png" # ✅ 推奨（どこからでも同じ）
 ```
 
 ### ケース2: 相対パス
@@ -254,7 +254,7 @@ nodes:
 # patterns/test.yaml
 nodes:
   - type: image
-    src: "../images/fg/crosstalk.png"  # ✅ OK（シンプル）
+    src: "../images/fg/crosstalk.png" # ✅ OK（シンプル）
 ```
 
 ### ケース3: 絶対パス
@@ -263,7 +263,7 @@ nodes:
 # patterns/test.yaml
 nodes:
   - type: image
-    src: "/home/user/assets/test.png"  # ✅ OK（外部リソース）
+    src: "/home/user/assets/test.png" # ✅ OK（外部リソース）
 ```
 
 ### ケース4: URL
@@ -272,7 +272,7 @@ nodes:
 # patterns/test.yaml
 nodes:
   - type: image
-    src: "https://cdn.example.com/test.png"  # ✅ OK（リモート）
+    src: "https://cdn.example.com/test.png" # ✅ OK（リモート）
 ```
 
 ---
@@ -298,6 +298,7 @@ def load_pattern(pattern_file: Path):
 ```
 
 **エラーメッセージ例:**
+
 ```
 Image not found: ./images/fg/test.png
 Resolved to: /home/user/xsg/patterns/images/fg/test.png
@@ -318,6 +319,7 @@ src: "@/images/fg/crosstalk.png"
 ```
 
 **メリット:**
+
 - どのYAMLファイルからも同じパスで参照可能
 - YAMLファイルを移動しても動作する
 - 最も分かりやすい
@@ -329,10 +331,12 @@ src: "../images/fg/crosstalk.png"
 ```
 
 **メリット:**
+
 - シンプル
 - プロジェクトルートの検出が不要
 
 **デメリット:**
+
 - YAMLファイルを移動すると動作しなくなる
 
 ### ✅ OK: 絶対パス（外部リソース）
@@ -342,6 +346,7 @@ src: "/mnt/shared/assets/test.png"
 ```
 
 **用途:**
+
 - 共有ディレクトリのリソース
 - 外部ストレージ
 
@@ -352,6 +357,7 @@ src: "https://cdn.example.com/test.png"
 ```
 
 **用途:**
+
 - CDN
 - リモートリソース
 
@@ -398,11 +404,11 @@ def convert_image_id(image_id: str) -> str:
 
 ## 📋 まとめ
 
-| パス形式 | 例 | カレント | 推奨度 |
-|---------|-----|---------|--------|
-| プロジェクト相対 | `@/images/test.png` | プロジェクトルート | ⭐⭐⭐ |
-| 相対パス | `../images/test.png` | YAMLファイルのディレクトリ | ⭐⭐ |
-| 絶対パス | `/home/user/test.png` | - | ⭐（外部リソース） |
-| URL | `https://example.com/test.png` | - | ⭐（リモート） |
+| パス形式         | 例                             | カレント                   | 推奨度             |
+| ---------------- | ------------------------------ | -------------------------- | ------------------ |
+| プロジェクト相対 | `@/images/test.png`            | プロジェクトルート         | ⭐⭐⭐             |
+| 相対パス         | `../images/test.png`           | YAMLファイルのディレクトリ | ⭐⭐               |
+| 絶対パス         | `/home/user/test.png`          | -                          | ⭐（外部リソース） |
+| URL              | `https://example.com/test.png` | -                          | ⭐（リモート）     |
 
 **デフォルト推奨: プロジェクト相対（@/）**

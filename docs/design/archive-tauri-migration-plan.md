@@ -55,15 +55,15 @@
 
 ### Python依存関係
 
-| パッケージ | 目的 | Rust代替 |
-|-----------|------|---------|
-| **fastapi** | REST API | `axum`, `actix-web` |
-| **pywebview** | デスクトップウィンドウ | **Tauri本体** |
-| **pydantic** | データバリデーション | `serde`, `validator` |
-| **pyyaml** | YAML解析 | `serde_yaml` |
-| **screeninfo** | ディスプレイ情報取得 | `tauri::window::Monitor` |
-| **httpx** | HTTP通信 | `reqwest` |
-| **uvicorn** | ASGIサーバー | 不要（Tauriが内蔵） |
+| パッケージ     | 目的                   | Rust代替                 |
+| -------------- | ---------------------- | ------------------------ |
+| **fastapi**    | REST API               | `axum`, `actix-web`      |
+| **pywebview**  | デスクトップウィンドウ | **Tauri本体**            |
+| **pydantic**   | データバリデーション   | `serde`, `validator`     |
+| **pyyaml**     | YAML解析               | `serde_yaml`             |
+| **screeninfo** | ディスプレイ情報取得   | `tauri::window::Monitor` |
+| **httpx**      | HTTP通信               | `reqwest`                |
+| **uvicorn**    | ASGIサーバー           | 不要（Tauriが内蔵）      |
 
 ---
 
@@ -129,6 +129,7 @@
 #### 1.1 ウィンドウ管理（1-2日）
 
 **現在（Python）:**
+
 ```python
 webview.create_window(
     title="XSG",
@@ -139,6 +140,7 @@ webview.create_window(
 ```
 
 **移行後（Rust）:**
+
 ```rust
 // src-tauri/src/main.rs
 tauri::Builder::default()
@@ -159,6 +161,7 @@ tauri::Builder::default()
 ```
 
 **実装項目:**
+
 - ✅ シングルウィンドウ作成
 - ✅ フルスクリーン・フレームレス
 - ⚠️ マルチディスプレイ対応（Tauri 2.0で改善）
@@ -170,6 +173,7 @@ tauri::Builder::default()
 #### 1.2 パターンローダー（2-3日）
 
 **現在（Python）:**
+
 ```python
 # backend/app/pattern_loader.py
 import yaml
@@ -182,6 +186,7 @@ def load_pattern(pattern_id: str) -> dict:
 ```
 
 **移行後（Rust）:**
+
 ```rust
 // src-tauri/src/pattern_loader.rs
 use serde::{Deserialize, Serialize};
@@ -209,6 +214,7 @@ async fn get_pattern(pattern_id: String) -> Result<Pattern, String> {
 ```
 
 **実装項目:**
+
 - ✅ YAML解析（`serde_yaml`）
 - ✅ Pydanticモデル → Rust構造体（`serde`）
 - ✅ `extends` 解決（pattern_expander移植）
@@ -221,17 +227,19 @@ async fn get_pattern(pattern_id: String) -> Result<Pattern, String> {
 #### 1.3 IPC実装（1-2日）
 
 **フロントエンド変更:**
+
 ```typescript
 // Before (fetch API)
-const response = await fetch('http://localhost:8000/api/patterns');
+const response = await fetch("http://localhost:8000/api/patterns");
 const data = await response.json();
 
 // After (Tauri invoke)
-import { invoke } from '@tauri-apps/api/tauri';
-const data = await invoke('get_patterns');
+import { invoke } from "@tauri-apps/api/tauri";
+const data = await invoke("get_patterns");
 ```
 
 **バックエンド:**
+
 ```rust
 // src-tauri/src/main.rs
 #[tauri::command]
@@ -257,6 +265,7 @@ fn main() {
 ```
 
 **実装項目:**
+
 - ✅ `/api/patterns` → `get_patterns` command
 - ✅ `/api/patterns/{id}` → `get_pattern` command
 - ✅ `/api/pattern` (POST) → `set_pattern` command
@@ -271,6 +280,7 @@ fn main() {
 #### 2.1 マルチディスプレイ対応（2-3日）
 
 **現在（Python）:**
+
 ```python
 from screeninfo import get_monitors
 
@@ -280,6 +290,7 @@ def get_display_info():
 ```
 
 **移行後（Rust）:**
+
 ```rust
 use tauri::Manager;
 
@@ -326,6 +337,7 @@ async fn create_window_on_display(
 ```
 
 **実装項目:**
+
 - ✅ `screeninfo` → `tauri::window::Monitor`
 - ✅ 位置ベース指定（left, right, top, bottom）
 - ✅ 複数ウィンドウ作成
@@ -338,6 +350,7 @@ async fn create_window_on_display(
 #### 2.2 ディスプレイキャリブレーション（3-5日）
 
 **現在（Python）:**
+
 ```python
 # backend/app/calibration.py
 import platform
@@ -360,6 +373,7 @@ def set_gamma_windows(gamma: float):
 ```
 
 **移行後（Rust + Windows）:**
+
 ```rust
 // src-tauri/src/calibration/windows.rs
 #[cfg(target_os = "windows")]
@@ -385,6 +399,7 @@ pub fn set_gamma_windows(gamma: f32) -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 **移行後（Rust + Linux）:**
+
 ```rust
 // src-tauri/src/calibration/linux.rs
 #[cfg(target_os = "linux")]
@@ -401,6 +416,7 @@ pub fn set_gamma_linux(gamma: f32) -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 **移行後（Rust + macOS）:**
+
 ```rust
 // src-tauri/src/calibration/macos.rs
 #[cfg(target_os = "macos")]
@@ -435,6 +451,7 @@ pub fn set_gamma_macos(gamma: f32) -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 **実装項目:**
+
 - ✅ Windows gamma制御（`windows-rs` クレート）
 - ✅ Linux gamma制御（`xrandr` コマンド）
 - ✅ macOS gamma制御（`core-graphics` クレート）
@@ -443,6 +460,7 @@ pub fn set_gamma_macos(gamma: f32) -> Result<(), Box<dyn std::error::Error>> {
 - ✅ GPU検出
 
 **必要なクレート:**
+
 - Windows: `windows` (公式Microsoftクレート)
 - macOS: `core-graphics`, `cocoa`
 - Linux: `std::process::Command`（xrandr呼び出し）
@@ -454,6 +472,7 @@ pub fn set_gamma_macos(gamma: f32) -> Result<(), Box<dyn std::error::Error>> {
 #### 2.3 プレイリスト機能（2-3日）
 
 **現在（Python）:**
+
 ```python
 # backend/app/playlist_runner.py
 class PlaylistRunner:
@@ -471,6 +490,7 @@ class PlaylistRunner:
 ```
 
 **移行後（Rust）:**
+
 ```rust
 // src-tauri/src/playlist_runner.rs
 use tokio::time::{sleep, Duration};
@@ -500,6 +520,7 @@ impl PlaylistRunner {
 ```
 
 **実装項目:**
+
 - ✅ プレイリストJSON/YAML解析
 - ✅ パターン/URL切り替え
 - ✅ 非同期実行（`tokio`）
@@ -512,12 +533,14 @@ impl PlaylistRunner {
 #### 2.4 Webレンダリングモード（1-2日）
 
 **現在（Python）:**
+
 ```python
 # --url オプションでURLを表示
 create_url_windows(url=args.url, readonly=args.readonly)
 ```
 
 **移行後（Rust）:**
+
 ```rust
 // src-tauri/src/main.rs
 #[tauri::command]
@@ -550,6 +573,7 @@ async fn open_url_window(
 ```
 
 **実装項目:**
+
 - ✅ 外部URL表示（`WindowUrl::External`）
 - ✅ Readonly mode（JavaScript injection）
 - ✅ プロキシ対応（Tauriは自動的にOSプロキシ設定を継承）
@@ -563,6 +587,7 @@ async fn open_url_window(
 #### 3.1 ビルド設定（1日）
 
 **tauri.conf.json:**
+
 ```json
 {
   "build": {
@@ -599,6 +624,7 @@ async fn open_url_window(
 ```
 
 **実装項目:**
+
 - ✅ Windows MSIインストーラー
 - ✅ Linux AppImage/deb
 - ✅ macOS dmg
@@ -612,6 +638,7 @@ async fn open_url_window(
 #### 3.2 スクリーンセーバー（2-3日）
 
 **Windows .scr:**
+
 ```rust
 // src-tauri/src/screensaver.rs
 #[cfg(target_os = "windows")]
@@ -639,10 +666,12 @@ fn main() {
 ```
 
 **Linux/macOS:**
+
 - Linuxはスクリーンセーバーの仕組みが異なる（XScreenSaver設定ファイル）
 - macOSは `.saver` バンドル（Screen Saver framework）
 
 **実装項目:**
+
 - ✅ Windows .scr ビルド
 - ✅ コマンドライン引数パース
 - ⚠️ Linux/macOSは別途対応が必要（現状と同じ）
@@ -660,6 +689,7 @@ fn main() {
 - ✅ バイナリサイズ削減（`strip = true`）
 
 **Cargo.toml:**
+
 ```toml
 [profile.release]
 opt-level = 3
@@ -682,17 +712,17 @@ codegen-units = 1
 
 ### 難易度評価（コンポーネント別）
 
-| コンポーネント | 難易度 | 理由 | 工数 |
-|--------------|-------|------|------|
-| ウィンドウ管理 | ⭐ Easy | Tauri APIがシンプル | 1-2日 |
-| IPC実装 | ⭐ Easy | `#[tauri::command]` で自動生成 | 1-2日 |
-| パターンローダー | ⭐⭐ Medium | Rust構造体・所有権 | 2-3日 |
-| プレイリスト | ⭐⭐ Medium | 非同期処理（tokio） | 2-3日 |
-| Webレンダリング | ⭐ Easy | `WindowUrl::External` | 1-2日 |
-| **マルチディスプレイ** | ⭐⭐⭐ Hard | Tauri 1.xの制限 | 2-3日 |
+| コンポーネント         | 難易度             | 理由                            | 工数  |
+| ---------------------- | ------------------ | ------------------------------- | ----- |
+| ウィンドウ管理         | ⭐ Easy            | Tauri APIがシンプル             | 1-2日 |
+| IPC実装                | ⭐ Easy            | `#[tauri::command]` で自動生成  | 1-2日 |
+| パターンローダー       | ⭐⭐ Medium        | Rust構造体・所有権              | 2-3日 |
+| プレイリスト           | ⭐⭐ Medium        | 非同期処理（tokio）             | 2-3日 |
+| Webレンダリング        | ⭐ Easy            | `WindowUrl::External`           | 1-2日 |
+| **マルチディスプレイ** | ⭐⭐⭐ Hard        | Tauri 1.xの制限                 | 2-3日 |
 | **キャリブレーション** | ⭐⭐⭐⭐ Very Hard | プラットフォーム固有API、unsafe | 3-5日 |
-| パッケージング | ⭐ Easy | Tauri CLI自動化 | 1日 |
-| スクリーンセーバー | ⭐⭐ Medium | Windows .scr特殊処理 | 2-3日 |
+| パッケージング         | ⭐ Easy            | Tauri CLI自動化                 | 1日   |
+| スクリーンセーバー     | ⭐⭐ Medium        | Windows .scr特殊処理            | 2-3日 |
 
 **総工数: 15-24日（3-5週間）**
 
@@ -707,10 +737,12 @@ codegen-units = 1
 #### 1. プラットフォーム固有API（キャリブレーション）
 
 **課題:**
+
 - Windows API、Xrandr、CoreGraphicsへの直接アクセスが必要
 - Rustでは `unsafe` ブロックを使用する必要がある
 
 **対策:**
+
 - ✅ Rustの `windows-rs` クレート（公式Microsoft製）を使用
 - ✅ `core-graphics` クレート（macOS）
 - ✅ `std::process::Command` でxrandr実行（Linux）
@@ -722,10 +754,12 @@ codegen-units = 1
 #### 2. マルチディスプレイ対応
 
 **課題:**
+
 - Tauri 1.x では `available_monitors()` が実験的機能
 - Tauri 2.0（現在ベータ版）で安定化予定
 
 **対策:**
+
 - ⚠️ Tauri 1.x で実装する場合、機能が制限される可能性
 - ✅ Tauri 2.0にアップグレードする（推奨）
 - ✅ 代替: カスタムプラグインで `screeninfo` 相当を実装
@@ -737,9 +771,11 @@ codegen-units = 1
 #### 3. Pythonライブラリの直接利用
 
 **課題:**
+
 - Pythonの `screeninfo`, `pyyaml` などをそのまま使えない
 
 **対策:**
+
 - ✅ Rustクレートで代替（`serde_yaml`, `tauri::window::Monitor`）
 - ✅ 機能は100%同等に実装可能
 
@@ -751,23 +787,25 @@ codegen-units = 1
 
 ### 予測されるパフォーマンス改善
 
-| 指標 | Python + PyWebView | Tauri | 改善率 |
-|------|-------------------|-------|--------|
-| **起動時間** | 3-5秒 | 0.3-0.8秒 | **85%高速化** |
-| **メモリ使用量** | 150-200MB | 50-80MB | **60%削減** |
-| **バイナリサイズ** | 50-100MB | 5-15MB | **80%削減** |
-| **CPU使用率（アイドル）** | 2-5% | 0.5-1% | **75%削減** |
-| **実行ファイル起動** | Python + 依存関係ロード | ネイティブバイナリ | **即時起動** |
+| 指標                      | Python + PyWebView      | Tauri              | 改善率        |
+| ------------------------- | ----------------------- | ------------------ | ------------- |
+| **起動時間**              | 3-5秒                   | 0.3-0.8秒          | **85%高速化** |
+| **メモリ使用量**          | 150-200MB               | 50-80MB            | **60%削減**   |
+| **バイナリサイズ**        | 50-100MB                | 5-15MB             | **80%削減**   |
+| **CPU使用率（アイドル）** | 2-5%                    | 0.5-1%             | **75%削減**   |
+| **実行ファイル起動**      | Python + 依存関係ロード | ネイティブバイナリ | **即時起動**  |
 
 ### ベンチマーク想定
 
 **起動時間（初回）:**
+
 ```
 Python:  [████████████████████████████████] 5.0s
 Tauri:   [███] 0.8s
 ```
 
 **起動時間（2回目以降）:**
+
 ```
 Python:  [████████████████████] 3.2s
 Tauri:   [██] 0.3s
@@ -780,11 +818,13 @@ Tauri:   [██] 0.3s
 ### リスク1: Rust学習曲線
 
 **リスク:**
+
 - Rustは所有権・ライフタイム・トレイトなど、独特な概念が多い
 - チームにRust経験者がいない場合、学習コストが高い
 
 **影響度:** 🔴 高
 **対策:**
+
 - ✅ Rustの基礎を1週間集中学習（The Rust Book）
 - ✅ Tauriの公式ガイド・サンプルを活用
 - ✅ シンプルな部分（IPC、パターンローダー）から始める
@@ -795,11 +835,13 @@ Tauri:   [██] 0.3s
 ### リスク2: Tauriのエコシステムが若い
 
 **リスク:**
+
 - Tauri 1.x は安定版だが、2.0はベータ版
 - マルチディスプレイなど一部機能がまだ発展途上
 
 **影響度:** 🟡 中
 **対策:**
+
 - ✅ Tauri 2.0 RC版の安定化を待つ（2025年Q1予定）
 - ✅ または Tauri 1.x で実装し、後で2.0にアップグレード
 - ✅ コミュニティが活発（GitHub Issues, Discord）
@@ -809,11 +851,13 @@ Tauri:   [██] 0.3s
 ### リスク3: プラットフォーム固有の不具合
 
 **リスク:**
+
 - Windows, Linux, macOS それぞれで異なる挙動が発生する可能性
 - キャリブレーション機能は特にプラットフォーム依存
 
 **影響度:** 🟡 中
 **対策:**
+
 - ✅ 各プラットフォームでテストを徹底
 - ✅ CI/CD（GitHub Actions）でクロスプラットフォームビルド
 - ✅ 条件付きコンパイル（`#[cfg(target_os = "windows")]`）を活用
@@ -823,10 +867,12 @@ Tauri:   [██] 0.3s
 ### リスク4: 機能が完全に移行できない可能性
 
 **リスク:**
+
 - 特殊な機能（ガンマ制御など）がRustで実装困難な場合
 
 **影響度:** 🟢 低
 **対策:**
+
 - ✅ 調査の結果、全機能が移行可能と判断
 - ✅ 最悪の場合、Pythonスクリプトを別プロセスで実行する手もある（非推奨）
 
@@ -844,13 +890,13 @@ Tauri:   [██] 0.3s
 
 ### フェーズ別工数
 
-| フェーズ | 内容 | 工数 | 累計 |
-|---------|------|------|------|
-| **Phase 0** | 環境構築 | 1-2日 | 1-2日 |
-| **Phase 1** | 基本機能移行 | 5-7日 | 6-9日 |
-| **Phase 2** | 高度な機能移行 | 7-11日 | 13-20日 |
-| **Phase 3** | パッケージング・テスト | 3-5日 | 16-25日 |
-| **Phase 4** | 最適化・ドキュメント | 2-3日 | **18-28日** |
+| フェーズ    | 内容                   | 工数   | 累計        |
+| ----------- | ---------------------- | ------ | ----------- |
+| **Phase 0** | 環境構築               | 1-2日  | 1-2日       |
+| **Phase 1** | 基本機能移行           | 5-7日  | 6-9日       |
+| **Phase 2** | 高度な機能移行         | 7-11日 | 13-20日     |
+| **Phase 3** | パッケージング・テスト | 3-5日  | 16-25日     |
+| **Phase 4** | 最適化・ドキュメント   | 2-3日  | **18-28日** |
 
 **総工数: 18-28日（3.5-5.5週間）**
 
@@ -858,10 +904,10 @@ Tauri:   [██] 0.3s
 
 ### リスクバッファ込みの見積もり
 
-| シナリオ | 工数 | 備考 |
-|---------|------|------|
-| **楽観的** | 3週間 | Rust経験豊富、問題なし |
-| **標準** | 4週間 | 一部の機能で試行錯誤 |
+| シナリオ   | 工数  | 備考                     |
+| ---------- | ----- | ------------------------ |
+| **楽観的** | 3週間 | Rust経験豊富、問題なし   |
+| **標準**   | 4週間 | 一部の機能で試行錯誤     |
 | **悲観的** | 6週間 | Rust初心者、予期せぬ問題 |
 
 **推奨見積もり: 4-5週間**
@@ -894,15 +940,18 @@ Tauri:   [██] 0.3s
 #### ハイブリッドアプローチ（折衷案）
 
 **Phase 1: Tauri化（基本機能のみ）**（2週間）
+
 - ✅ ウィンドウ管理のみTauriに移行
 - ✅ バックエンドは引き続きFastAPIを使用（Tauriから起動）
 - ✅ 起動速度は改善（Pythonインタプリタ起動は必要だが、PyWebViewよりは速い）
 
 **Phase 2: Rust移行（余裕があれば）**（3週間）
+
 - ✅ FastAPIのエンドポイントを順次Rustコマンドに置き換え
 - ✅ 最終的にPython依存を完全削除
 
 **メリット:**
+
 - ⚡ 早い段階で起動速度改善の恩恵
 - 📈 段階的な移行でリスク分散
 - 🔄 途中で引き返しやすい
@@ -914,11 +963,13 @@ Tauri:   [██] 0.3s
 #### 🎯 推奨: **段階的移行（ハイブリッド → フルTauri）**
 
 **理由:**
+
 1. **起動速度改善が最優先課題** → Tauri化のメリット大
 2. **Rust学習コストを分散** → 段階的に学べる
 3. **リスク分散** → 失敗しても戻せる
 
 **実施プラン:**
+
 ```
 Week 1-2:  Phase 1（Tauri化）
 Week 3-5:  Phase 2（Rust移行）
@@ -953,6 +1004,7 @@ Week 6:    テスト・ドキュメント
 移行開始前に確認すべき項目：
 
 ### Phase 0（環境構築）
+
 - [ ] Rust 1.70+インストール済み
 - [ ] Tauri CLI 1.5+インストール済み
 - [ ] 各プラットフォームの開発環境整備
@@ -961,24 +1013,28 @@ Week 6:    テスト・ドキュメント
   - [ ] Linux: `libwebkit2gtk-4.0-dev` 等
 
 ### Phase 1（基本移行）
+
 - [ ] Tauri プロジェクト作成完了
 - [ ] フロントエンドビルドが通る
 - [ ] IPC通信（1つ以上のコマンド）が動作
 - [ ] パターンローダー実装完了
 
 ### Phase 2（高度な機能）
+
 - [ ] マルチディスプレイ対応完了
 - [ ] キャリブレーション（Windows/Linux/macOS）実装完了
 - [ ] プレイリスト機能実装完了
 - [ ] Webレンダリングモード実装完了
 
 ### Phase 3（パッケージング）
+
 - [ ] Windows MSI生成成功
 - [ ] Linux AppImage/deb生成成功
 - [ ] macOS dmg生成成功
 - [ ] スクリーンセーバー（.scr）ビルド成功
 
 ### Phase 4（最終確認）
+
 - [ ] 全機能の動作テスト完了
 - [ ] パフォーマンステスト（起動時間・メモリ）
 - [ ] ドキュメント更新完了（CLAUDE.md, README.md）
@@ -996,6 +1052,7 @@ Week 6:    テスト・ドキュメント
 - ⚠️ **Rust学習コストは高い**（初心者の場合、追加1-2週間）
 
 **推奨:**
+
 - **段階的移行（ハイブリッド → フルTauri）**を推奨
 - まずTauri化して起動速度を改善し、その後Rustに移行
 - Tauri 2.0の安定リリース（2025年Q1予定）まで待つのも一案
@@ -1003,12 +1060,14 @@ Week 6:    テスト・ドキュメント
 ---
 
 **次のステップ:**
+
 1. ✅ Rust環境をセットアップ
 2. ✅ Tauriチュートリアルを完了
 3. ✅ Phase 0（環境構築）を開始
 4. ✅ このドキュメントをチームでレビュー
 
 **質問・相談:**
+
 - このドキュメントは `.claude/docs/tauri-migration-plan.md` に保存されています
 - 各フェーズの詳細な実装手順は、移行開始時に別途作成します
 

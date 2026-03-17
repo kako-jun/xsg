@@ -77,52 +77,106 @@ export default function PatternMenu() {
   const categories = Array.from(new Set(patterns.map((p) => p.category)));
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{ backgroundColor: "rgba(0,0,0,0.75)" }}
+    >
       <div
         data-menu-content
-        className="bg-gray-900 text-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto"
+        className="text-white max-w-4xl w-full max-h-[80vh] overflow-y-auto"
+        style={{
+          backgroundColor: "#111",
+          border: "1px solid rgba(255,255,255,0.08)",
+        }}
       >
-        <div className="sticky top-0 bg-gray-800 px-6 py-4 border-b border-gray-700">
+        <div
+          className="sticky top-0 px-6 py-4"
+          style={{
+            backgroundColor: "#111",
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Pattern Selection</h2>
+            <h2
+              className="text-base font-medium tracking-widest uppercase"
+              style={{
+                color: "rgba(255,255,255,0.5)",
+                letterSpacing: "0.15em",
+              }}
+            >
+              Patterns
+            </h2>
             <button
               onClick={() => setIsVisible(false)}
-              className="text-gray-400 hover:text-white text-xl"
+              className="text-sm"
+              style={{ color: "rgba(255,255,255,0.3)" }}
             >
-              ✕
+              ESC
             </button>
           </div>
-          <p className="text-gray-400 text-sm mt-1">
-            Tap screen or press &apos;M&apos; to toggle • ESC to close
-          </p>
         </div>
 
         <div className="p-6">
           {loading ? (
-            <div className="text-center text-gray-400 py-8">
-              Loading patterns...
+            <div
+              className="text-center py-8"
+              style={{ color: "rgba(255,255,255,0.3)" }}
+            >
+              Loading...
             </div>
           ) : patterns.length === 0 ? (
-            <div className="text-center text-gray-400 py-8">
+            <div
+              className="text-center py-8"
+              style={{ color: "rgba(255,255,255,0.3)" }}
+            >
               No patterns found
             </div>
           ) : (
             categories.map((category) => (
-              <div key={category} className="mb-6">
-                <h3 className="text-lg font-semibold mb-3 text-blue-400">
+              <div key={category} className="mb-8">
+                <h3
+                  className="text-xs mb-3 tracking-widest uppercase"
+                  style={{
+                    color: "rgba(255,255,255,0.25)",
+                    letterSpacing: "0.2em",
+                  }}
+                >
                   {category}
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
                   {patterns
                     .filter((p) => p.category === category)
                     .map((item) => (
                       <button
                         key={item.id}
                         onClick={() => handlePatternSelect(item.id)}
-                        className="bg-gray-800 hover:bg-blue-600 active:bg-blue-700 px-4 py-3 rounded transition-colors text-left touch-manipulation"
+                        className="px-4 py-3 text-left touch-manipulation transition-colors"
+                        style={{
+                          backgroundColor: "transparent",
+                          color: "rgba(255,255,255,0.7)",
+                        }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            "rgba(255,255,255,0.05)")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            "transparent")
+                        }
+                        onMouseDown={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            "rgba(255,255,255,0.1)")
+                        }
+                        onMouseUp={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            "rgba(255,255,255,0.05)")
+                        }
                       >
-                        <div className="font-medium">{item.name}</div>
-                        <div className="text-xs text-gray-400 mt-1">
+                        <div className="text-sm font-normal">{item.name}</div>
+                        <div
+                          className="text-xs mt-0.5"
+                          style={{ color: "rgba(255,255,255,0.2)" }}
+                        >
                           {item.id}
                         </div>
                       </button>

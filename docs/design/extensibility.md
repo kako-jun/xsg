@@ -14,12 +14,12 @@
 
 ## 📊 調査結果
 
-| システム | レイヤー数 | プリセット | プラグイン |
-|---------|----------|----------|----------|
-| Photoshop | 8,000まで | カスタム可 | 規約ベース |
-| Figma | 無制限 | コンポーネント | プラグインAPI |
-| After Effects | 無制限 | プリセット | Expression |
-| 移植元 | 2層固定 | 不可 | なし |
+| システム      | レイヤー数 | プリセット     | プラグイン    |
+| ------------- | ---------- | -------------- | ------------- |
+| Photoshop     | 8,000まで  | カスタム可     | 規約ベース    |
+| Figma         | 無制限     | コンポーネント | プラグインAPI |
+| After Effects | 無制限     | プリセット     | Expression    |
+| 移植元        | 2層固定    | 不可           | なし          |
 
 ---
 
@@ -51,6 +51,7 @@ nodes:
 ```
 
 **理由:**
+
 - ✅ **JSON Canvas準拠**: `nodes`配列なので自然に無制限
 - ✅ **柔軟性**: 将来の複雑なパターンに対応
 - ✅ **実装コスト**: 制限を設ける方が複雑（バリデーション必要）
@@ -82,6 +83,7 @@ nodes:
 ### ❌ 2層固定にしない理由
 
 **問題点:**
+
 1. ❌ 将来の拡張が困難（破壊的変更が必要）
 2. ❌ ユーザーの創造性を制限
 3. ❌ 実装が複雑（backgroundとforegroundを分離）
@@ -120,7 +122,7 @@ xsg/
 ```yaml
 # test.yaml でカスタムプリセットを使用
 - type: background
-  preset: my-custom       # ✅ presets/my-custom.tsx を自動検出
+  preset: my-custom # ✅ presets/my-custom.tsx を自動検出
   params:
     color: "#FF0000"
 ```
@@ -149,6 +151,7 @@ export const metadata = {
 ```
 
 **規約:**
+
 1. ✅ `presets/` ディレクトリに `.tsx` ファイルを配置
 2. ✅ default export で React Component
 3. ✅ ファイル名 = プリセット名（`my-custom.tsx` → `preset: my-custom`）
@@ -181,6 +184,7 @@ npm install @xsg/presets-professional
 **結論: プリセットシステムで十分**
 
 理由:
+
 - ✅ XSGの用途はテストパターン生成（限定的）
 - ✅ プリセットでカスタム描画は実現可能
 - ✅ 複雑なプラグインAPIは過剰
@@ -198,15 +202,15 @@ xsg/
 
 ```typescript
 // plugins/gamma-control.ts（規約）
-import { XSGPlugin } from '@/lib/plugins';
+import { XSGPlugin } from "@/lib/plugins";
 
 export default {
-  name: 'gamma-control',
-  version: '1.0.0',
+  name: "gamma-control",
+  version: "1.0.0",
 
   // ライフサイクルフック
   onLoad(app) {
-    console.log('Plugin loaded');
+    console.log("Plugin loaded");
   },
 
   onPatternChange(pattern) {
@@ -216,8 +220,8 @@ export default {
   // APIエンドポイント追加
   routes: [
     {
-      path: '/api/gamma',
-      method: 'POST',
+      path: "/api/gamma",
+      method: "POST",
       handler: async (req, res) => {
         // ガンマ補正処理
       },
@@ -232,6 +236,7 @@ export default {
 ```
 
 **規約:**
+
 1. ✅ `plugins/` ディレクトリに配置
 2. ✅ default export で Plugin オブジェクト
 3. ✅ ファイル名 = プラグイン名
@@ -265,6 +270,7 @@ npm install @xsg/plugin-midi
 ```
 
 **理由:**
+
 - 移植元の全機能をカバーできる
 - シンプルで分かりやすい
 - 実装コストが低い
@@ -280,6 +286,7 @@ npm install @xsg/plugin-midi
 ```
 
 **トリガー:**
+
 - ユーザーから「独自パターンを作りたい」という要望
 - プルリクで同じパターンが3回以上来た
 
@@ -294,6 +301,7 @@ npm install @xsg/plugin-midi
 ```
 
 **トリガー:**
+
 - コミュニティが育った
 - 企業利用が増えた
 
@@ -343,7 +351,7 @@ export default {
   server: {
     watch: {
       // presets/ ディレクトリを監視
-      include: ['src/**', 'presets/**'],
+      include: ["src/**", "presets/**"],
     },
   },
 };
@@ -381,7 +389,7 @@ canvas:
 
 nodes:
   - type: background
-    preset: checker   # ✅ 組み込みプリセット
+    preset: checker # ✅ 組み込みプリセット
 
   - type: rect
     x: 100
@@ -417,7 +425,7 @@ nodes:
 
   # 複数レイヤー
   - type: preset
-    preset: iso12233   # presets/iso12233.tsx
+    preset: iso12233 # presets/iso12233.tsx
     params:
       position: center
 
@@ -430,6 +438,7 @@ nodes:
 ```
 
 **ディレクトリ構造:**
+
 ```
 xsg/
 ├── presets/
@@ -472,12 +481,12 @@ nodes:
 
 ## ✅ 最終推奨
 
-| 項目 | v1.0 | v1.1 | v1.2+ |
-|------|------|------|-------|
-| **レイヤー数** | 無制限 | 無制限 | 無制限 + Group |
-| **組み込みプリセット** | ✅ | ✅ | ✅ |
-| **カスタムプリセット** | ❌ | ✅ | ✅ + npm |
-| **プラグイン** | ❌ | ⚠️ | ✅ |
+| 項目                   | v1.0   | v1.1   | v1.2+          |
+| ---------------------- | ------ | ------ | -------------- |
+| **レイヤー数**         | 無制限 | 無制限 | 無制限 + Group |
+| **組み込みプリセット** | ✅     | ✅     | ✅             |
+| **カスタムプリセット** | ❌     | ✅     | ✅ + npm       |
+| **プラグイン**         | ❌     | ⚠️     | ✅             |
 
 ### v1.0で実装すべきこと
 
@@ -488,22 +497,24 @@ nodes:
 
 ### いつ拡張するか
 
-| 機能 | トリガー |
-|------|---------|
-| カスタムプリセット | ユーザーから「独自パターンを作りたい」という要望が3件以上 |
-| プラグイン | 「ガンマ補正」「MIDI対応」など、プリセットでは実現できない要望 |
-| プリセットリポジトリ | コミュニティが育ち、共有したいプリセットが増えた |
+| 機能                 | トリガー                                                       |
+| -------------------- | -------------------------------------------------------------- |
+| カスタムプリセット   | ユーザーから「独自パターンを作りたい」という要望が3件以上      |
+| プラグイン           | 「ガンマ補正」「MIDI対応」など、プリセットでは実現できない要望 |
+| プリセットリポジトリ | コミュニティが育ち、共有したいプリセットが増えた               |
 
 ---
 
 ## 🎯 まとめ
 
 **今すぐやること（v1.0）:**
+
 - ✅ レイヤー数: **無制限**（`nodes`配列で自然）
 - ✅ プリセット: **組み込みのみ**（移植元をカバー）
 - ✅ プラグイン: **なし**（シンプルに）
 
 **将来やること（v1.1+）:**
+
 - ⏳ カスタムプリセット: **Convention over Configuration**
   - `presets/` に置くだけでOK
   - Hot Reload対応
@@ -512,6 +523,7 @@ nodes:
   - 要望があれば段階的に追加
 
 **メリット:**
+
 1. ✅ シンプルに始められる
 2. ✅ 将来の拡張性を確保
 3. ✅ 過剰設計を避ける（YAGNI: You Aren't Gonna Need It）

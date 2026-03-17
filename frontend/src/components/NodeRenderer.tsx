@@ -488,8 +488,8 @@ function renderGradient(
     const end = Math.floor(((i + 1) / steps) * totalSize);
     const size = end - start;
 
-    // Interpolate color
-    const t = i / (steps - 1);
+    // Interpolate color (avoid division by zero when steps === 1)
+    const t = steps === 1 ? 0 : i / (steps - 1);
     const r = Math.round(startColor.r + (endColor.r - startColor.r) * t);
     const g = Math.round(startColor.g + (endColor.g - startColor.g) * t);
     const b = Math.round(startColor.b + (endColor.b - startColor.b) * t);

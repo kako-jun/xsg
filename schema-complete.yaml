@@ -33,17 +33,17 @@ nodes:
     type: background
     preset: crosshatch
     params:
-      width: 50           # rect_width → width
-      height: 50          # rect_height → height
-      color1: "#FFFFFF"   # rgb_string → color1
-      color2: "#000000"   # rgb_string2 → color2
+      width: 50 # rect_width → width
+      height: 50 # rect_height → height
+      color1: "#FFFFFF" # rgb_string → color1
+      color2: "#000000" # rgb_string2 → color2
 
   # --- Mesh/Checker（市松模様）---
   - id: bg-checker
     type: background
     preset: checker
     params:
-      size: 50            # rect_width/height → size（正方形）
+      size: 50 # rect_width/height → size（正方形）
       color1: "#000000"
       color2: "#FFFFFF"
 
@@ -52,11 +52,11 @@ nodes:
     type: background
     preset: grayscale
     params:
-      steps: 16                    # step_num → steps
-      direction: horizontal        # grayscale_direction: "h"→horizontal, "v"→vertical
-      reverse: false               # grayscale_inverse → reverse
-      flatSteps: [0, 15]           # flat_step_ids → flatSteps
-      invertedSteps: [7, 8]        # inverted_step_ids → invertedSteps
+      steps: 16 # step_num → steps
+      direction: horizontal # grayscale_direction: "h"→horizontal, "v"→vertical
+      reverse: false # grayscale_inverse → reverse
+      flatSteps: [0, 15] # flat_step_ids → flatSteps
+      invertedSteps: [7, 8] # inverted_step_ids → invertedSteps
 
   # --- Image（画像表示）---
   - id: bg-image
@@ -64,7 +64,7 @@ nodes:
     preset: image
     params:
       src: "./images/bg/sandstorm.png"
-      fit: cover                   # contain | cover | fill
+      fit: cover # contain | cover | fill
 
   # --- RepeatCropImage（画像の繰り返しクロップ）---
   - id: bg-repeat-crop
@@ -72,10 +72,10 @@ nodes:
     preset: repeatCropImage
     params:
       src: "./images/bg/test-chart.png"
-      cropWidth: 100               # クロップ幅
-      cropHeight: 100              # クロップ高さ
-      cropX: 0                     # クロップ開始X座標
-      cropY: 0                     # クロップ開始Y座標
+      cropWidth: 100 # クロップ幅
+      cropHeight: 100 # クロップ高さ
+      cropX: 0 # クロップ開始X座標
+      cropY: 0 # クロップ開始Y座標
 
   # ============================================
   # 2. Foreground Layers
@@ -84,23 +84,23 @@ nodes:
   # --- Rect（矩形）---
   - id: static-rect
     type: rect
-    x: 100                         # 絶対座標
+    x: 100 # 絶対座標
     y: 100
     width: 200
     height: 100
-    fill: "#FF0000"                # rgb_string → fill
+    fill: "#FF0000" # rgb_string → fill
     stroke: "#000000"
-    strokeWidth: 2                 # line_width → strokeWidth
-    opacity: 0.8                   # alpha → opacity
-    blur: 5                        # blur_radius → blur
-    rotate: 45                     # rotate（そのまま）
+    strokeWidth: 2 # line_width → strokeWidth
+    opacity: 0.8 # alpha → opacity
+    blur: 5 # blur_radius → blur
+    rotate: 45 # rotate（そのまま）
 
   # --- Circle（円）---
   - id: dot
     type: circle
     x: 960
     y: 540
-    diameter: 10                   # Dot用（小さい円）
+    diameter: 10 # Dot用（小さい円）
     fill: "#FF0000"
     opacity: 1.0
 
@@ -123,28 +123,28 @@ nodes:
     x2: 1920
     y2: 540
     stroke: "#FFFFFF"
-    strokeWidth: 3                 # line_width → strokeWidth
+    strokeWidth: 3 # line_width → strokeWidth
 
   # --- Line with direction/length（移植元互換）---
   - id: line-with-direction
     type: line
-    x: 960                         # 開始点
+    x: 960 # 開始点
     y: 540
-    direction: horizontal          # line_direction: "h"→horizontal, "v"→vertical
-    length: 500                    # line_length → length
+    direction: horizontal # line_direction: "h"→horizontal, "v"→vertical
+    length: 500 # line_length → length
     stroke: "#FF0000"
     strokeWidth: 5
 
   # --- Image（画像レイヤー）---
   - id: image-layer
     type: image
-    src: "./images/fg/crosstalk.png"  # image_id → src
+    src: "./images/fg/crosstalk.png" # image_id → src
     x: 960
     y: 540
-    width: 400                     # Optional
+    width: 400 # Optional
     height: 300
-    fit: contain                   # image_stretch: "fill"→fill, "none"→contain
-    scale: 1.5                     # image_scale → scale（新規追加）
+    fit: contain # image_stretch: "fill"→fill, "none"→contain
+    scale: 1.5 # image_scale → scale（新規追加）
     opacity: 0.5
     rotate: 45
     blur: 2
@@ -156,21 +156,21 @@ nodes:
     y: 540
     diameter: 1
     fill: "#FF0000"
-    blink: 500                     # blink_interval → blink
+    blink: 500 # blink_interval → blink
 
   # --- Moving rect（移動する矩形、旧Window）---
   - id: moving-rect
     type: rect
     x: 0
     y: 540
-    width: 100                     # window_width → width
-    height: 100                    # window_height → height
+    width: 100 # window_width → width
+    height: 100 # window_height → height
     fill: "#0000FF"
     blur: 3
     animation:
       props:
         x: [0, 1920]
-      duration: 19200              # window_speed: 100px/s → duration計算
+      duration: 19200 # window_speed: 100px/s → duration計算
       iterations: Infinity
       easing: linear
 

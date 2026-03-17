@@ -14,7 +14,7 @@
  * - Restore original values
  */
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
 interface GammaStatus {
@@ -113,7 +113,9 @@ export default function CalibrationSettings() {
     setActionMessage(null);
 
     try {
-      const result = await invoke<{ success: boolean; message: string }>("reset_gamma");
+      const result = await invoke<{ success: boolean; message: string }>(
+        "reset_gamma"
+      );
 
       if (result.success) {
         setActionMessage(`✓ ${result.message}`);
@@ -135,7 +137,9 @@ export default function CalibrationSettings() {
     setActionMessage(null);
 
     try {
-      const result = await invoke<{ success: boolean; message: string }>("restore_gamma");
+      const result = await invoke<{ success: boolean; message: string }>(
+        "restore_gamma"
+      );
 
       if (result.success) {
         setActionMessage(`✓ ${result.message}`);
@@ -157,7 +161,9 @@ export default function CalibrationSettings() {
     setActionMessage(null);
 
     try {
-      const result = await invoke<{ success: boolean; message: string }>("disable_night_mode");
+      const result = await invoke<{ success: boolean; message: string }>(
+        "disable_night_mode"
+      );
 
       if (result.success) {
         setActionMessage(`✓ ${result.message}`);
@@ -178,46 +184,106 @@ export default function CalibrationSettings() {
     return null;
   }
 
+  const flatBtnBase: React.CSSProperties = {
+    padding: "6px 14px",
+    fontSize: "0.75rem",
+    letterSpacing: "0.05em",
+    border: "1px solid rgba(255,255,255,0.12)",
+    backgroundColor: "transparent",
+    color: "rgba(255,255,255,0.6)",
+    cursor: "pointer",
+    transition: "background-color 0.15s",
+  };
+
+  const flatBtnDisabled: React.CSSProperties = {
+    ...flatBtnBase,
+    color: "rgba(255,255,255,0.2)",
+    borderColor: "rgba(255,255,255,0.06)",
+    cursor: "not-allowed",
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-      <div className="bg-gray-900 text-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto">
+    <div
+      data-menu-content
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{ backgroundColor: "rgba(0,0,0,0.75)" }}
+    >
+      <div
+        className="text-white max-w-3xl w-full max-h-[80vh] overflow-y-auto"
+        style={{
+          backgroundColor: "#111",
+          border: "1px solid rgba(255,255,255,0.08)",
+        }}
+      >
         {/* Header */}
-        <div className="sticky top-0 bg-gray-800 px-6 py-4 border-b border-gray-700">
+        <div
+          className="sticky top-0 px-6 py-4"
+          style={{
+            backgroundColor: "#111",
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Display Calibration</h2>
+            <h2
+              className="text-base font-medium tracking-widest uppercase"
+              style={{
+                color: "rgba(255,255,255,0.5)",
+                letterSpacing: "0.15em",
+              }}
+            >
+              Calibration
+            </h2>
             <button
               onClick={() => setIsVisible(false)}
-              className="text-gray-400 hover:text-white text-xl"
+              className="text-sm"
+              style={{
+                color: "rgba(255,255,255,0.3)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+              }}
             >
-              ✕
+              ESC
             </button>
           </div>
-          <p className="text-gray-400 text-sm mt-1">
-            Press &apos;C&apos; to toggle • ESC to close • Phase 2: Control
-            Buttons Active
-          </p>
         </div>
 
         {/* Action Message */}
         {actionMessage && (
-          <div className="bg-blue-900 border-l-4 border-blue-500 px-4 py-3 mx-6 mt-4">
-            <p className="text-sm">{actionMessage}</p>
+          <div className="px-6 pt-4">
+            <div
+              className="px-4 py-3 text-sm"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.05)",
+                borderLeft: "2px solid rgba(255,255,255,0.2)",
+                color: "rgba(255,255,255,0.6)",
+              }}
+            >
+              {actionMessage}
+            </div>
           </div>
         )}
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-4">
           {loading ? (
-            <div className="text-center text-gray-400 py-8">
-              Loading calibration status...
+            <div
+              className="text-center py-8"
+              style={{ color: "rgba(255,255,255,0.3)" }}
+            >
+              Loading...
             </div>
           ) : error ? (
-            <div className="text-center text-red-400 py-8">
+            <div
+              className="text-center py-8"
+              style={{ color: "rgba(255,255,255,0.4)" }}
+            >
               Error: {error}
               <br />
               <button
                 onClick={() => setIsVisible(false)}
-                className="mt-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded"
+                className="mt-4 px-4 py-2 text-sm"
+                style={flatBtnBase}
               >
                 Close
               </button>
@@ -225,253 +291,241 @@ export default function CalibrationSettings() {
           ) : status ? (
             <>
               {/* Platform Info */}
-              <div className="bg-gray-800 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-400 mb-2">
-                  System Information
-                </h3>
-                <div className="text-lg">
-                  Platform: <span className="font-mono">{status.platform}</span>
+              <div
+                className="px-4 py-3"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.03)",
+                  borderLeft: "2px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                <div
+                  className="text-xs mb-1 tracking-widest uppercase"
+                  style={{ color: "rgba(255,255,255,0.25)" }}
+                >
+                  System
                 </div>
-                <div className="text-sm text-gray-400 mt-1">
-                  GPU: {status.gpu.vendor} • {status.gpu.message}
+                <div
+                  className="text-sm"
+                  style={{ color: "rgba(255,255,255,0.6)" }}
+                >
+                  {status.platform} &nbsp;·&nbsp; {status.gpu.vendor}
                 </div>
               </div>
 
               {/* Gamma Correction */}
-              <div className="bg-gray-800 rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">
-                      ⚙️ Gamma Correction
-                    </h3>
-                    {status.gamma.supported ? (
-                      <>
-                        <div className="space-y-1">
-                          <div>
-                            Current Value:{" "}
-                            <span
-                              className={`font-mono text-lg ${
-                                status.gamma.is_default
-                                  ? "text-green-400"
-                                  : "text-yellow-400"
-                              }`}
-                            >
-                              {status.gamma.current_value?.toFixed(2) ?? "N/A"}
-                            </span>
-                          </div>
-                          <div className="text-sm text-gray-400">
-                            Status:{" "}
-                            {status.gamma.is_default ? (
-                              <span className="text-green-400">
-                                ✓ Default (1.0)
-                              </span>
-                            ) : (
-                              <span className="text-yellow-400">
-                                ⚠ Modified
-                              </span>
-                            )}
-                          </div>
-                          {status.gamma.message && (
-                            <div className="text-xs text-gray-500">
-                              {status.gamma.message}
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-gray-400">
-                        Not supported on this platform
-                      </div>
-                    )}
-                  </div>
+              <div
+                className="px-4 py-4"
+                style={{ backgroundColor: "rgba(255,255,255,0.03)" }}
+              >
+                <div
+                  className="text-xs mb-3 tracking-widest uppercase"
+                  style={{ color: "rgba(255,255,255,0.25)" }}
+                >
+                  Gamma
                 </div>
-                <div className="mt-4 bg-gray-700 rounded p-3 text-sm">
-                  <div className="font-semibold mb-1">Recommendation:</div>
-                  <div className="text-gray-300 mb-3">
-                    For accurate test patterns, gamma should be set to{" "}
-                    <span className="font-mono">1.0</span> (linear).
-                  </div>
-                  {status.gamma.supported && (
+                {status.gamma.supported ? (
+                  <>
+                    <div className="flex items-center gap-4 mb-3">
+                      <span
+                        className="font-mono text-2xl"
+                        style={{
+                          color: status.gamma.is_default
+                            ? "rgba(255,255,255,0.8)"
+                            : "rgba(255,200,100,0.8)",
+                        }}
+                      >
+                        {status.gamma.current_value?.toFixed(2) ?? "N/A"}
+                      </span>
+                      <span
+                        className="text-xs"
+                        style={{
+                          color: status.gamma.is_default
+                            ? "rgba(255,255,255,0.3)"
+                            : "rgba(255,200,100,0.5)",
+                        }}
+                      >
+                        {status.gamma.is_default ? "linear" : "modified"}
+                      </span>
+                    </div>
+                    <div
+                      className="text-xs mb-4"
+                      style={{ color: "rgba(255,255,255,0.3)" }}
+                    >
+                      Set to 1.0 (linear) for accurate patterns.
+                    </div>
                     <div className="flex gap-2">
                       <button
                         onClick={handleGammaReset}
                         disabled={actionLoading || status.gamma.is_default}
-                        className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
+                        style={
                           actionLoading || status.gamma.is_default
-                            ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                            : "bg-blue-600 hover:bg-blue-700 text-white"
-                        }`}
+                            ? flatBtnDisabled
+                            : flatBtnBase
+                        }
+                        onMouseEnter={(e) => {
+                          if (!actionLoading && !status.gamma.is_default)
+                            e.currentTarget.style.backgroundColor =
+                              "rgba(255,255,255,0.07)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "transparent";
+                        }}
                       >
                         {actionLoading ? "Working..." : "Reset to 1.0"}
                       </button>
                       <button
                         onClick={handleGammaRestore}
                         disabled={actionLoading}
-                        className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
-                          actionLoading
-                            ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                            : "bg-gray-600 hover:bg-gray-500 text-white"
-                        }`}
+                        style={actionLoading ? flatBtnDisabled : flatBtnBase}
+                        onMouseEnter={(e) => {
+                          if (!actionLoading)
+                            e.currentTarget.style.backgroundColor =
+                              "rgba(255,255,255,0.07)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "transparent";
+                        }}
                       >
                         {actionLoading ? "Working..." : "Restore Original"}
                       </button>
                     </div>
-                  )}
-                </div>
+                  </>
+                ) : (
+                  <div
+                    className="text-sm"
+                    style={{ color: "rgba(255,255,255,0.3)" }}
+                  >
+                    Not supported on this platform
+                  </div>
+                )}
               </div>
 
-              {/* Night Mode / Blue Light Filter */}
-              <div className="bg-gray-800 rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">
-                      🌙 Night Mode / Blue Light Filter
-                    </h3>
-                    {status.night_mode.supported ? (
-                      <>
-                        <div className="space-y-1">
-                          <div>
-                            Status:{" "}
-                            <span
-                              className={`font-semibold ${
-                                status.night_mode.enabled
-                                  ? "text-yellow-400"
-                                  : "text-green-400"
-                              }`}
-                            >
-                              {status.night_mode.enabled
-                                ? "⚠ Enabled"
-                                : "✓ Disabled"}
-                            </span>
-                          </div>
-                          {status.night_mode.message && (
-                            <div className="text-xs text-gray-500">
-                              {status.night_mode.message}
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-gray-400">
-                        Not supported on this platform
-                      </div>
-                    )}
-                  </div>
+              {/* Night Mode */}
+              <div
+                className="px-4 py-4"
+                style={{ backgroundColor: "rgba(255,255,255,0.03)" }}
+              >
+                <div
+                  className="text-xs mb-3 tracking-widest uppercase"
+                  style={{ color: "rgba(255,255,255,0.25)" }}
+                >
+                  Night Mode
                 </div>
-                <div className="mt-4 bg-gray-700 rounded p-3 text-sm">
-                  <div className="font-semibold mb-1">Recommendation:</div>
-                  <div className="text-gray-300 mb-3">
-                    Night mode should be disabled for accurate color display.
-                    <br />
-                    <span className="text-gray-400 text-xs">
-                      {status.platform === "Windows" &&
-                        "Settings → Display → Night light"}
-                      {status.platform === "Darwin" &&
-                        "System Preferences → Displays → Night Shift"}
-                      {status.platform === "Linux" && "Disable Redshift/f.lux"}
-                    </span>
-                  </div>
-                  {status.night_mode.supported && (
+                {status.night_mode.supported ? (
+                  <>
+                    <div className="flex items-center gap-4 mb-3">
+                      <span
+                        className="text-sm"
+                        style={{
+                          color: status.night_mode.enabled
+                            ? "rgba(255,200,100,0.8)"
+                            : "rgba(255,255,255,0.5)",
+                        }}
+                      >
+                        {status.night_mode.enabled ? "Enabled" : "Disabled"}
+                      </span>
+                    </div>
+                    <div
+                      className="text-xs mb-4"
+                      style={{ color: "rgba(255,255,255,0.3)" }}
+                    >
+                      Disable for accurate color display.&nbsp;
+                      {status.platform === "windows" &&
+                        "Settings > Display > Night light"}
+                      {status.platform === "macos" &&
+                        "System Preferences > Displays > Night Shift"}
+                      {status.platform === "linux" &&
+                        "Disable Redshift / f.lux"}
+                    </div>
                     <div className="flex gap-2">
                       <button
                         onClick={handleNightModeDisable}
                         disabled={actionLoading || !status.night_mode.enabled}
-                        className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
+                        style={
                           actionLoading || !status.night_mode.enabled
-                            ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                            : "bg-blue-600 hover:bg-blue-700 text-white"
-                        }`}
+                            ? flatBtnDisabled
+                            : flatBtnBase
+                        }
+                        onMouseEnter={(e) => {
+                          if (!actionLoading && status.night_mode.enabled)
+                            e.currentTarget.style.backgroundColor =
+                              "rgba(255,255,255,0.07)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "transparent";
+                        }}
                       >
                         {actionLoading ? "Working..." : "Disable Night Mode"}
                       </button>
                     </div>
-                  )}
-                </div>
+                  </>
+                ) : (
+                  <div
+                    className="text-sm"
+                    style={{ color: "rgba(255,255,255,0.3)" }}
+                  >
+                    Not supported on this platform
+                  </div>
+                )}
               </div>
 
               {/* HDR (Windows only) */}
               {status.hdr.supported && (
-                <div className="bg-gray-800 rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">
-                        🎨 HDR (High Dynamic Range)
-                      </h3>
-                      <div className="space-y-1">
-                        <div>
-                          Status:{" "}
-                          <span
-                            className={`font-semibold ${
-                              status.hdr.enabled
-                                ? "text-yellow-400"
-                                : "text-green-400"
-                            }`}
-                          >
-                            {status.hdr.enabled ? "⚠ Enabled" : "✓ Disabled"}
-                          </span>
-                        </div>
-                        {status.hdr.message && (
-                          <div className="text-xs text-gray-500">
-                            {status.hdr.message}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                <div
+                  className="px-4 py-4"
+                  style={{ backgroundColor: "rgba(255,255,255,0.03)" }}
+                >
+                  <div
+                    className="text-xs mb-3 tracking-widest uppercase"
+                    style={{ color: "rgba(255,255,255,0.25)" }}
+                  >
+                    HDR
                   </div>
-                  <div className="mt-4 bg-gray-700 rounded p-3 text-sm">
-                    <div className="font-semibold mb-1">Recommendation:</div>
-                    <div className="text-gray-300">
-                      HDR should be disabled for SDR test patterns.
-                      <br />
-                      <span className="text-gray-400 text-xs">
-                        Settings → Display → Use HDR → Off
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-4 mb-2">
+                    <span
+                      className="text-sm"
+                      style={{
+                        color: status.hdr.enabled
+                          ? "rgba(255,200,100,0.8)"
+                          : "rgba(255,255,255,0.5)",
+                      }}
+                    >
+                      {status.hdr.enabled ? "Enabled" : "Disabled"}
+                    </span>
+                  </div>
+                  <div
+                    className="text-xs"
+                    style={{ color: "rgba(255,255,255,0.3)" }}
+                  >
+                    {
+                      "Disable for SDR test patterns. Settings > Display > Use HDR > Off"
+                    }
                   </div>
                 </div>
               )}
 
-              {/* Additional Guidance (Read-only) */}
-              <div className="bg-gray-800 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-3">
-                  ℹ️ Additional Settings (Manual Configuration Required)
-                </h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-start gap-2">
-                    <span className="text-gray-400 mt-1">•</span>
-                    <div>
-                      <span className="font-semibold">Display Brightness:</span>{" "}
-                      Set to 100% for consistent results
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-gray-400 mt-1">•</span>
-                    <div>
-                      <span className="font-semibold">Color Temperature:</span>{" "}
-                      Set to 6500K (D65) if available
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-gray-400 mt-1">•</span>
-                    <div>
-                      <span className="font-semibold">Picture Mode:</span> Use
-                      sRGB or Standard mode if available
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-gray-400 mt-1">•</span>
-                    <div>
-                      <span className="font-semibold">Contrast:</span> Set to
-                      default/standard value
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-gray-400 mt-1">•</span>
-                    <div>
-                      <span className="font-semibold">GPU Color Settings:</span>{" "}
-                      Check {status.gpu.vendor} Control Panel for any LUT or
-                      color filters
-                    </div>
+              {/* Additional Guidance */}
+              <div
+                className="px-4 py-4"
+                style={{ backgroundColor: "rgba(255,255,255,0.03)" }}
+              >
+                <div
+                  className="text-xs mb-3 tracking-widest uppercase"
+                  style={{ color: "rgba(255,255,255,0.25)" }}
+                >
+                  Manual Settings
+                </div>
+                <div
+                  className="space-y-2 text-xs"
+                  style={{ color: "rgba(255,255,255,0.4)" }}
+                >
+                  <div>Brightness — 100%</div>
+                  <div>Color Temperature — 6500K (D65)</div>
+                  <div>Picture Mode — sRGB or Standard</div>
+                  <div>Contrast — default</div>
+                  <div>
+                    GPU Color Settings — check {status.gpu.vendor} Control Panel
+                    for LUT / color filters
                   </div>
                 </div>
               </div>

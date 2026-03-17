@@ -297,12 +297,14 @@ xsg --screensaver --random --duration 5000
 ## 🚀 実装の優先順位
 
 ### v1.0（全OS共通）
+
 1. ✅ **コマンドライン基盤** - 全OSで動作
 2. ✅ **プレイリスト** - `--playlist`
 3. ✅ **ランダム生成** - `--random`
 4. ✅ **URL直接表示** - `--url`
 
 ### v1.1（OS固有ラッパー）
+
 5. ✅ **Windows .scr** - `/s`, `/c`, `/p` 引数
 6. ✅ **Linux XScreenSaver** - `-root` 引数
 7. ⚠️ **macOS .saver** - ラッパー（オプション）
@@ -410,6 +412,7 @@ xsg --url https://company.com/dashboard --fullscreen --readonly
 ## ✅ まとめ
 
 **設計方針:**
+
 1. ✅ **コマンドライン基盤** - 全OSで共通
 2. ✅ **OS固有ラッパー** - 必要最小限
 
@@ -422,6 +425,7 @@ xsg --url https://company.com/dashboard --fullscreen --readonly
 | **macOS** | `.saver`ラッパー | ⚠️ オプション |
 
 **メリット:**
+
 - ✅ **シンプル** - コマンドラインが基盤
 - ✅ **柔軟** - OS固有の制約なし
 - ✅ **保守性** - 共通コードベース

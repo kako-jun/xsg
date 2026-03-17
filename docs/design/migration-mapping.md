@@ -12,80 +12,80 @@
 
 ## 1. Background Types（6種類）
 
-| # | 移植元 | 新スキーマ | 備考 |
-|---|--------|-----------|------|
-| 1 | `Solid` | `preset: solid` | 単色塗りつぶし |
-| 2 | `Crosshatch` | `preset: crosshatch` | クロスハッチ（格子） |
-| 3 | `Mesh` | `preset: checker` | メッシュ（市松模様） |
-| 4 | `Grayscale` | `preset: grayscale` | グレースケール（段階） |
-| 5 | `RepeatCropImage` | `preset: repeatCropImage` | 画像の繰り返しクロップ |
-| 6 | `Image` | `preset: image` | 画像表示 |
+| #   | 移植元            | 新スキーマ                | 備考                   |
+| --- | ----------------- | ------------------------- | ---------------------- |
+| 1   | `Solid`           | `preset: solid`           | 単色塗りつぶし         |
+| 2   | `Crosshatch`      | `preset: crosshatch`      | クロスハッチ（格子）   |
+| 3   | `Mesh`            | `preset: checker`         | メッシュ（市松模様）   |
+| 4   | `Grayscale`       | `preset: grayscale`       | グレースケール（段階） |
+| 5   | `RepeatCropImage` | `preset: repeatCropImage` | 画像の繰り返しクロップ |
+| 6   | `Image`           | `preset: image`           | 画像表示               |
 
 ---
 
 ## 2. Foreground Types（5種類）
 
-| # | 移植元 | 新スキーマ | 備考 |
-|---|--------|-----------|------|
-| 1 | `Dot` | `type: circle` | ドット（画素欠け）、diameter=1 |
-| 2 | `Line` | `type: line` | ライン |
-| 3 | `Window` | `type: rect` + `animation` | 移動する矩形 |
-| 4 | `Image` | `type: image` | 画像表示 |
-| 5 | `Crosshatch` | `type: preset, preset: crosshatch` | クロスハッチ（前景） |
+| #   | 移植元       | 新スキーマ                         | 備考                           |
+| --- | ------------ | ---------------------------------- | ------------------------------ |
+| 1   | `Dot`        | `type: circle`                     | ドット（画素欠け）、diameter=1 |
+| 2   | `Line`       | `type: line`                       | ライン                         |
+| 3   | `Window`     | `type: rect` + `animation`         | 移動する矩形                   |
+| 4   | `Image`      | `type: image`                      | 画像表示                       |
+| 5   | `Crosshatch` | `type: preset, preset: crosshatch` | クロスハッチ（前景）           |
 
 ---
 
 ## 3. 共通プロパティ（4個）
 
-| # | 移植元 | 新スキーマ | 変換関数 | 例 |
-|---|--------|-----------|---------|-----|
-| 1 | `rgb_string` | `fill` | `rgb_to_hex()` | "RGB(255,0,0)" → "#FF0000" |
-| 2 | `alpha` | `opacity` | そのまま | 0.5 → 0.5 |
-| 3 | `rotate` | `rotate` | そのまま | 45 → 45 |
-| 4 | `blur_radius` | `blur` | そのまま | 5 → 5 |
+| #   | 移植元        | 新スキーマ | 変換関数       | 例                         |
+| --- | ------------- | ---------- | -------------- | -------------------------- |
+| 1   | `rgb_string`  | `fill`     | `rgb_to_hex()` | "RGB(255,0,0)" → "#FF0000" |
+| 2   | `alpha`       | `opacity`  | そのまま       | 0.5 → 0.5                  |
+| 3   | `rotate`      | `rotate`   | そのまま       | 45 → 45                    |
+| 4   | `blur_radius` | `blur`     | そのまま       | 5 → 5                      |
 
 ---
 
 ## 4. Foreground専用プロパティ（10個）
 
-| # | 移植元 | 新スキーマ | 変換関数 | 例 |
-|---|--------|-----------|---------|-----|
-| 1 | `blink_interval` | `blink` | そのまま | 500 → 500 |
-| 2 | `line_direction` | `direction` | `"h"→"horizontal"`, `"v"→"vertical"` | "h" → "horizontal" |
-| 3 | `line_length` | `length` | そのまま | 500 → 500 |
-| 4 | `line_width` | `strokeWidth` | そのまま | 3 → 3 |
-| 5 | `window_width` | `width` | そのまま | 100 → 100 |
-| 6 | `window_height` | `height` | そのまま | 100 → 100 |
-| 7 | `window_speed` | `animation.duration` | `calc_duration()` | 100px/s → duration: 19200ms |
-| 8 | `image_id` | `src` | `resolve_image_path()` | "fg/crosstalk" → "./images/fg/crosstalk.png" |
-| 9 | `image_scale` | `scale` | そのまま | 1.5 → 1.5 |
-| 10 | `image_stretch` | `fit` | `"fill"→"fill"`, `"none"→"contain"` | "fill" → "fill" |
+| #   | 移植元           | 新スキーマ           | 変換関数                             | 例                                           |
+| --- | ---------------- | -------------------- | ------------------------------------ | -------------------------------------------- |
+| 1   | `blink_interval` | `blink`              | そのまま                             | 500 → 500                                    |
+| 2   | `line_direction` | `direction`          | `"h"→"horizontal"`, `"v"→"vertical"` | "h" → "horizontal"                           |
+| 3   | `line_length`    | `length`             | そのまま                             | 500 → 500                                    |
+| 4   | `line_width`     | `strokeWidth`        | そのまま                             | 3 → 3                                        |
+| 5   | `window_width`   | `width`              | そのまま                             | 100 → 100                                    |
+| 6   | `window_height`  | `height`             | そのまま                             | 100 → 100                                    |
+| 7   | `window_speed`   | `animation.duration` | `calc_duration()`                    | 100px/s → duration: 19200ms                  |
+| 8   | `image_id`       | `src`                | `resolve_image_path()`               | "fg/crosstalk" → "./images/fg/crosstalk.png" |
+| 9   | `image_scale`    | `scale`              | そのまま                             | 1.5 → 1.5                                    |
+| 10  | `image_stretch`  | `fit`                | `"fill"→"fill"`, `"none"→"contain"`  | "fill" → "fill"                              |
 
 ---
 
 ## 5. Background専用プロパティ（8個）
 
-| # | 移植元 | 新スキーマ | 変換関数 | 例 |
-|---|--------|-----------|---------|-----|
-| 1 | `rect_width` | `params.width` | そのまま | 50 → 50 |
-| 2 | `rect_height` | `params.height` | そのまま | 50 → 50 |
-| 3 | `rgb_string2` | `params.color2` | `rgb_to_hex()` | "RGB(255,255,255)" → "#FFFFFF" |
-| 4 | `step_num` | `params.steps` | そのまま | 16 → 16 |
-| 5 | `grayscale_direction` | `params.direction` | `"h"→"horizontal"`, `"v"→"vertical"` | "h" → "horizontal" |
-| 6 | `grayscale_inverse` | `params.reverse` | そのまま | false → false |
-| 7 | `flat_step_ids` | `params.flatSteps` | そのまま（配列） | [0, 15] → [0, 15] |
-| 8 | `inverted_step_ids` | `params.invertedSteps` | そのまま（配列） | [7, 8] → [7, 8] |
+| #   | 移植元                | 新スキーマ             | 変換関数                             | 例                             |
+| --- | --------------------- | ---------------------- | ------------------------------------ | ------------------------------ |
+| 1   | `rect_width`          | `params.width`         | そのまま                             | 50 → 50                        |
+| 2   | `rect_height`         | `params.height`        | そのまま                             | 50 → 50                        |
+| 3   | `rgb_string2`         | `params.color2`        | `rgb_to_hex()`                       | "RGB(255,255,255)" → "#FFFFFF" |
+| 4   | `step_num`            | `params.steps`         | そのまま                             | 16 → 16                        |
+| 5   | `grayscale_direction` | `params.direction`     | `"h"→"horizontal"`, `"v"→"vertical"` | "h" → "horizontal"             |
+| 6   | `grayscale_inverse`   | `params.reverse`       | そのまま                             | false → false                  |
+| 7   | `flat_step_ids`       | `params.flatSteps`     | そのまま（配列）                     | [0, 15] → [0, 15]              |
+| 8   | `inverted_step_ids`   | `params.invertedSteps` | そのまま（配列）                     | [7, 8] → [7, 8]                |
 
 ---
 
 ## 6. 座標指定（特殊変換）
 
-| 移植元 | 新スキーマ | 変換関数 | 例 |
-|--------|-----------|---------|-----|
-| `"100"` | `100` | `parse_int()` | "100" → 100 |
-| `"50p"` | `"50%"` | `replace("p", "%")` | "50p" → "50%" |
-| `"50pplus10"` | `"calc(50% + 10px)"` | `parse_calc()` | "50pplus10" → "calc(50% + 10px)" |
-| `"50pminus10"` | `"calc(50% - 10px)"` | `parse_calc()` | "50pminus10" → "calc(50% - 10px)" |
+| 移植元         | 新スキーマ           | 変換関数            | 例                                |
+| -------------- | -------------------- | ------------------- | --------------------------------- |
+| `"100"`        | `100`                | `parse_int()`       | "100" → 100                       |
+| `"50p"`        | `"50%"`              | `replace("p", "%")` | "50p" → "50%"                     |
+| `"50pplus10"`  | `"calc(50% + 10px)"` | `parse_calc()`      | "50pplus10" → "calc(50% + 10px)"  |
+| `"50pminus10"` | `"calc(50% - 10px)"` | `parse_calc()`      | "50pminus10" → "calc(50% - 10px)" |
 
 ---
 
@@ -291,6 +291,7 @@ nodes:
 ## 9. 検証チェックリスト
 
 ### Background Types
+
 - [x] Solid
 - [x] Crosshatch
 - [x] Mesh
@@ -299,6 +300,7 @@ nodes:
 - [x] Image
 
 ### Foreground Types
+
 - [x] Dot
 - [x] Line
 - [x] Window
@@ -306,12 +308,14 @@ nodes:
 - [x] Crosshatch
 
 ### 共通プロパティ
+
 - [x] rgb_string
 - [x] alpha
 - [x] rotate
 - [x] blur_radius
 
 ### Foreground専用
+
 - [x] blink_interval
 - [x] line_direction
 - [x] line_length
@@ -324,6 +328,7 @@ nodes:
 - [x] image_stretch
 
 ### Background専用
+
 - [x] rect_width
 - [x] rect_height
 - [x] rgb_string2
@@ -334,6 +339,7 @@ nodes:
 - [x] inverted_step_ids
 
 ### 座標指定
+
 - [x] 絶対値（"100"）
 - [x] パーセント（"50p"）
 - [x] 加算（"50pplus10"）

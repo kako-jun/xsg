@@ -5,6 +5,7 @@
 **「組み込みプリセットはない。全てがプラグインである。」**
 
 これはVSCode、Neovim、Emacsなどの設計哲学と同じです：
+
 - VSCode: 組み込み機能もextensionとして実装
 - Neovim: 組み込み機能もプラグインとして実装
 - Emacs: 組み込み機能もパッケージとして実装
@@ -31,6 +32,7 @@ xsg/
 ```
 
 **重要:**
+
 - ❌ 「組み込み」と「カスタム」の区別はない
 - ✅ 全てのプリセットは `presets/` に配置される
 - ✅ リポジトリに含まれているか否かの違いだけ
@@ -172,6 +174,7 @@ presets/
 ```
 
 **ユーザーは自由に:**
+
 - ✅ 削除できる（不要なプリセットを削除）
 - ✅ 編集できる（標準プリセットを改造）
 - ✅ 追加できる（独自プリセットを追加）
@@ -191,7 +194,7 @@ canvas:
 nodes:
   # 「標準」プリセット（リポジトリに含まれる）
   - type: background
-    preset: checker       # presets/checker.tsx
+    preset: checker # presets/checker.tsx
     params:
       size: 50
       color1: "#000000"
@@ -199,16 +202,17 @@ nodes:
 
   # ユーザーのカスタムプリセット
   - type: preset
-    preset: company-logo  # presets/company-logo.tsx
+    preset: company-logo # presets/company-logo.tsx
     params:
       scale: 1.5
 
   # 別のカスタムプリセット
   - type: preset
-    preset: my-custom     # presets/my-custom.tsx
+    preset: my-custom # presets/my-custom.tsx
 ```
 
 **重要: 実装側は区別しない**
+
 - `checker` も `company-logo` も同じ仕組みでロード
 - APIも同じ（`/api/presets` で全て返す）
 
@@ -245,6 +249,7 @@ presets/
 ```
 
 **変更点:**
+
 1. ファイルの配置場所が変わるだけ
 2. 実装は基本的に変更不要（Props型を統一）
 3. `preset` として使えるようになる
@@ -338,6 +343,7 @@ GET /api/presets
 ```
 
 **レスポンス:**
+
 ```json
 {
   "presets": [
@@ -373,18 +379,22 @@ GET /api/presets
 ## 🎯 メリット
 
 ### 1. シンプル
+
 - ❌ 「組み込み」「カスタム」の区別なし
 - ✅ 全て同じ仕組み
 
 ### 2. 拡張性
+
 - ✅ ユーザーは自由にプリセットを追加
 - ✅ 標準プリセットも編集・削除可能
 
 ### 3. 一貫性
+
 - ✅ 全てのプリセットが同じ規約に従う
 - ✅ ドキュメントがシンプル
 
 ### 4. 透明性
+
 - ✅ 標準プリセットのソースが見える
 - ✅ カスタマイズしやすい
 
@@ -449,7 +459,7 @@ canvas:
 
 nodes:
   - type: background
-    preset: colorbar  # presets/ColorBar.tsx → presets/colorbar.tsx
+    preset: colorbar # presets/ColorBar.tsx → presets/colorbar.tsx
 ```
 
 ```bash
@@ -463,16 +473,17 @@ uv run python -m app.main --file patterns/colorbar.yaml
 
 **「組み込みプリセットはない。全てがプラグインである。」**
 
-| 項目 | 設計 |
-|------|------|
-| プリセットの配置 | `presets/` ディレクトリ |
-| 標準 vs カスタム | **区別しない** |
-| 実装の規約 | React Component、default export |
-| 自動検出 | ファイル名 = プリセット名 |
-| Hot Reload | ✅ 対応 |
-| メタデータ | `export const metadata`（オプション） |
+| 項目             | 設計                                  |
+| ---------------- | ------------------------------------- |
+| プリセットの配置 | `presets/` ディレクトリ               |
+| 標準 vs カスタム | **区別しない**                        |
+| 実装の規約       | React Component、default export       |
+| 自動検出         | ファイル名 = プリセット名             |
+| Hot Reload       | ✅ 対応                               |
+| メタデータ       | `export const metadata`（オプション） |
 
 **利点:**
+
 1. ✅ シンプル（区別がない）
 2. ✅ 拡張性（自由に追加・編集・削除）
 3. ✅ 透明性（全てのソースが見える）
