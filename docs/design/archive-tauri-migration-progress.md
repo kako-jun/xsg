@@ -379,7 +379,7 @@ Phase 6 (パッケージング)   ░░░░░░░░░░░░░░░�
 
 ## 📚 リソース
 
-- 移行計画: `.claude/docs/tauri-migration-plan.md`
+- 移行計画: `docs/design/archive-tauri-migration-plan.md`
 - Tauri公式: https://tauri.app/
 - Rust Book: https://doc.rust-jp.rs/book-ja/
 

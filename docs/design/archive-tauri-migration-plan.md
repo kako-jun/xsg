@@ -1068,7 +1068,7 @@ Week 6:    テスト・ドキュメント
 
 **質問・相談:**
 
-- このドキュメントは `.claude/docs/tauri-migration-plan.md` に保存されています
+- このドキュメントは `docs/design/archive-tauri-migration-plan.md` に保存されています
 - 各フェーズの詳細な実装手順は、移行開始時に別途作成します
 
 ---

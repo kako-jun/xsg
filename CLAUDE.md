@@ -1445,15 +1445,14 @@ Canvas 2D APIの命令的な記述をそのまま使うのではなく、**SVG�
 
 ### 詳細ドキュメント
 
-**設計の詳細は [design-summary.md](./.claude/docs/design-summary.md) を参照してください。**
+**設計の詳細は各 `docs/design/` 配下のドキュメントを参照してください。**
 
 作成された設計ドキュメント（15ファイル）:
 
-- コアスキーマ: `schema-complete.yaml`, `schema-final.yaml`, `schema.d.ts`, [migration-mapping.md](./.claude/docs/migration-mapping.md)
-- 完全性・直交性: [orthogonality-check.md](./.claude/docs/orthogonality-check.md), [orthogonality-improvements.md](./.claude/docs/orthogonality-improvements.md)
-- 拡張性: [extensibility-design.md](./.claude/docs/extensibility-design.md), [preset-system.md](./.claude/docs/preset-system.md), [path-resolution.md](./.claude/docs/path-resolution.md)
-- 新機能: [screensaver-playlist.md](./.claude/docs/screensaver-playlist.md), [web-rendering.md](./.claude/docs/web-rendering.md), [cross-platform-screensaver.md](./.claude/docs/cross-platform-screensaver.md), [playlist-design.md](./.claude/docs/playlist-design.md)
-- サマリー: [design-summary.md](./.claude/docs/design-summary.md)
+- コアスキーマ: `schema-complete.yaml`, `schema-final.yaml`, `schema.d.ts`, [migration-mapping.md](./docs/design/migration-mapping.md)
+- 完全性・直交性: [schema-orthogonality.md](./docs/design/schema-orthogonality.md), [schema-improvements.md](./docs/design/schema-improvements.md)
+- 拡張性: [extensibility.md](./docs/design/extensibility.md), [preset-system.md](./docs/design/preset-system.md), [path-resolution.md](./docs/design/path-resolution.md)
+- 新機能: [screensaver-playlist.md](./docs/design/screensaver-playlist.md), [web-rendering.md](./docs/design/web-rendering.md), [screensaver-cross-platform.md](./docs/design/screensaver-cross-platform.md), [playlist-design.md](./docs/design/playlist-design.md)
 
 ### 実装ロードマップ
 
@@ -1500,7 +1499,7 @@ Canvas 2D APIの命令的な記述をそのまま使うのではなく、**SVG�
   - コマンドライン引数パース（`backend/app/screensaver.py`）
   - Windows/Linux/macOS対応
   - プレビューモード・設定画面
-  - インストールガイド（[screensaver-install.md](./.claude/docs/screensaver-install.md)）
+  - インストールガイド（[screensaver-install.md](./docs/design/screensaver-install.md)）
 - [x] Windows .scr ビルドスクリプト（作成済み、.scr生成確認必要）
 - [x] Linux パッケージング（作成済み）
 - [x] macOS .appバンドル（作成済み）
@@ -1522,7 +1521,7 @@ Canvas 2D APIの命令的な記述をそのまま使うのではなく、**SVG�
      - 他すべてを `/presets/` へ移動
 
 2. **Webレンダリングモード未実装** ❌
-   - **状況**: [web-rendering.md](./.claude/docs/web-rendering.md) で詳細設計されているが実装なし
+   - **状況**: [web-rendering.md](./docs/design/web-rendering.md) で詳細設計されているが実装なし
    - **未実装機能**:
      - `--url` コマンドライン引数
      - readonly mode（JavaScript注入によるインタラクション無効化）
