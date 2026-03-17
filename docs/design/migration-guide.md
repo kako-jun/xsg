@@ -30,7 +30,7 @@ uv run python migrate.py --directory ../legacy_patterns/ --dry-run
 
 マイグレーションツールは、旧形式の**全37項目**を新形式に変換します。
 
-詳細な変換マッピングは [MIGRATION_MAPPING.md](./MIGRATION_MAPPING.md) を参照してください。
+詳細な変換マッピングは [migration-mapping.md](./migration-mapping.md) を参照してください。
 
 ### Background変換
 
@@ -281,9 +281,7 @@ ajv validate -s ../xsg-pattern.schema.json -d output.yaml
 
 ## 参考資料
 
-- [MIGRATION_MAPPING.md](./MIGRATION_MAPPING.md) - 完全な変換マッピング表
-- [DESIGN_SUMMARY.md](./DESIGN_SUMMARY.md) - 新形式の仕様
-- [patterns/README.md](./patterns/README.md) - パターンファイルの書き方
+- [migration-mapping.md](./migration-mapping.md) - 完全な変換マッピング表
 
 ## サポート
 

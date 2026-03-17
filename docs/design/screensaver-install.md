@@ -338,6 +338,4 @@ xsg --screensaver --playlist screensaver.yaml --display left
 
 ## 参考リンク
 
-- [CROSS_PLATFORM_SCREENSAVER.md](./CROSS_PLATFORM_SCREENSAVER.md) - 設計詳細
-- [playlists/README.md](./playlists/README.md) - プレイリスト作成
-- [DESIGN_SUMMARY.md](./DESIGN_SUMMARY.md) - 全体設計
+- [screensaver-cross-platform.md](./screensaver-cross-platform.md) - 設計詳細
