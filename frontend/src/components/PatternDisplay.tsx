@@ -82,9 +82,9 @@ export default function PatternDisplay({ pattern }: PatternDisplayProps) {
           }
         });
 
-        // Use Tauri invoke instead of fetch
-        const { invoke } = await import("@tauri-apps/api/core");
-        const data = (await invoke("get_pattern", {
+        // Use safeInvoke for Tauri/web compatibility
+        const { safeInvoke } = await import("../lib/tauriCompat");
+        const data = (await safeInvoke("get_pattern", {
           patternId,
           params,
         })) as XSGPattern;

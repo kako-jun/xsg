@@ -15,7 +15,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { safeInvoke } from "../lib/tauriCompat";
 
 interface GammaStatus {
   supported: boolean;
@@ -84,7 +84,9 @@ export default function CalibrationSettings() {
         setLoading(true);
         setError(null);
 
-        const data = await invoke<CalibrationStatus>("get_calibration_status");
+        const data = await safeInvoke<CalibrationStatus>(
+          "get_calibration_status"
+        );
         setStatus(data);
       } catch (err) {
         console.error("Failed to load calibration status:", err);
@@ -100,7 +102,9 @@ export default function CalibrationSettings() {
   // Reload status after control actions
   const reloadStatus = async () => {
     try {
-      const data = await invoke<CalibrationStatus>("get_calibration_status");
+      const data = await safeInvoke<CalibrationStatus>(
+        "get_calibration_status"
+      );
       setStatus(data);
     } catch (err) {
       console.error("Failed to reload status:", err);
@@ -113,7 +117,7 @@ export default function CalibrationSettings() {
     setActionMessage(null);
 
     try {
-      const result = await invoke<{ success: boolean; message: string }>(
+      const result = await safeInvoke<{ success: boolean; message: string }>(
         "reset_gamma"
       );
 
@@ -137,7 +141,7 @@ export default function CalibrationSettings() {
     setActionMessage(null);
 
     try {
-      const result = await invoke<{ success: boolean; message: string }>(
+      const result = await safeInvoke<{ success: boolean; message: string }>(
         "restore_gamma"
       );
 
@@ -161,7 +165,7 @@ export default function CalibrationSettings() {
     setActionMessage(null);
 
     try {
-      const result = await invoke<{ success: boolean; message: string }>(
+      const result = await safeInvoke<{ success: boolean; message: string }>(
         "disable_night_mode"
       );
 

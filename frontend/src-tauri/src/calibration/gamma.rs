@@ -1,5 +1,5 @@
 use super::types::{GammaStatus, ControlResult};
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "linux")]
 use std::process::Command;
 use std::sync::Mutex;
 
@@ -75,7 +75,14 @@ pub fn restore_gamma() -> ControlResult {
     }
 
     #[cfg(target_os = "macos")]
-    return ControlResult::failure("macOS gamma restore not yet implemented");
+    {
+        let saved = SAVED_GAMMA.lock().unwrap();
+        if let Some(SavedGamma::MacOS(gamma)) = *saved {
+            drop(saved);
+            return set_gamma(gamma);
+        }
+        return ControlResult::failure("No saved gamma to restore");
+    }
 
     #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
     return ControlResult::failure("Gamma restore not supported on this platform");
@@ -323,23 +330,112 @@ fn set_gamma_linux(gamma: f32) -> ControlResult {
 }
 
 // ============================================================================
-// macOS Implementation
+// macOS Implementation (CoreGraphics)
 // ============================================================================
 
 #[cfg(target_os = "macos")]
 fn detect_gamma_macos() -> GammaStatus {
-    // TODO: Implement using CoreGraphics
-    GammaStatus {
-        supported: true,
-        current_value: None,
-        saved_value: None,
-        is_default: true,
-        message: "macOS gamma detection not yet implemented".to_string(),
+    use core_graphics::display::CGDisplay;
+
+    extern "C" {
+        fn CGGetDisplayTransferByFormula(
+            display: u32,
+            red_min: *mut f32,
+            red_max: *mut f32,
+            red_gamma: *mut f32,
+            green_min: *mut f32,
+            green_max: *mut f32,
+            green_gamma: *mut f32,
+            blue_min: *mut f32,
+            blue_max: *mut f32,
+            blue_gamma: *mut f32,
+        ) -> i32;
+    }
+
+    let display_id = CGDisplay::main().id;
+    let mut red_min: f32 = 0.0;
+    let mut red_max: f32 = 0.0;
+    let mut red_gamma: f32 = 0.0;
+    let mut green_min: f32 = 0.0;
+    let mut green_max: f32 = 0.0;
+    let mut green_gamma: f32 = 0.0;
+    let mut blue_min: f32 = 0.0;
+    let mut blue_max: f32 = 0.0;
+    let mut blue_gamma: f32 = 0.0;
+
+    let result = unsafe {
+        CGGetDisplayTransferByFormula(
+            display_id,
+            &mut red_min, &mut red_max, &mut red_gamma,
+            &mut green_min, &mut green_max, &mut green_gamma,
+            &mut blue_min, &mut blue_max, &mut blue_gamma,
+        )
+    };
+
+    if result == 0 {
+        // Use average of RGB gamma values
+        let avg_gamma = (red_gamma + green_gamma + blue_gamma) / 3.0;
+        let is_default = (avg_gamma - 1.0).abs() < 0.05;
+
+        GammaStatus {
+            supported: true,
+            current_value: Some(avg_gamma),
+            saved_value: None,
+            is_default,
+            message: "OK".to_string(),
+        }
+    } else {
+        GammaStatus::error("CGGetDisplayTransferByFormula failed")
     }
 }
 
 #[cfg(target_os = "macos")]
-fn set_gamma_macos(_gamma: f32) -> ControlResult {
-    // TODO: Implement using CoreGraphics CGSetDisplayTransferByTable
-    ControlResult::failure("macOS gamma control not yet implemented")
+fn set_gamma_macos(gamma: f32) -> ControlResult {
+    use core_graphics::display::CGDisplay;
+
+    // Save current gamma before changing (if not already saved)
+    {
+        let mut saved = SAVED_GAMMA.lock().unwrap();
+        if saved.is_none() {
+            let current = detect_gamma_macos();
+            if let Some(current_value) = current.current_value {
+                *saved = Some(SavedGamma::MacOS(current_value));
+            }
+        }
+    }
+
+    // CGSetDisplayTransferByFormula
+    extern "C" {
+        fn CGSetDisplayTransferByFormula(
+            display: u32,
+            red_min: f32,
+            red_max: f32,
+            red_gamma: f32,
+            green_min: f32,
+            green_max: f32,
+            green_gamma: f32,
+            blue_min: f32,
+            blue_max: f32,
+            blue_gamma: f32,
+        ) -> i32;
+    }
+
+    let display_id = CGDisplay::main().id;
+
+    // Set gamma using the formula: output = min + (max - min) * pow(input, gamma)
+    // For standard gamma correction: min=0.0, max=1.0, gamma=<value>
+    let result = unsafe {
+        CGSetDisplayTransferByFormula(
+            display_id,
+            0.0, 1.0, gamma,  // Red
+            0.0, 1.0, gamma,  // Green
+            0.0, 1.0, gamma,  // Blue
+        )
+    };
+
+    if result == 0 {
+        ControlResult::success(format!("Gamma set to {:.2}", gamma))
+    } else {
+        ControlResult::failure("CGSetDisplayTransferByFormula failed")
+    }
 }

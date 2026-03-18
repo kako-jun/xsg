@@ -79,9 +79,6 @@ fn load_playlist(path: String) -> Result<Playlist, String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run(pattern: String, display_spec: String, list_displays: bool) {
-    // Clone pattern for the single-instance handler
-    let pattern_clone = pattern.clone();
-
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(move |app, args, _cwd| {
             // This callback is triggered when a second instance is launched
@@ -91,7 +88,25 @@ pub fn run(pattern: String, display_spec: String, list_displays: bool) {
             if let Some(pattern_arg_idx) = args.iter().position(|arg| arg == "--pattern") {
                 if let Some(new_pattern) = args.get(pattern_arg_idx + 1) {
                     log::info!("Switching to pattern: {}", new_pattern);
-                    // TODO: Implement pattern switching via window.eval or state management
+
+                    // Switch pattern on all display windows by navigating to new URL
+                    for i in 0..8 {
+                        let window_label = format!("display-{}", i);
+                        if let Some(window) = app.get_webview_window(&window_label) {
+                            let url = if cfg!(debug_assertions) {
+                                format!("http://localhost:3000/?pattern={}", new_pattern)
+                            } else {
+                                format!("tauri://localhost/?pattern={}", new_pattern)
+                            };
+                            let js = format!(
+                                "window.location.href = '{}';",
+                                url.replace('\'', "\\'")
+                            );
+                            let _ = window.eval(&js);
+                        } else {
+                            break;
+                        }
+                    }
                 }
             }
 

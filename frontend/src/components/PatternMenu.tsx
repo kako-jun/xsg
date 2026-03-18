@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { safeInvoke } from "../lib/tauriCompat";
 
 interface PatternMenuItem {
   id: string;
@@ -20,7 +20,7 @@ export default function PatternMenu() {
   useEffect(() => {
     const loadPatterns = async () => {
       try {
-        const data = await invoke<PatternsResponse>("get_patterns");
+        const data = await safeInvoke<PatternsResponse>("get_patterns");
         setPatterns(data.patterns || []);
       } catch (error) {
         console.error("Failed to load patterns:", error);
