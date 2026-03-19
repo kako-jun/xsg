@@ -697,6 +697,13 @@ kako-jun
 
 ---
 
+## CI/CD
+
+- **CI**: `.github/workflows/ci.yml` — push/PR to main triggers `cargo fmt --check` / `cargo clippy` / `cargo check` + `npm run build` (`frontend/`)
+- **Release**: `.github/workflows/release.yml` — manual dispatch or tag `v*`, 3-OS matrix (macOS/Linux/Windows), tauri-action
+- **Deploy (web demo)**: `.github/workflows/deploy.yml` — GitHub Pages, `frontend/dist/`
+- **Pre-commit**: Husky + lint-staged (`eslint --fix` + `prettier`) + `cargo fmt` (`frontend/src-tauri/`)
+
 ## 移植元アプリ（pg）の調査
 
 XSGは pgアプリの機能を移植・改善したアプリケーションです。
