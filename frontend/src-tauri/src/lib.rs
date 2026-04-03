@@ -1,14 +1,14 @@
-mod patterns;
-mod pattern_loader;
-mod pattern_expander;
-mod displays;
 mod calibration;
+mod displays;
+mod pattern_expander;
+mod pattern_loader;
+mod patterns;
 mod playlist;
 
-use displays::{print_display_list, select_displays, DisplayInfo};
-use patterns::{load_patterns, PatternsResponse};
-use pattern_loader::load_pattern_with_params;
 use calibration::{CalibrationStatus, ControlResult};
+use displays::{print_display_list, select_displays, DisplayInfo};
+use pattern_loader::load_pattern_with_params;
+use patterns::{load_patterns, PatternsResponse};
 use playlist::{Playlist, PlaylistRunner};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -80,41 +80,46 @@ fn load_playlist(path: String) -> Result<Playlist, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run(pattern: String, display_spec: String, list_displays: bool) {
     tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(move |app, args, _cwd| {
-            // This callback is triggered when a second instance is launched
-            log::info!("Single instance: Another instance attempted to start with args: {:?}", args);
+        .plugin(tauri_plugin_single_instance::init(
+            move |app, args, _cwd| {
+                // This callback is triggered when a second instance is launched
+                log::info!(
+                    "Single instance: Another instance attempted to start with args: {:?}",
+                    args
+                );
 
-            // If args contain --pattern, switch to that pattern
-            if let Some(pattern_arg_idx) = args.iter().position(|arg| arg == "--pattern") {
-                if let Some(new_pattern) = args.get(pattern_arg_idx + 1) {
-                    log::info!("Switching to pattern: {}", new_pattern);
+                // If args contain --pattern, switch to that pattern
+                if let Some(pattern_arg_idx) = args.iter().position(|arg| arg == "--pattern") {
+                    if let Some(new_pattern) = args.get(pattern_arg_idx + 1) {
+                        log::info!("Switching to pattern: {}", new_pattern);
 
-                    // Switch pattern on all display windows by navigating to new URL
-                    for i in 0..8 {
-                        let window_label = format!("display-{}", i);
-                        if let Some(window) = app.get_webview_window(&window_label) {
-                            let url = if cfg!(debug_assertions) {
-                                format!("http://localhost:3000/?pattern={}", new_pattern)
+                        // Switch pattern on all display windows by navigating to new URL
+                        for i in 0..8 {
+                            let window_label = format!("display-{}", i);
+                            if let Some(window) = app.get_webview_window(&window_label) {
+                                let url = if cfg!(debug_assertions) {
+                                    format!("http://localhost:3000/?pattern={}", new_pattern)
+                                } else {
+                                    format!("tauri://localhost/?pattern={}", new_pattern)
+                                };
+                                let js = format!(
+                                    "window.location.href = '{}';",
+                                    url.replace('\'', "\\'")
+                                );
+                                let _ = window.eval(&js);
                             } else {
-                                format!("tauri://localhost/?pattern={}", new_pattern)
-                            };
-                            let js = format!(
-                                "window.location.href = '{}';",
-                                url.replace('\'', "\\'")
-                            );
-                            let _ = window.eval(&js);
-                        } else {
-                            break;
+                                break;
+                            }
                         }
                     }
                 }
-            }
 
-            // Bring existing windows to front
-            if let Some(window) = app.get_webview_window("display-0") {
-                let _ = window.set_focus();
-            }
-        }))
+                // Bring existing windows to front
+                if let Some(window) = app.get_webview_window("display-0") {
+                    let _ = window.set_focus();
+                }
+            },
+        ))
         .setup(move |app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(

@@ -93,7 +93,9 @@ fn load_pattern_info(path: &Path) -> Result<PatternInfo> {
         name_str.to_string()
     } else {
         // Default: convert pattern-id to Title Case
-        pattern_id.replace("-", " ").split_whitespace()
+        pattern_id
+            .replace("-", " ")
+            .split_whitespace()
             .map(|word| {
                 let mut chars = word.chars();
                 match chars.next() {

@@ -17,7 +17,9 @@ fn detect_hdr_windows() -> HDRStatus {
     use winreg::enums::*;
     use winreg::RegKey;
 
-    let _hkcu = match RegKey::predef(HKEY_CURRENT_USER).open_subkey("Software\\Microsoft\\Windows\\CurrentVersion\\Video\\Display") {
+    let _hkcu = match RegKey::predef(HKEY_CURRENT_USER)
+        .open_subkey("Software\\Microsoft\\Windows\\CurrentVersion\\Video\\Display")
+    {
         Ok(key) => key,
         Err(_) => {
             return HDRStatus {

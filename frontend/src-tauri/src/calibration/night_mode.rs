@@ -1,4 +1,4 @@
-use super::types::{NightModeStatus, ControlResult};
+use super::types::{ControlResult, NightModeStatus};
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 use std::process::Command;
 
@@ -51,7 +51,8 @@ fn detect_night_mode_windows() -> NightModeStatus {
                     // The "Data" value is binary; byte 18 or 23 indicates state
                     // This is a simplified check
                     let data = value.bytes;
-                    let enabled = data.len() > 23 && matches!(data[23], 0x15 | 0x13 | 0x10 | 0x01 | 0x02);
+                    let enabled =
+                        data.len() > 23 && matches!(data[23], 0x15 | 0x13 | 0x10 | 0x01 | 0x02);
 
                     NightModeStatus {
                         supported: true,
@@ -155,6 +156,6 @@ fn detect_night_mode_macos() -> NightModeStatus {
 fn disable_night_mode_macos() -> ControlResult {
     // TODO: Implement using CoreBrightness (unofficial API) or AppleScript
     ControlResult::failure(
-        "macOS Night Shift control not yet implemented. Disable manually in System Preferences."
+        "macOS Night Shift control not yet implemented. Disable manually in System Preferences.",
     )
 }

@@ -25,7 +25,8 @@ fn detect_gpu_windows() -> GPUStatus {
         Ok(output) if output.status.success() => {
             let stdout = String::from_utf8_lossy(&output.stdout).to_lowercase();
 
-            if stdout.contains("nvidia") || stdout.contains("geforce") || stdout.contains("quadro") {
+            if stdout.contains("nvidia") || stdout.contains("geforce") || stdout.contains("quadro")
+            {
                 GPUStatus {
                     vendor: "NVIDIA".to_string(),
                     message: "OK".to_string(),
@@ -106,7 +107,11 @@ fn detect_gpu_macos() -> GPUStatus {
                     vendor: "Intel".to_string(),
                     message: "OK".to_string(),
                 }
-            } else if stdout.contains("apple") || stdout.contains("m1") || stdout.contains("m2") || stdout.contains("m3") {
+            } else if stdout.contains("apple")
+                || stdout.contains("m1")
+                || stdout.contains("m2")
+                || stdout.contains("m3")
+            {
                 GPUStatus {
                     vendor: "Apple".to_string(),
                     message: "OK".to_string(),

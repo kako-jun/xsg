@@ -1,4 +1,4 @@
-use super::types::{GammaStatus, ControlResult};
+use super::types::{ControlResult, GammaStatus};
 #[cfg(target_os = "linux")]
 use std::process::Command;
 use std::sync::Mutex;
@@ -94,9 +94,9 @@ pub fn restore_gamma() -> ControlResult {
 
 #[cfg(target_os = "windows")]
 fn detect_gamma_windows() -> GammaStatus {
-    use winapi::um::wingdi::{GetDeviceGammaRamp};
-    use winapi::um::winuser::{GetDC, ReleaseDC};
     use std::ptr::null_mut;
+    use winapi::um::wingdi::GetDeviceGammaRamp;
+    use winapi::um::winuser::{GetDC, ReleaseDC};
 
     unsafe {
         let hdc = GetDC(null_mut());
@@ -149,9 +149,9 @@ fn detect_gamma_windows() -> GammaStatus {
 
 #[cfg(target_os = "windows")]
 fn set_gamma_windows(gamma: f32) -> ControlResult {
+    use std::ptr::null_mut;
     use winapi::um::wingdi::{GetDeviceGammaRamp, SetDeviceGammaRamp};
     use winapi::um::winuser::{GetDC, ReleaseDC};
-    use std::ptr::null_mut;
 
     unsafe {
         let hdc = GetDC(null_mut());
@@ -181,9 +181,9 @@ fn set_gamma_windows(gamma: f32) -> ControlResult {
             let value = (corrected * 65535.0) as u16;
 
             // Set all three channels (R, G, B) to same value
-            ramp[i] = value;          // Red
-            ramp[256 + i] = value;    // Green
-            ramp[512 + i] = value;    // Blue
+            ramp[i] = value; // Red
+            ramp[256 + i] = value; // Green
+            ramp[512 + i] = value; // Blue
         }
 
         // Apply gamma ramp
@@ -200,9 +200,9 @@ fn set_gamma_windows(gamma: f32) -> ControlResult {
 
 #[cfg(target_os = "windows")]
 fn restore_gamma_windows() -> ControlResult {
+    use std::ptr::null_mut;
     use winapi::um::wingdi::SetDeviceGammaRamp;
     use winapi::um::winuser::{GetDC, ReleaseDC};
-    use std::ptr::null_mut;
 
     let saved = SAVED_GAMMA.lock().unwrap();
 
@@ -366,9 +366,15 @@ fn detect_gamma_macos() -> GammaStatus {
     let result = unsafe {
         CGGetDisplayTransferByFormula(
             display_id,
-            &mut red_min, &mut red_max, &mut red_gamma,
-            &mut green_min, &mut green_max, &mut green_gamma,
-            &mut blue_min, &mut blue_max, &mut blue_gamma,
+            &mut red_min,
+            &mut red_max,
+            &mut red_gamma,
+            &mut green_min,
+            &mut green_max,
+            &mut green_gamma,
+            &mut blue_min,
+            &mut blue_max,
+            &mut blue_gamma,
         )
     };
 
@@ -426,10 +432,9 @@ fn set_gamma_macos(gamma: f32) -> ControlResult {
     // For standard gamma correction: min=0.0, max=1.0, gamma=<value>
     let result = unsafe {
         CGSetDisplayTransferByFormula(
-            display_id,
-            0.0, 1.0, gamma,  // Red
-            0.0, 1.0, gamma,  // Green
-            0.0, 1.0, gamma,  // Blue
+            display_id, 0.0, 1.0, gamma, // Red
+            0.0, 1.0, gamma, // Green
+            0.0, 1.0, gamma, // Blue
         )
     };
 

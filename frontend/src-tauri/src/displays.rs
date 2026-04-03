@@ -34,15 +34,15 @@ impl DisplayInfo {
 }
 
 /// Group displays by position (X or Y coordinate)
-pub fn group_displays_by_position(
-    displays: &[DisplayInfo],
-    axis: &str,
-) -> Vec<Vec<DisplayInfo>> {
+pub fn group_displays_by_position(displays: &[DisplayInfo], axis: &str) -> Vec<Vec<DisplayInfo>> {
     let mut groups: HashMap<i32, Vec<DisplayInfo>> = HashMap::new();
 
     for display in displays {
         let coord = if axis == "x" { display.x } else { display.y };
-        groups.entry(coord).or_insert_with(Vec::new).push(display.clone());
+        groups
+            .entry(coord)
+            .or_insert_with(Vec::new)
+            .push(display.clone());
     }
 
     // Sort groups by coordinate

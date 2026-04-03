@@ -103,8 +103,7 @@ impl PatternExpander {
                     Ok(Value::Number(int_val.into()))
                 } else if let Ok(float_val) = value.parse::<f64>() {
                     Ok(Value::Number(
-                        serde_json::Number::from_f64(float_val)
-                            .context("Invalid float value")?,
+                        serde_json::Number::from_f64(float_val).context("Invalid float value")?,
                     ))
                 } else {
                     Err(anyhow::anyhow!("Cannot parse '{}' as number", value))

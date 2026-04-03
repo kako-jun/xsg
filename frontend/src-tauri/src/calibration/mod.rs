@@ -12,11 +12,11 @@ Phase 2: Control functions
 - Night Mode: Disable
 */
 
-pub mod types;
 pub mod gamma;
-pub mod night_mode;
-pub mod hdr;
 pub mod gpu;
+pub mod hdr;
+pub mod night_mode;
+pub mod types;
 
 pub use types::*;
 
