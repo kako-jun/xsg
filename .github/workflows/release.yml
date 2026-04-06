@@ -72,6 +72,6 @@ jobs:
           tagName: ${{ github.event.inputs.version || github.ref_name }}
           releaseName: "XSG ${{ github.ref_name }}"
           releaseBody: "See the assets below to download and install XSG."
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
