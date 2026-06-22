@@ -1,5 +1,7 @@
 # XSG Migration Mapping - 完全対応表
 
+> 注: 対応表のうち `blink_interval → blink` と `Window`/`window_speed → animation` は **v1.1 予定で現行未実装**です。schema・型としてはマップ済みですが、現行レンダラー（`NodeRenderer`）は animation / blink を描画しません（変換結果は静的表示になります）。
+
 このドキュメントは、移植元（pg）の**全プロパティ**が新スキーマでカバーされていることを保証します。
 
 ## ✅ 完全性の保証

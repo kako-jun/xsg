@@ -1,5 +1,7 @@
 # Animation Example
 # Demonstrates: WAAPI animations with props syntax
+# ⚠️ このパターンは v1.1 予定の animation / blink を実演するもので、
+#    現行レンダラー（NodeRenderer）では点滅・移動せず静的表示になる。
 
 name: "Animation Example"
 category: "Examples"
