@@ -12,7 +12,7 @@
 
 import { useEffect, useState } from "react";
 import { parsePatternParams, resolvePatternId } from "../lib/patternId";
-import type { PatternLoad, XSGPattern } from "../lib/types";
+import type { PatternLoad } from "../lib/types";
 
 export function usePatternLoader(pattern: string): PatternLoad {
   // Runtime load state (規律2): the loaded `XSGPattern` is an immutable
@@ -31,12 +31,10 @@ export function usePatternLoader(pattern: string): PatternLoad {
         // Parse query parameters (excluding 'pattern' itself)
         const params = parsePatternParams(window.location.search);
 
-        // Use safeInvoke for Tauri/web compatibility
-        const { safeInvoke } = await import("../lib/tauriCompat");
-        const data = (await safeInvoke("get_pattern", {
-          patternId,
-          params,
-        })) as XSGPattern;
+        // get_pattern 取得 + preset/background 展開（Issue #23）。
+        // loadResolvedPattern が Tauri/web 双方で参照先 nodes まで解決する。
+        const { loadResolvedPattern } = await import("../lib/tauriCompat");
+        const data = await loadResolvedPattern(patternId, params);
 
         setLoad({ status: "ready", pattern: data });
       } catch (err) {

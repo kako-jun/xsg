@@ -14,19 +14,44 @@
  * 純粋ロジック（resolvePatternId / parsePatternParams）は patternId.test.ts が
  * 固定済みなので、ここでは「フックがそれらを正しく呼び結線しているか」だけを見る。
  *
- * safeInvoke は `../lib/tauriCompat` から動的 import されるため vi.mock で差し替える。
+ * フックは `../lib/tauriCompat` から `loadResolvedPattern` を動的 import する
+ * （Issue #23 で `safeInvoke("get_pattern", ...)` 直呼びから差し替え）。preset 展開
+ * の有無を含めた経路を再現するため、mock では本物の `loadResolvedPattern` を
+ * mock 化した `safeInvoke` に結線して使う。これにより従来どおり safeInvoke の
+ * 引数（`("get_pattern", { patternId, params })`）を検証でき、nodes が空（=preset
+ * を含まない）の戻りでは expandPresets が no-op になり戻り値の同一参照も保たれる。
  * window.location.search はテストごとに設定し afterEach で元へ戻す。
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { usePatternLoader } from "./usePatternLoader";
+import { expandPresets } from "../lib/presetExpander";
 import type { XSGPattern } from "../lib/types";
 
 // safeInvoke を mock 化（動的 import 先の module を丸ごと差し替える）。
+// フックは loadResolvedPattern を import するので、それも mock で再現する:
+// 本番同様 safeInvoke("get_pattern", ...) の戻りを expandPresets に通す結線にし、
+// safeInvoke の呼び出し引数を従来どおり検証できるようにする。nodes が空（preset を
+// 含まない）戻りでは expandPresets は no-op になり戻り値の同一参照も保たれる。
 const safeInvokeMock = vi.fn();
 vi.mock("../lib/tauriCompat", () => ({
   safeInvoke: (...args: unknown[]) => safeInvokeMock(...args),
+  loadResolvedPattern: async (
+    patternId: string,
+    params: Record<string, string>
+  ): Promise<XSGPattern> => {
+    const base = (await safeInvokeMock("get_pattern", {
+      patternId,
+      params,
+    })) as XSGPattern | undefined;
+    // 本番の safeInvoke は常に XSGPattern を返すが、テストでは mockReset 後の
+    // 取りこぼし（undefined）でクラッシュしないよう保険を入れる。
+    if (!base) return { nodes: [] };
+    return expandPresets(base, (id, p) =>
+      safeInvokeMock("get_pattern", { patternId: id, params: p })
+    );
+  },
 }));
 
 // ---------------------------------------------------------------------------
@@ -98,15 +123,17 @@ describe("usePatternLoader", () => {
     });
   });
 
-  it("未知の pattern 名は patternId が solid にフォールバックして呼ばれる", async () => {
-    // --- 仕様: resolvePatternId は未知名を "solid" に落とす。その結線を確認 ---
+  it("未知の pattern 名はファイル名としてそのまま patternId に渡る（#23: solid 黙殺廃止）", async () => {
+    // --- 仕様: resolvePatternId は未知名を "solid" に黙殺せず、名前をそのまま ---
+    // pattern id として返す。エイリアス未登録の colorbar-simple 等へ到達できる。
+    // その結線（未知名 → loader にそのまま渡る）を確認する。
     safeInvokeMock.mockResolvedValue(samplePattern());
 
     const { result } = renderHook(() => usePatternLoader("does-not-exist"));
     await waitFor(() => expect(result.current.status).toBe("ready"));
 
     expect(safeInvokeMock).toHaveBeenCalledWith("get_pattern", {
-      patternId: "solid",
+      patternId: "does-not-exist",
       params: {},
     });
   });

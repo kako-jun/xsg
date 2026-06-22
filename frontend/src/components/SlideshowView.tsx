@@ -179,11 +179,9 @@ function PatternSlide({ path }: { path: string }) {
     const run = async () => {
       setLoad({ status: "loading" });
       try {
-        const { safeInvoke } = await import("../lib/tauriCompat");
-        const data = await safeInvoke<XSGPattern>("get_pattern", {
-          patternId: patternIdFromPath(path),
-          params: {},
-        });
+        // get_pattern 取得 + preset/background 展開（Issue #23）。
+        const { loadResolvedPattern } = await import("../lib/tauriCompat");
+        const data = await loadResolvedPattern(patternIdFromPath(path), {});
         if (!cancelled) setLoad({ status: "ready", pattern: data });
       } catch (err) {
         if (!cancelled) {
