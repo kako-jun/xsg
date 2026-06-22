@@ -84,7 +84,7 @@ export class PathResolver {
    */
   private isAbsolutePath(path: string): boolean {
     // Windows absolute paths
-    if (/^[a-zA-Z]:[\\\/]/.test(path)) return true;
+    if (/^[a-zA-Z]:[\\/]/.test(path)) return true;
     if (/^\\\\/.test(path)) return true; // UNC paths
 
     // Unix absolute paths
@@ -335,11 +335,193 @@ function evaluateCalcExpression(expr: string, containerSize: number): number {
   // Remove 'px' units
   const withoutUnits = normalized.replace(/px/g, "");
 
-  // Evaluate expression (simple evaluation, not production-ready)
-  // For production, consider using a proper expression parser
+  // Evaluate the now purely-arithmetic expression with a sandboxed parser.
+  // This intentionally avoids eval()/Function so that a hostile pattern file
+  // cannot inject code through coordinate expressions.
+  return evaluateArithmetic(withoutUnits);
+}
+
+/**
+ * Safely evaluate a pure arithmetic expression to a number.
+ *
+ * This replaces the previous eval()-based evaluation to remove the code
+ * injection risk: only numbers, the binary operators `+ - * /`, unary `+`/`-`,
+ * parentheses, and whitespace are accepted. Any identifier, function call,
+ * or stray symbol causes the whole expression to be rejected.
+ *
+ * Numeric semantics match JavaScript arithmetic: floating-point division,
+ * `* /` bind tighter than `+ -`, operators are left-associative, and unary
+ * minus is supported. On any tokenization/parse failure (unknown character,
+ * empty or incomplete expression, etc.) this returns 0, matching the old
+ * `catch { return 0 }` behavior. Separately, a *successful* parse whose result
+ * is non-finite (e.g. div-by-zero → Infinity, 0/0 → NaN) is also coerced to 0;
+ * that is an intentional safety divergence from the old eval (which surfaced
+ * Infinity/NaN), not the same path as a parse failure.
+ *
+ * @param expr - Normalized arithmetic expression (no units, no percentages)
+ * @returns Evaluated value, or 0 if the expression is invalid
+ */
+function evaluateArithmetic(expr: string): number {
+  type Token =
+    | { kind: "number"; value: number }
+    | { kind: "op"; value: "+" | "-" | "*" | "/" }
+    | { kind: "lparen" }
+    | { kind: "rparen" };
+
+  // --- Tokenizer ---------------------------------------------------------
+  const tokenize = (input: string): Token[] | null => {
+    const tokens: Token[] = [];
+    let i = 0;
+
+    while (i < input.length) {
+      const ch = input[i];
+
+      // Whitespace is ignored.
+      if (ch === " " || ch === "\t" || ch === "\n" || ch === "\r") {
+        i++;
+        continue;
+      }
+
+      // Numbers: integer or decimal (e.g. "640", "0.5", ".5", "12.").
+      if ((ch >= "0" && ch <= "9") || ch === ".") {
+        let j = i;
+        let seenDot = false;
+        while (j < input.length) {
+          const c = input[j];
+          if (c >= "0" && c <= "9") {
+            j++;
+          } else if (c === "." && !seenDot) {
+            seenDot = true;
+            j++;
+          } else {
+            break;
+          }
+        }
+        const slice = input.slice(i, j);
+        const value = Number(slice);
+        // Guard against malformed numbers like a bare ".".
+        if (!Number.isFinite(value)) {
+          return null;
+        }
+        tokens.push({ kind: "number", value });
+        i = j;
+        continue;
+      }
+
+      if (ch === "+" || ch === "-" || ch === "*" || ch === "/") {
+        tokens.push({ kind: "op", value: ch });
+        i++;
+        continue;
+      }
+
+      if (ch === "(") {
+        tokens.push({ kind: "lparen" });
+        i++;
+        continue;
+      }
+
+      if (ch === ")") {
+        tokens.push({ kind: "rparen" });
+        i++;
+        continue;
+      }
+
+      // Anything else (letters, ';', ',', etc.) is rejected outright.
+      return null;
+    }
+
+    return tokens;
+  };
+
+  // --- Recursive-descent parser ------------------------------------------
+  // Grammar (left-associative, standard precedence):
+  //   expression := term (('+' | '-') term)*
+  //   term       := factor (('*' | '/') factor)*
+  //   factor     := ('+' | '-') factor | '(' expression ')' | number
+  const tokens = tokenize(expr);
+  if (tokens === null) {
+    return 0;
+  }
+
+  let pos = 0;
+  const peek = (): Token | undefined => tokens[pos];
+
+  // ParseError sentinel: thrown on any structural problem, caught below.
+  class ParseError extends Error {}
+
+  const parseFactor = (): number => {
+    const token = peek();
+    if (token === undefined) {
+      throw new ParseError("unexpected end of expression");
+    }
+
+    // Unary +/-
+    if (token.kind === "op" && (token.value === "+" || token.value === "-")) {
+      pos++;
+      const operand = parseFactor();
+      return token.value === "-" ? -operand : operand;
+    }
+
+    if (token.kind === "lparen") {
+      pos++;
+      const value = parseExpression();
+      const closing = peek();
+      if (closing === undefined || closing.kind !== "rparen") {
+        throw new ParseError("missing closing parenthesis");
+      }
+      pos++;
+      return value;
+    }
+
+    if (token.kind === "number") {
+      pos++;
+      return token.value;
+    }
+
+    throw new ParseError("expected number or '('");
+  };
+
+  const parseTerm = (): number => {
+    let value = parseFactor();
+    for (;;) {
+      const token = peek();
+      if (token === undefined || token.kind !== "op") {
+        break;
+      }
+      if (token.value !== "*" && token.value !== "/") {
+        break;
+      }
+      pos++;
+      const right = parseFactor();
+      value = token.value === "*" ? value * right : value / right;
+    }
+    return value;
+  };
+
+  const parseExpression = (): number => {
+    let value = parseTerm();
+    for (;;) {
+      const token = peek();
+      if (token === undefined || token.kind !== "op") {
+        break;
+      }
+      if (token.value !== "+" && token.value !== "-") {
+        break;
+      }
+      pos++;
+      const right = parseTerm();
+      value = token.value === "+" ? value + right : value - right;
+    }
+    return value;
+  };
+
   try {
-    // eslint-disable-next-line no-eval
-    return eval(withoutUnits);
+    const result = parseExpression();
+    // Reject trailing garbage (e.g. "1 2" or "(1)2").
+    if (pos !== tokens.length) {
+      return 0;
+    }
+    return Number.isFinite(result) ? result : 0;
   } catch {
     return 0;
   }
