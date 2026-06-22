@@ -34,6 +34,17 @@ const MAX_DEPTH = 16;
  *     に差し込む（z 順保持。background が先頭なら背面に来る）。
  *   - それ以外のノードはそのまま残す。
  *
+ * 展開する子ノードの `id` は**ホスト（preset/background）ノードの id で名前空間化**
+ * する（`${hostId}/${childId}`、ホストに id が無ければ `preset-${index}/${childId}`）。
+ * これにより、同じ preset を複数回参照しても、また preset 内 id が兄弟ノード id と
+ * 衝突しても、展開後の id が一意になり、描画側（`PatternCanvas`/`SlideshowView` の
+ * `key={node.id}`）の React duplicate key を防ぐ。再帰展開ではこの prefix が積み上がり
+ * 深い階層でも一意性が保たれる。id 以外（type/座標/fill/z 順 等）は一切変えない。
+ *
+ * ユーザのクエリ params（`?pattern=...&size=...`）は**base パターンにのみ**適用され、
+ * preset 参照の子へは伝播しない。子 preset は YAML 記述の `node.params` のみで
+ * 解決される（preset params は作者固定）。
+ *
  * 黒落ちでクラッシュさせないため、参照不能（preset 欠落・取得失敗・深度超過）な
  * 展開ノードは `console.warn` して **drop** し、他ノードの描画は継続する。
  *
@@ -60,7 +71,9 @@ export async function expandPresets(
 
   const expandedNodes: PatternNode[] = [];
 
+  let index = -1;
   for (const node of nodes) {
+    index += 1;
     if (node.type === "background" || node.type === "preset") {
       const presetNode = node as PresetNode;
       const presetId = presetNode.preset;
@@ -86,6 +99,11 @@ export async function expandPresets(
       // 文字列前提のため）。
       const params = stringifyParams(presetNode.params);
 
+      // 展開ノード id の名前空間 prefix。ホストノード id があればそれを使い、
+      // 無ければインデックスで一意化する。これで同 preset の複数参照でも、
+      // また preset 内 id が兄弟 id と衝突しても、展開後 id が一意になる。
+      const namespacePrefix = node.id ?? `preset-${index}`;
+
       try {
         const presetPattern = await getPattern(presetId, params);
         // nested preset 対応: 取得したパターン自身が preset/background を
@@ -96,8 +114,13 @@ export async function expandPresets(
           depth + 1
         );
         // 展開 nodes をこの位置に差し込む（z 順保持＝in-place 展開）。
+        // 各子ノードの id をホストノード id で名前空間化して一意化する
+        // （type/座標/fill 等の中身は不変、id だけ prefix を付加）。
         for (const child of expanded.nodes ?? []) {
-          expandedNodes.push(child);
+          expandedNodes.push({
+            ...child,
+            id: `${namespacePrefix}/${child.id}`,
+          });
         }
       } catch (err) {
         // 取得失敗（fetch 404・コマンド未対応など）は握り、このノードだけ

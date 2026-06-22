@@ -5,7 +5,9 @@
  * 参照先パターンの nodes に in-place 展開する純粋寄り関数 `expandPresets` の挙動を
  * 固定する。守る仕様:
  *   - background/preset ノードが getPattern の戻り nodes に置換される
- *   - nested preset（参照先がさらに preset を持つ）を再帰展開する
+ *   - 展開ノードの id はホストノード id で名前空間化される（`${hostId}/${childId}`）
+ *   - nested preset（参照先がさらに preset を持つ）を再帰展開する（prefix が積み上がる）
+ *   - 同一 preset の複数参照でも展開後の全 id が一意（React key 衝突回避）
  *   - node.params が getPattern の第2引数へ文字列化して渡る
  *   - z 順: 展開 nodes は元の位置に in-place 展開され前後関係が保たれる
  *   - 取得失敗（getPattern reject）は warn して drop、throw しない・他ノードは残る
@@ -88,8 +90,11 @@ describe("expandPresets", () => {
 
     const result = await expandPresets(input, getPattern);
 
-    // 参照先の rect 群がそのまま nodes になる。
-    expect(result.nodes).toEqual(colorbarNodes);
+    // 参照先の rect 群が nodes になる。id はホスト 'bg-colorbar' で名前空間化される。
+    expect(result.nodes).toEqual([
+      { ...colorbarNodes[0], id: "bg-colorbar/bar-white" },
+      { ...colorbarNodes[1], id: "bg-colorbar/bar-yellow" },
+    ]);
     // canvas など他フィールドは保持される。
     expect(result.canvas).toEqual({ width: 1920, height: 1080 });
     // getPattern は参照先 id と空 params で1回呼ばれる。
@@ -106,7 +111,8 @@ describe("expandPresets", () => {
 
     const result = await expandPresets(input, getPattern);
 
-    expect(result.nodes).toEqual(inner);
+    // 中身は不変、id だけホスト 'p' で名前空間化される。
+    expect(result.nodes).toEqual([{ ...inner[0], id: "p/a" }]);
     expect(getPattern).toHaveBeenCalledWith("some-preset", {});
   });
 
@@ -126,10 +132,61 @@ describe("expandPresets", () => {
     const input: XSGPattern = { nodes: [preset("outer-ref", "mid")] };
     const result = await expandPresets(input, getPattern);
 
-    // 2段深く展開され、最終的に leaf の rect だけが残る。
-    expect(result.nodes).toEqual(leafNodes);
+    // 2段深く展開され、最終的に leaf の rect だけが残る。id 名前空間は再帰で
+    // prefix が積み上がる: outer-ref（最外ホスト）→ mid-ref（中間ホスト）→ leaf-rect。
+    expect(result.nodes).toEqual([
+      { ...leafNodes[0], id: "outer-ref/mid-ref/leaf-rect" },
+    ]);
     expect(getPattern).toHaveBeenCalledWith("mid", {});
     expect(getPattern).toHaveBeenCalledWith("leaf", {});
+  });
+
+  it("同じ preset を2回参照しても展開後の全ノード id が一意（React key 衝突回避）", async () => {
+    // 参照先 colorbar は同じ id の rect を持つ。host id でしか区別できないので、
+    // 名前空間化が無いと展開後に重複 key（bar-white が2つ等）になる。
+    const colorbarNodes = [
+      rect("bar-white", "#fff"),
+      rect("bar-black", "#000"),
+    ];
+    const getPattern = vi.fn(
+      async (): Promise<XSGPattern> => ({ nodes: colorbarNodes })
+    );
+    const input: XSGPattern = {
+      nodes: [background("bg-a", "colorbar"), background("bg-b", "colorbar")],
+    };
+
+    const result = await expandPresets(input, getPattern);
+
+    const ids = (result.nodes ?? []).map((n) => n.id);
+    // 4 ノードに展開され、それぞれ別ホスト prefix で一意化される。
+    expect(ids).toEqual([
+      "bg-a/bar-white",
+      "bg-a/bar-black",
+      "bg-b/bar-white",
+      "bg-b/bar-black",
+    ]);
+    // 重複なし（new Set のサイズが一致）= React key が衝突しない。
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("ホストノードに id が無い preset はインデックスで一意化される", async () => {
+    // id を持たない preset/background ノード（防御ケース）。
+    const getPattern = vi.fn(
+      async (): Promise<XSGPattern> => ({ nodes: [rect("child", "#abc")] })
+    );
+    const input: XSGPattern = {
+      nodes: [
+        { type: "preset", preset: "p" } as PatternNode,
+        { type: "preset", preset: "p" } as PatternNode,
+      ],
+    };
+
+    const result = await expandPresets(input, getPattern);
+
+    const ids = (result.nodes ?? []).map((n) => n.id);
+    // index 0/1 で一意化され、重複しない。
+    expect(ids).toEqual(["preset-0/child", "preset-1/child"]);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it("node.params を文字列化して getPattern の第2引数に渡す", async () => {
@@ -165,7 +222,12 @@ describe("expandPresets", () => {
     const result = await expandPresets(input, getPattern);
 
     // 展開 nodes が in-place（先頭位置）に並び、その後に前景 rect が続く。
-    expect(result.nodes).toEqual([...bgNodes, fg]);
+    // 展開 nodes の id はホスト 'bg' で名前空間化され、前景 fg はそのまま。
+    expect(result.nodes).toEqual([
+      { ...bgNodes[0], id: "bg/bg-1" },
+      { ...bgNodes[1], id: "bg/bg-2" },
+      fg,
+    ]);
   });
 
   it("取得失敗（getPattern reject）は warn して drop、throw せず他ノードは残る", async () => {
