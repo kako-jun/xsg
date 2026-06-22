@@ -14,7 +14,7 @@ pub enum Order {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Playback {
     pub order: Order,
-    #[serde(default = "default_loop")]
+    #[serde(rename = "loop", default = "default_loop")]
     pub loop_playback: bool,
     #[serde(rename = "defaultDuration")]
     pub default_duration: Option<f32>,
