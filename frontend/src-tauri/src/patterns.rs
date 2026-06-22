@@ -50,8 +50,13 @@ fn get_patterns_dir() -> Result<PathBuf> {
 
 /// Load all patterns from YAML files
 pub fn load_patterns() -> Result<Vec<PatternInfo>> {
-    let patterns_dir = get_patterns_dir()?;
-    let pattern = format!("{}/*.yaml", patterns_dir.display());
+    let dir = get_patterns_dir()?;
+    load_patterns_from(&dir)
+}
+
+/// Load all patterns from YAML files in the given directory
+pub fn load_patterns_from(dir: &Path) -> Result<Vec<PatternInfo>> {
+    let pattern = format!("{}/*.yaml", dir.display());
 
     let mut patterns = Vec::new();
 
