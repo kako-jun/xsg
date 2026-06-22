@@ -8,10 +8,12 @@
  * 方針:
  *   - `resolvePatternId` は全別名（colorbar 系/ebu/arib/gradient/grayscale 系/staircase 系/
  *     checker 系/crosshatch 系/pluge/solid/multiburst 系/convergence 系/pixel-defect 系）と
- *     未知名→その名前自身（ファイル名扱い）、大文字混在（`COLORBAR` 等）を網羅する。
- *   - #23 で未知名フォールバックを `"solid"` 黙殺 → 名前パススルーに変更したため、
- *     未知名ケースの期待値を「その名前自身（lowercased）」に更新済み（意図的な
- *     characterization 更新）。空白のみは安全な既定として `"solid"` を温存。
+ *     安全な未知名→その名前自身（ファイル名扱い）、大文字混在（`COLORBAR` 等）を網羅する。
+ *   - #23 で未知名フォールバックを `"solid"` 黙殺 → 名前パススルーに変更したが、
+ *     パストラバーサル遮断のため passthrough は **安全な id（`[a-z0-9-]`、先頭英数字）**
+ *     に限定する。安全な未知名（`colorbar-simple` 等）のみその名前自身（lowercased）に
+ *     解決し、不正文字を含む名前（`../../etc/passwd`・`foo/bar`・`a.yaml` 等）と空白のみは
+ *     安全な既定 `"solid"` に倒す（意図的な characterization 更新）。
  *   - `parsePatternParams` は `pattern` 除外・複数パラメータ・空・混在クエリを固定する（不変）。
  */
 
@@ -56,11 +58,11 @@ describe("resolvePatternId — alias → id（characterization）", () => {
     expect(resolvePatternId(name)).toBe(expected);
   });
 
-  // #23: 未知名は「ファイル名」として扱い、そのまま pattern id に解決する
+  // #23: 安全な未知名は「ファイル名」として扱い、そのまま pattern id に解決する
   // （旧挙動の `"solid"` 黙殺を廃止）。エイリアス未登録の colorbar-simple 等の
   // パターンファイルへ `?pattern=` で到達できるようにするための意図的な characterization 更新。
   // 実在しない名前は loader が 404 → error 状態にする（黒画面でなく明示エラー）。
-  it("未知名はファイル名としてそのまま扱う（solid 黙殺を廃止）", () => {
+  it("安全な未知名はファイル名としてそのまま扱う（solid 黙殺を廃止）", () => {
     expect(resolvePatternId("colorbar-simple")).toBe("colorbar-simple");
     expect(resolvePatternId("multi-layer-example")).toBe("multi-layer-example");
     expect(resolvePatternId("animation-example")).toBe("animation-example");
@@ -70,10 +72,27 @@ describe("resolvePatternId — alias → id（characterization）", () => {
     expect(resolvePatternId("xyz123")).toBe("xyz123");
   });
 
-  it("大文字混在の未知名も lowercased passthrough（ファイル名扱い）", () => {
+  it("大文字混在の安全な未知名も lowercased passthrough（ファイル名扱い）", () => {
     expect(resolvePatternId("Colorbar-Simple")).toBe("colorbar-simple");
     expect(resolvePatternId("Multi-Layer-Example")).toBe("multi-layer-example");
     expect(resolvePatternId("UNKNOWN-XYZ")).toBe("unknown-xyz");
+  });
+
+  // #23 security: passthrough は「安全な id（[a-z0-9-]・先頭英数字）」に限定する。
+  // パストラバーサル（`../../etc/passwd`・`foo/bar`）・拡張子注入（`a.yaml`・`a.b`）・
+  // 不正文字（空白・記号）を含む名前は passthrough せず安全な既定 `"solid"` に倒す。
+  // これがないと resolve 結果が Rust の patterns_dir.join(path) に渡り、patterns
+  // ディレクトリ外の任意 .yaml を読まれる（pattern_expander.load_pattern_file）。
+  it("パストラバーサル/不正文字は solid に倒す（passthrough 遮断）", () => {
+    expect(resolvePatternId("../../etc/passwd")).toBe("solid");
+    expect(resolvePatternId("foo/bar")).toBe("solid");
+    expect(resolvePatternId("a.yaml")).toBe("solid");
+    expect(resolvePatternId("a.b")).toBe("solid"); // ドットも除外＝拡張子注入防止
+    expect(resolvePatternId("..")).toBe("solid");
+    expect(resolvePatternId("foo bar")).toBe("solid"); // 内部空白
+    expect(resolvePatternId("foo\\bar")).toBe("solid"); // バックスラッシュ
+    expect(resolvePatternId("-leading-hyphen")).toBe("solid"); // 先頭ハイフンは不可
+    expect(resolvePatternId("foo_bar")).toBe("solid"); // アンダースコアは不可
   });
 
   // 空白のみ（空文字含む）は安全な既定として従来どおり solid を返す（防御ガード）。
