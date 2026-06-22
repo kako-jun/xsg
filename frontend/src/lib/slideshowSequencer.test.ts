@@ -236,13 +236,32 @@ describe("shuffle", () => {
 });
 
 // ---------------------------------------------------------------------------
-// random — 入力メンバーを返す・advance は状態不変（#20）
+// random — 入力メンバーを返す・advance で次の乱択へ進む（#20: 止まらない）
 //   Rust: runner_inproc_random_returns_only_input_members
+//   ※ 旧仕様（advance は state 不変）から改修。random も advance で次の index を
+//     再サンプルし、毎回「新しい state」を返す（さもないと React が bail して
+//     再描画されず random がフリーズする）。getCurrent は render 中に rng を
+//     呼ばない純粋関数で、sources[currentIndex] を返す（seq/shuffle と同じ）。
 // ---------------------------------------------------------------------------
 
 describe("random", () => {
-  it("getCurrent は毎回入力集合のメンバーを返す", () => {
-    // --- 仕様: Random は毎回 0..len から乱択する。返る要素は必ず入力集合のメンバー ---
+  it("getCurrent は currentIndex の source を返す（純粋・rng を呼ばない）", () => {
+    // --- 仕様: random でも getCurrent は sources[currentIndex] を返す。
+    //          乱択は advance 側で行うので getCurrent は決定論的 ---
+    const playlist = makePlaylist("random", true, undefined, [
+      patternSource("a"),
+      patternSource("b"),
+      patternSource("c"),
+    ]);
+    const s = prepare(playlist); // currentIndex = 0
+    // 何度呼んでも同じ（render 中にフリッカしない）。
+    expect(sourcePath(getCurrent(s))).toBe("a");
+    expect(sourcePath(getCurrent(s))).toBe("a");
+  });
+
+  it("advance で次の乱択へ進む（毎回入力集合のメンバー）", () => {
+    // --- 仕様: advance(state, rng) は index = floor(rng()*len) を再サンプルする。
+    //          得られる current は必ず入力集合のメンバー ---
     const inputPaths = ["a", "b", "c"];
     const playlist = makePlaylist(
       "random",
@@ -250,41 +269,60 @@ describe("random", () => {
       undefined,
       inputPaths.map((p) => patternSource(p))
     );
-    const s = prepare(playlist);
     const input = new Set(inputPaths);
-    // 様々な rng 値で 30 回引いて、すべて入力メンバーであることを確認。
+    // 様々な rng 値で 30 回 advance し、毎回 current が入力メンバーであることを確認。
     const rng = seqRng([0.0, 0.34, 0.67, 0.99, 0.5, 0.1, 0.9, 0.2, 0.8, 0.45]);
+    let s = prepare(playlist);
     for (let i = 0; i < 30; i++) {
-      const got = sourcePath(getCurrent(s, rng));
+      s = advance(s, rng);
+      const got = sourcePath(getCurrent(s));
       expect(input.has(got)).toBe(true);
     }
   });
 
-  it("seeded rng で getCurrent の具体値が決まる", () => {
-    // --- 仕様: index = floor(rng() * len)。rng を固定すれば返る source も決まる ---
+  it("seeded rng で advance 後の具体値が決まる（決定論）", () => {
+    // --- 仕様: advance の index = floor(rng() * len)。rng を固定すれば進む先も決まる ---
     const playlist = makePlaylist("random", true, undefined, [
       patternSource("a"), // index 0
       patternSource("b"), // index 1
       patternSource("c"), // index 2
     ]);
-    const s = prepare(playlist);
+    const s0 = prepare(playlist);
     // floor(0.0*3)=0→a, floor(0.5*3)=1→b, floor(0.99*3)=2→c
-    expect(sourcePath(getCurrent(s, seqRng([0.0])))).toBe("a");
-    expect(sourcePath(getCurrent(s, seqRng([0.5])))).toBe("b");
-    expect(sourcePath(getCurrent(s, seqRng([0.99])))).toBe("c");
+    expect(sourcePath(getCurrent(advance(s0, seqRng([0.0]))))).toBe("a");
+    expect(sourcePath(getCurrent(advance(s0, seqRng([0.5]))))).toBe("b");
+    expect(sourcePath(getCurrent(advance(s0, seqRng([0.99]))))).toBe("c");
   });
 
-  it("advance は状態を変えない（index 不変＝止まらない / #20）", () => {
-    // --- 仕様: Random は advance でカーソルを動かさない（既知仕様 #20: 永遠に止まらない）---
+  it("advance は必ず新しい state を返す（参照が変わる＝React が再描画する）", () => {
+    // --- 仕様: random の advance は同一参照を返してはならない。
+    //          同一参照だと setState((p)=>advance(p)) が bail して再描画されず凍る ---
+    const playlist = makePlaylist("random", true, undefined, [
+      patternSource("a"),
+      patternSource("b"),
+      patternSource("c"),
+    ]);
+    const s0 = prepare(playlist);
+    const s1 = advance(s0, seqRng([0.5])); // index 1 へ
+    expect(s1).not.toBe(s0); // 参照が必ず変わる
+    expect(s1.currentIndex).toBe(1);
+  });
+
+  it("loop:false でも止まらない（#20: random は永遠に続く）", () => {
+    // --- 仕様: random は loop に関わらず止まらない。currentIndex は常に範囲内なので
+    //          getCurrent は undefined を返さず、shouldContinue も true のまま ---
     const playlist = makePlaylist("random", false, undefined, [
       patternSource("a"),
       patternSource("b"),
     ]);
-    const s0 = prepare(playlist);
-    const s1 = advance(s0);
-    // currentIndex が 0 のまま（状態オブジェクトの index 不変）。
-    expect(s1.currentIndex).toBe(s0.currentIndex);
-    expect(s1.currentIndex).toBe(0);
+    let s = prepare(playlist);
+    const rng = seqRng([0.9, 0.1, 0.6, 0.3, 0.8]);
+    for (let i = 0; i < 5; i++) {
+      s = advance(s, rng);
+      // 何回 advance しても current は出続け、継続判定も true。
+      expect(getCurrent(s)).toBeDefined();
+      expect(shouldContinue(s)).toBe(true);
+    }
   });
 });
 

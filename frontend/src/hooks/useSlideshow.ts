@@ -73,13 +73,13 @@ export function useSlideshow(
     setIsPlaying(autoPlay);
   }, [initialState, autoPlay]);
 
-  // For `random`, getCurrent samples a fresh index each call. We freeze that
-  // sample per advance step into `current` so a slide does not "flicker"
-  // between renders while it is on screen. The sample is recomputed only when
-  // the underlying sequencer state changes (i.e. on each advance/next/prev).
+  // `current` is a pure read of `sources[currentIndex]` (the sequencer chooses
+  // the random index in `advance`, not here), so it only changes when the
+  // sequencer state changes identity — i.e. on each advance/next/prev. A random
+  // slide therefore stays put between renders and never flickers.
   const current = useMemo<PlaylistSource | undefined>(
-    () => (seqState ? getCurrent(seqState, rng) : undefined),
-    [seqState, rng]
+    () => (seqState ? getCurrent(seqState) : undefined),
+    [seqState]
   );
 
   // A non-looping playlist is "stopped" once getCurrent yields nothing while
@@ -91,8 +91,11 @@ export function useSlideshow(
   }, [seqState, current]);
 
   const doAdvance = useCallback(() => {
-    setSeqState((prev) => (prev ? advance(prev) : prev));
-  }, []);
+    // Thread the injectable RNG so `random` order is deterministic in tests and
+    // re-samples a fresh index on every advance (= a new state, so the timer
+    // re-arms and the slide actually changes).
+    setSeqState((prev) => (prev ? advance(prev, rng) : prev));
+  }, [rng]);
 
   const doRetreat = useCallback(() => {
     setSeqState((prev) => (prev ? retreat(prev) : prev));
@@ -149,7 +152,16 @@ export function useSlideshow(
   };
 }
 
-/** Narrow helper: a non-null playback config (used for duration resolution). */
+/**
+ * Narrow helper: a non-null playback config (used for duration resolution).
+ *
+ * The `null` branch is a defensive default that is in practice unreachable: the
+ * only caller is the auto-advance effect, which has already bailed out when
+ * `seqState`/`current` is absent, and `current` can only exist when `playlist`
+ * (and thus `playlist.playback`) does. The fallback's `order`/`loop` are never
+ * consulted here — only `defaultDuration` would be, and it is absent — so this
+ * is purely a type-narrowing guard, not live behaviour.
+ */
 function playlistPlayback(playlist: Playlist | null): Playlist["playback"] {
   return playlist?.playback ?? { order: "sequence", loop: true };
 }

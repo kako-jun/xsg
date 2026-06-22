@@ -6,18 +6,24 @@
  * an explicit, immutable-ish state value so the ordering semantics can be unit
  * tested without React. `useSlideshow` wraps these in React state.
  *
- * Behaviour is intentionally identical to the Rust runner:
+ * Behaviour mirrors the Rust runner, with one documented difference for shuffle
+ * (the actual shuffle *order* is not reproduced — only set membership is):
  *
  * - prepare(): for `order === "shuffle"`, shuffle the sources **once**;
  *   `sequence` and `random` keep the source array as-is (random does NOT
- *   pre-shuffle — it samples each time).
+ *   pre-shuffle — it picks a fresh index per advance). Shuffle's resulting
+ *   order depends on the injected RNG, so it is only *membership-equivalent* to
+ *   the Rust runner, not order-identical (Rust uses its own `rand` shuffle).
  * - getCurrent(): the source the runner's `get_next()` would *return* for the
- *   current state. For sequence/shuffle that is `sources[currentIndex]`
- *   (`undefined` once the index has run past the end with loop disabled). For
- *   random it samples a uniformly random index each call.
+ *   current state. For every order this is `sources[currentIndex]` (`undefined`
+ *   once a sequence/shuffle cursor has run past the end with loop disabled).
+ *   getCurrent is pure: it never calls the RNG, so a slide cannot flicker
+ *   between renders.
  * - advance(): the index bookkeeping `get_next()` performs *after* returning a
  *   source. sequence/shuffle do `currentIndex += 1`, wrapping to 0 only when
- *   `loop` is true. random leaves the index untouched (so it never stops).
+ *   `loop` is true. random picks a fresh uniformly random `currentIndex` (so
+ *   every advance yields a new state — matching the Rust runner's "sample each
+ *   `get_next`" — and random never stops, issue #20).
  * - durationFor(): `source.duration ?? playback.defaultDuration ?? 5000`.
  *
  * Separation of concerns (doctrine 規律2): `Playlist` (definition) is never
@@ -97,42 +103,53 @@ export function prepare(
  * advancing. Returns `undefined` when there is nothing to show (empty list, or
  * the sequence/shuffle cursor has run past the end with loop disabled).
  *
- * @param rng - Optional RNG used only for `random` order.
+ * Pure: this never calls the RNG. For `random`, the next index is chosen in
+ * `advance()` and stored in `currentIndex`, so all orders read
+ * `sources[currentIndex]` here. Keeping the RNG out of render means a random
+ * slide stays put between renders and changes only on advance.
  */
 export function getCurrent(
-  state: SequencerState,
-  rng: Rng = defaultRng
+  state: SequencerState
 ): PlaylistSource | undefined {
   if (state.sources.length === 0) {
     return undefined;
   }
 
-  if (state.order === "random") {
-    const index = Math.floor(rng() * state.sources.length);
-    return state.sources[index];
-  }
-
-  // sequence | shuffle: cursor-based. `undefined` once past the end.
+  // All orders are cursor-based at read time. For sequence/shuffle the cursor
+  // may run past the end (=> `undefined` = stop); for random it always points
+  // at a valid in-range index chosen by prepare()/advance().
   return state.sources[state.currentIndex];
 }
 
 /**
- * Advance the cursor, returning the next state. Mirrors the index bookkeeping
- * `get_next()` performs after returning a source.
+ * Advance the cursor, returning the **next state** (always a new object when
+ * there is something to show, so React re-renders and re-arms the timer).
+ * Mirrors the index bookkeeping `get_next()` performs after returning a source.
  *
  * - sequence/shuffle: `currentIndex += 1`, wrapping to 0 only when `loop` is
  *   true. With loop disabled the index keeps climbing past the end so the next
  *   `getCurrent()` yields `undefined` (= stop).
- * - random: unchanged (random never advances a cursor, so it never stops —
- *   this matches the Rust runner and is the documented behaviour, issue #20).
+ * - random: pick a fresh uniformly random `currentIndex`. This is where the
+ *   RNG is consumed (not in `getCurrent`), so each advance yields a different
+ *   slide and a brand-new state. Random never advances "past the end", so it
+ *   never stops — matching the Rust runner and the documented behaviour, even
+ *   with `loop: false` (issue #20).
+ *
+ * @param rng - Optional RNG used only for `random` order.
  */
-export function advance(state: SequencerState): SequencerState {
+export function advance(
+  state: SequencerState,
+  rng: Rng = defaultRng
+): SequencerState {
   if (state.sources.length === 0) {
     return state;
   }
 
   if (state.order === "random") {
-    return state;
+    // Re-sample every advance (mirrors the Rust runner sampling per get_next).
+    // Always returns a new object so React never bails out of the update.
+    const nextIndex = Math.floor(rng() * state.sources.length);
+    return { ...state, currentIndex: nextIndex };
   }
 
   let nextIndex = state.currentIndex + 1;

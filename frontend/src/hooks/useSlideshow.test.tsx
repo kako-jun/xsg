@@ -150,6 +150,81 @@ describe("自動送り（タイマー）", () => {
 });
 
 // ---------------------------------------------------------------------------
+// random — duration 経過ごとに別スライドへ進む（フリーズ回帰ガード）
+//   旧バグ: advance が同一 state を返すと setState が bail → 再描画されず
+//           タイマーも再武装されず random が1枚で凍る。seeded rng で決定論化。
+// ---------------------------------------------------------------------------
+
+describe("random（フリーズ回帰ガード）", () => {
+  /** 与えた float 列を順に返す決定論 rng（尽きたら 0）。 */
+  function seqRng(values: number[]): () => number {
+    let i = 0;
+    return () => (i < values.length ? values[i++] : 0);
+  }
+
+  it("duration 経過ごとに乱択スライドへ進み続ける（凍らない）", () => {
+    // --- 仕様: random + loop:true は duration 経過ごとに別スライドへ送られる。
+    //          advance が毎回新 state を返すので再描画・タイマー再武装が起きる ---
+    const playlist = makePlaylist("random", true, 1000, [
+      patternSource("a"), // index 0
+      patternSource("b"), // index 1
+      patternSource("c"), // index 2
+    ]);
+    // floor(rng*3): 0.5→1(b), 0.99→2(c), 0.0→0(a)
+    const rng = seqRng([0.5, 0.99, 0.0]);
+    const { result } = renderHook(() => useSlideshow(playlist, { rng }));
+
+    // 初期は currentIndex=0 → a を表示。
+    expect(currentPath(result.current.current)).toBe("a");
+
+    // 1000ms 経過 → advance(rng=0.5) → index 1 → b。
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(currentPath(result.current.current)).toBe("b");
+
+    // さらに 1000ms → advance(rng=0.99) → index 2 → c（凍っていない）。
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(currentPath(result.current.current)).toBe("c");
+
+    // さらに 1000ms → advance(rng=0.0) → index 0 → a。
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(currentPath(result.current.current)).toBe("a");
+    // ずっと再生中・停止していない（#20: random は止まらない）。
+    expect(result.current.isPlaying).toBe(true);
+    expect(result.current.isStopped).toBe(false);
+  });
+
+  it("loop:false でも止まらず送られ続ける（#20）", () => {
+    // --- 仕様: random は loop=false でも停止しない。duration ごとに進み続ける ---
+    const playlist = makePlaylist("random", false, 1000, [
+      patternSource("a"),
+      patternSource("b"),
+    ]);
+    // floor(rng*2): 0.9→1(b), 0.1→0(a)
+    const rng = seqRng([0.9, 0.1]);
+    const { result } = renderHook(() => useSlideshow(playlist, { rng }));
+    expect(currentPath(result.current.current)).toBe("a");
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(currentPath(result.current.current)).toBe("b");
+    expect(result.current.isStopped).toBe(false);
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(currentPath(result.current.current)).toBe("a");
+    expect(result.current.isStopped).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // pause / play — タイマーの停止と再開
 // ---------------------------------------------------------------------------
 
