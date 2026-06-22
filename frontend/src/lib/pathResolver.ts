@@ -353,7 +353,10 @@ function evaluateCalcExpression(expr: string, containerSize: number): number {
  * `* /` bind tighter than `+ -`, operators are left-associative, and unary
  * minus is supported. On any tokenization/parse failure (unknown character,
  * empty or incomplete expression, etc.) this returns 0, matching the old
- * `catch { return 0 }` behavior.
+ * `catch { return 0 }` behavior. Separately, a *successful* parse whose result
+ * is non-finite (e.g. div-by-zero → Infinity, 0/0 → NaN) is also coerced to 0;
+ * that is an intentional safety divergence from the old eval (which surfaced
+ * Infinity/NaN), not the same path as a parse failure.
  *
  * @param expr - Normalized arithmetic expression (no units, no percentages)
  * @returns Evaluated value, or 0 if the expression is invalid

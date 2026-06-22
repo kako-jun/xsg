@@ -368,4 +368,22 @@ describe("evaluateCoordinate — 敵対的・エッジケース（#4）", () => 
       expect(evaluateCoordinate("calc(2 + 3)", CONTAINER)).toBe(5);
     });
   });
+
+  // H. DoS 耐性 — 病的に深いネスト括弧でも throw せず 0 に倒す。
+  // 現状は再帰下降パーサが stack overflow（RangeError）を投げ、末尾の
+  // try/catch がそれを握って 0 を返すことで成立する。将来 iterative parser 等に
+  // リファクタしても「病的ネスト → 例外を外に漏らさず 0」が回帰しないよう固定する。
+  describe("H. DoS 耐性（病的に深いネストでも throw せず 0）", () => {
+    it("H1 深いネストでも throw せず 0（DoS 耐性）", () => {
+      // 10 万重のネスト括弧。再帰下降が stack overflow しても
+      // 公開 API は例外を外に漏らさず 0 を返し切ることを固定する。
+      const coord =
+        "calc(" + "(".repeat(100000) + "1" + ")".repeat(100000) + ")";
+      let result: number | undefined;
+      expect(() => {
+        result = evaluateCoordinate(coord, CONTAINER);
+      }).not.toThrow();
+      expect(result).toBe(0);
+    });
+  });
 });
