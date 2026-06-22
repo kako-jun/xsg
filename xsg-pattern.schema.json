@@ -98,10 +98,11 @@
         "blink": {
           "type": "number",
           "minimum": 0,
-          "description": "Blink interval in milliseconds"
+          "description": "Blink interval in milliseconds. Not yet implemented (planned for v1.1); currently ignored by the renderer."
         },
         "animation": {
-          "$ref": "#/definitions/Animation"
+          "$ref": "#/definitions/Animation",
+          "description": "Animation definition (WAAPI). Not yet implemented (planned for v1.1); currently ignored by the renderer."
         },
         "repeat": {
           "$ref": "#/definitions/Repeat"
@@ -277,6 +278,7 @@
     },
     "Animation": {
       "type": "object",
+      "description": "Animation definition (WAAPI). Not yet implemented (planned for v1.1); currently ignored by the renderer.",
       "required": ["duration"],
       "properties": {
         "keyframes": {

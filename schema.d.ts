@@ -95,6 +95,10 @@ export interface Keyframe {
   [key: string]: any;
 }
 
+/**
+ * ⚠️ 未実装（v1.1 予定）。現状 NodeRenderer は animation を描画しない。
+ * 型・スキーマは契約として保持し、レンダラーは静的にのみ評価する。
+ */
 export interface Animation {
   // keyframes形式（配列 or オブジェクト）
   keyframes?: Keyframe[];
@@ -126,7 +130,7 @@ export interface BaseNode {
   blur?: number;
   rotate?: number;
 
-  // アニメーション
+  // アニメーション（⚠️ 未実装・v1.1 予定。現状 NodeRenderer は描画しない＝静的表示のまま）
   blink?: number;
   animation?: Animation;
 }
@@ -362,7 +366,7 @@ export namespace Legacy {
     rotate?: number;
     blur_radius?: number;
 
-    // Blink
+    // Blink（移行先 blink へマップ。⚠️ 未実装・v1.1 予定のため現行レンダラーでは効果なし）
     blink_interval?: number;
 
     // Line
