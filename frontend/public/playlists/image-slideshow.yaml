@@ -1,0 +1,34 @@
+# Image Slideshow
+# Displays images from URLs in random order
+
+playback:
+  order: random
+  loop: true
+  defaultDuration: 5000
+
+sources:
+  # Random images from picsum.photos
+  - type: image
+    src: "https://picsum.photos/1920/1080?random=1"
+    fit: cover
+    duration: 5000
+
+  - type: image
+    src: "https://picsum.photos/1920/1080?random=2"
+    fit: cover
+    duration: 5000
+
+  - type: image
+    src: "https://picsum.photos/1920/1080?random=3"
+    fit: cover
+    duration: 5000
+
+  - type: image
+    src: "https://picsum.photos/1920/1080?random=4"
+    fit: cover
+    duration: 5000
+
+  - type: image
+    src: "https://picsum.photos/1920/1080?random=5"
+    fit: cover
+    duration: 5000

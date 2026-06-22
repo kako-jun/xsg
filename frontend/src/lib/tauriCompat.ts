@@ -48,6 +48,11 @@ async function webFallback<T>(
       return loadPatternsListFromWeb() as T;
     }
 
+    case "load_playlist": {
+      const path = (args?.path as string) || "";
+      return loadPlaylistFromWeb(path) as T;
+    }
+
     case "get_calibration_status": {
       return {
         platform: "web",
@@ -116,6 +121,65 @@ async function loadPatternFromWeb(
   pattern = expandParams(pattern as any, _params) as Record<string, unknown>;
 
   return pattern;
+}
+
+/**
+ * Load a playlist file via fetch (web mode).
+ *
+ * The Tauri `load_playlist` command takes a filesystem `path`; in web mode we
+ * can't hit the filesystem, so we serve playlists from `public/playlists/` the
+ * same way patterns come from `public/patterns/`. The incoming `path` may be a
+ * bare name ("digital-signage"), a name with extension, or a relative/absolute
+ * path; we reduce it to `<name>` and fetch `/playlists/<name>.yaml` (falling
+ * back to `.json`).
+ *
+ * `loop` is defaulted to `true` to match the Rust serde `default_loop`, so a
+ * playlist whose YAML omits `loop` behaves identically in web and Tauri modes.
+ */
+async function loadPlaylistFromWeb(path: string): Promise<unknown> {
+  const { default: yaml } = await import("js-yaml");
+
+  // Reduce the path to a bare playlist name (strip dir + extension).
+  const fileName = path.replace(/\\/g, "/").split("/").pop() || path;
+  const name = fileName.replace(/\.(ya?ml|json)$/i, "");
+
+  // Try YAML first, then JSON.
+  const candidates = [
+    { url: `/playlists/${name}.yaml`, kind: "yaml" as const },
+    { url: `/playlists/${name}.json`, kind: "json" as const },
+  ];
+
+  let lastError = "";
+  for (const { url, kind } of candidates) {
+    const response = await fetch(url);
+    if (!response.ok) {
+      lastError = `${url} -> ${response.status}`;
+      continue;
+    }
+    const text = await response.text();
+    const parsed =
+      kind === "json"
+        ? (JSON.parse(text) as Record<string, unknown>)
+        : (yaml.load(text) as Record<string, unknown>);
+    return normalizePlaylist(parsed);
+  }
+
+  throw new Error(`Playlist not found: ${name} (${lastError})`);
+}
+
+/**
+ * Apply Rust-side serde defaults that aren't expressed in the raw file, so the
+ * web `Playlist` matches what the Tauri command would return.
+ */
+function normalizePlaylist(
+  raw: Record<string, unknown>
+): Record<string, unknown> {
+  const playback = (raw.playback as Record<string, unknown>) || {};
+  if (playback.loop === undefined) {
+    // serde `default_loop` => true.
+    playback.loop = true;
+  }
+  return { ...raw, playback };
 }
 
 /**
