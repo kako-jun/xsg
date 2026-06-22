@@ -119,7 +119,7 @@
             "type": { "const": "background" },
             "preset": {
               "type": "string",
-              "description": "Preset name (from presets/ directory)"
+              "description": "Preset name = a pattern id under patterns/ (e.g. 'colorbar')"
             },
             "params": {
               "type": "object",
@@ -266,7 +266,7 @@
             "type": { "const": "preset" },
             "preset": {
               "type": "string",
-              "description": "Preset name (from presets/ directory)"
+              "description": "Preset name = a pattern id under patterns/ (e.g. 'colorbar')"
             },
             "params": {
               "type": "object",
