@@ -210,14 +210,23 @@ function InlineSlide({ pattern }: { pattern: Record<string, unknown> }) {
   return <PatternNodes pattern={data} />;
 }
 
-/** Shared pattern-node renderer (mirror of PatternDisplay's render path). */
+/**
+ * Shared pattern-node renderer (mirror of PatternDisplay's render path).
+ *
+ * Each `NodeRenderer` returns its own full-screen `<canvas class="w-full
+ * h-full">`. To layer them (multi-node patterns like multi-layer-example),
+ * wrap them in a `relative` box and pin every canvas with `absolute inset-0` so
+ * they overlap instead of stacking/centering inside the parent flex container.
+ */
 function PatternNodes({ pattern }: { pattern: XSGPattern }) {
   return (
-    <>
+    <div className="relative w-full h-full">
       {(pattern.nodes || []).map((node) => (
-        <NodeRenderer key={node.id} node={node} />
+        <div key={node.id} className="absolute inset-0">
+          <NodeRenderer node={node} />
+        </div>
       ))}
-    </>
+    </div>
   );
 }
 
