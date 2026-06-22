@@ -123,15 +123,17 @@ describe("usePatternLoader", () => {
     });
   });
 
-  it("未知の pattern 名は patternId が solid にフォールバックして呼ばれる", async () => {
-    // --- 仕様: resolvePatternId は未知名を "solid" に落とす。その結線を確認 ---
+  it("未知の pattern 名はファイル名としてそのまま patternId に渡る（#23: solid 黙殺廃止）", async () => {
+    // --- 仕様: resolvePatternId は未知名を "solid" に黙殺せず、名前をそのまま ---
+    // pattern id として返す。エイリアス未登録の colorbar-simple 等へ到達できる。
+    // その結線（未知名 → loader にそのまま渡る）を確認する。
     safeInvokeMock.mockResolvedValue(samplePattern());
 
     const { result } = renderHook(() => usePatternLoader("does-not-exist"));
     await waitFor(() => expect(result.current.status).toBe("ready"));
 
     expect(safeInvokeMock).toHaveBeenCalledWith("get_pattern", {
-      patternId: "solid",
+      patternId: "does-not-exist",
       params: {},
     });
   });

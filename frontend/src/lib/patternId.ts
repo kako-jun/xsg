@@ -3,8 +3,10 @@
  *
  * もとは `PatternDisplay.tsx` の読込 useEffect 内にインラインで埋まっていた2つの
  * 純粋関数を、テスト可能な単位として切り出したもの（規律3: 計算ロジックの隔離）。
- * 別名テーブル・`toLowerCase()`・fallback `"solid"`・`pattern` キー除外の挙動は
- * 抽出元と1文字も変えていない（characterization テストが固定する）。
+ * 別名テーブル・`toLowerCase()`・`pattern` キー除外の挙動は抽出元と同じだが、
+ * `resolvePatternId` の未知名フォールバックは `"solid"` 黙殺を廃止し、名前を
+ * pattern id としてそのまま返すよう変更した（#23: エイリアス未登録のパターンファイル
+ * が到達不能になるバグの修正）。詳細は当該関数の JSDoc を参照。
  */
 
 /**
@@ -48,11 +50,22 @@ const PATTERN_MAP: Record<string, string> = {
 /**
  * パターン名（別名可・大文字小文字を問わない）をパターン ID に解決する。
  *
- * 小文字化したうえで {@link PATTERN_MAP} を引き、未知名は `"solid"` に落とす。
- * 抽出元: `patternMap[pattern.toLowerCase()] || "solid"`。
+ * 小文字化したうえで {@link PATTERN_MAP} を引き、既知のニックネームは canonical id へ
+ * 解決する。未知名は `"solid"` に黙殺せず、小文字化した名前を pattern id として
+ * そのまま扱う（ファイル名直指定を許可）。`colorbar-simple` のように
+ * {@link PATTERN_MAP} 未登録でも `/patterns/<name>.yaml`（web）/ root `patterns/`（Tauri）
+ * から loader がロードできる。実在しない名前は loader が 404 → `error` 状態にする
+ * （旧挙動の「黙って solid を出す」黒画面より、明示エラーの方が良 UX）。
+ *
+ * 空白のみ（または空文字）は安全な既定として従来どおり `"solid"` を返す。
+ * App.tsx がデフォルト `"colorbar"` を保証するため空文字は実運用で来ないが、防御的に温存する。
  */
 export function resolvePatternId(name: string): string {
-  return PATTERN_MAP[name.toLowerCase()] || "solid";
+  const normalized = name.trim().toLowerCase();
+  if (normalized === "") {
+    return "solid";
+  }
+  return PATTERN_MAP[normalized] ?? normalized;
 }
 
 /**

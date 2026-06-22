@@ -8,8 +8,11 @@
  * 方針:
  *   - `resolvePatternId` は全別名（colorbar 系/ebu/arib/gradient/grayscale 系/staircase 系/
  *     checker 系/crosshatch 系/pluge/solid/multiburst 系/convergence 系/pixel-defect 系）と
- *     未知名→solid、大文字混在（`COLORBAR` 等）を網羅する。
- *   - `parsePatternParams` は `pattern` 除外・複数パラメータ・空・混在クエリを固定する。
+ *     未知名→その名前自身（ファイル名扱い）、大文字混在（`COLORBAR` 等）を網羅する。
+ *   - #23 で未知名フォールバックを `"solid"` 黙殺 → 名前パススルーに変更したため、
+ *     未知名ケースの期待値を「その名前自身（lowercased）」に更新済み（意図的な
+ *     characterization 更新）。空白のみは安全な既定として `"solid"` を温存。
+ *   - `parsePatternParams` は `pattern` 除外・複数パラメータ・空・混在クエリを固定する（不変）。
  */
 
 import { describe, expect, it } from "vitest";
@@ -53,11 +56,31 @@ describe("resolvePatternId — alias → id（characterization）", () => {
     expect(resolvePatternId(name)).toBe(expected);
   });
 
-  it("未知名は solid に落ちる", () => {
-    expect(resolvePatternId("nope")).toBe("solid");
+  // #23: 未知名は「ファイル名」として扱い、そのまま pattern id に解決する
+  // （旧挙動の `"solid"` 黙殺を廃止）。エイリアス未登録の colorbar-simple 等の
+  // パターンファイルへ `?pattern=` で到達できるようにするための意図的な characterization 更新。
+  // 実在しない名前は loader が 404 → error 状態にする（黒画面でなく明示エラー）。
+  it("未知名はファイル名としてそのまま扱う（solid 黙殺を廃止）", () => {
+    expect(resolvePatternId("colorbar-simple")).toBe("colorbar-simple");
+    expect(resolvePatternId("multi-layer-example")).toBe("multi-layer-example");
+    expect(resolvePatternId("animation-example")).toBe("animation-example");
+    expect(resolvePatternId("unknown-xyz")).toBe("unknown-xyz");
+    expect(resolvePatternId("nope")).toBe("nope");
+    expect(resolvePatternId("colorbarz")).toBe("colorbarz");
+    expect(resolvePatternId("xyz123")).toBe("xyz123");
+  });
+
+  it("大文字混在の未知名も lowercased passthrough（ファイル名扱い）", () => {
+    expect(resolvePatternId("Colorbar-Simple")).toBe("colorbar-simple");
+    expect(resolvePatternId("Multi-Layer-Example")).toBe("multi-layer-example");
+    expect(resolvePatternId("UNKNOWN-XYZ")).toBe("unknown-xyz");
+  });
+
+  // 空白のみ（空文字含む）は安全な既定として従来どおり solid を返す（防御ガード）。
+  // App.tsx がデフォルト "colorbar" を保証するため実運用では来ない。
+  it("空文字・空白のみは安全な既定として solid を返す", () => {
     expect(resolvePatternId("")).toBe("solid");
-    expect(resolvePatternId("colorbarz")).toBe("solid");
-    expect(resolvePatternId("xyz123")).toBe("solid");
+    expect(resolvePatternId("   ")).toBe("solid");
   });
 
   it("大文字・混在ケースは toLowerCase 経由で解決される", () => {
