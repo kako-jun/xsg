@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import NodeRenderer from "./NodeRenderer";
 import PatternMenu from "./PatternMenu";
 import CalibrationSettings from "./CalibrationSettings";
-import type { XSGPattern } from "../lib/types";
+import type { PatternLoad, XSGPattern } from "../lib/types";
 
 interface PatternDisplayProps {
   pattern: string;
@@ -12,9 +12,10 @@ interface PatternDisplayProps {
 
 export default function PatternDisplay({ pattern }: PatternDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [patternData, setPatternData] = useState<XSGPattern | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Runtime load state (規律2): the loaded `XSGPattern` is an immutable
+  // definition; loading/error live alongside it in this `PatternLoad` value
+  // rather than overloading the definition type as a state container.
+  const [load, setLoad] = useState<PatternLoad>({ status: "loading" });
 
   useEffect(() => {
     // Request fullscreen on mount
@@ -33,8 +34,7 @@ export default function PatternDisplay({ pattern }: PatternDisplayProps) {
 
   useEffect(() => {
     const loadPatternFile = async () => {
-      setLoading(true);
-      setError(null);
+      setLoad({ status: "loading" });
 
       try {
         // Map common pattern names to pattern IDs
@@ -89,12 +89,13 @@ export default function PatternDisplay({ pattern }: PatternDisplayProps) {
           params,
         })) as XSGPattern;
 
-        setPatternData(data);
+        setLoad({ status: "ready", pattern: data });
       } catch (err) {
         console.error("Failed to load pattern:", err);
-        setError(err instanceof Error ? err.message : "Failed to load pattern");
-      } finally {
-        setLoading(false);
+        setLoad({
+          status: "error",
+          message: err instanceof Error ? err.message : "Failed to load pattern",
+        });
       }
     };
 
@@ -102,7 +103,7 @@ export default function PatternDisplay({ pattern }: PatternDisplayProps) {
   }, [pattern]);
 
   const renderContent = () => {
-    if (loading) {
+    if (load.status === "loading") {
       return (
         <div className="w-full h-full flex items-center justify-center bg-black text-white">
           Loading pattern...
@@ -110,15 +111,15 @@ export default function PatternDisplay({ pattern }: PatternDisplayProps) {
       );
     }
 
-    if (error) {
+    if (load.status === "error") {
       return (
         <div className="w-full h-full flex items-center justify-center bg-black text-white">
-          Error: {error}
+          Error: {load.message}
         </div>
       );
     }
 
-    if (!patternData || !patternData.nodes) {
+    if (!load.pattern.nodes) {
       return (
         <div className="w-full h-full flex items-center justify-center bg-black text-white">
           No pattern data
@@ -128,7 +129,7 @@ export default function PatternDisplay({ pattern }: PatternDisplayProps) {
 
     return (
       <>
-        {patternData.nodes.map((node: any) => (
+        {load.pattern.nodes.map((node: any) => (
           <NodeRenderer key={node.id} node={node} />
         ))}
       </>
