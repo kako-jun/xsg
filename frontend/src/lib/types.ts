@@ -97,7 +97,11 @@ export interface AnimationProps {
 }
 
 /**
- * Animation definition following Web Animations API
+ * Animation definition following Web Animations API.
+ *
+ * ⚠️ 未実装（v1.1 予定）。現状 `NodeRenderer` は animation を描画しない。
+ * この型・スキーマは契約として保持されるが、レンダラーは静的にのみ評価し、
+ * animation のタイミング・キーフレームは無視される。
  */
 export interface Animation {
   /** Keyframes (WAAPI: Array of Objects format) */
@@ -140,9 +144,15 @@ export interface BaseNode {
   blur?: number;
   /** Rotation angle in degrees (0-360) */
   rotate?: number;
-  /** Blink interval in milliseconds */
+  /**
+   * Blink interval in milliseconds.
+   * ⚠️ 未実装（v1.1 予定）。現状 `NodeRenderer` は blink を描画しない（静的表示のまま）。
+   */
   blink?: number;
-  /** Animation definition */
+  /**
+   * Animation definition.
+   * ⚠️ 未実装（v1.1 予定）。現状 `NodeRenderer` は animation を描画しない（静的表示のまま）。
+   */
   animation?: Animation;
   /** Repeat definition (CSS/Canvas API + advanced configuration) */
   repeat?: Repeat;
@@ -410,6 +420,10 @@ export namespace Legacy {
     alpha?: number;
     rotate?: number;
     blur_radius?: number;
+    /**
+     * Legacy 点滅間隔。移行先の `BaseNode.blink` にマップされるが、
+     * その blink 自体が ⚠️ 未実装（v1.1 予定）のため現行レンダラーでは効果がない。
+     */
     blink_interval?: number;
     line_direction?: "h" | "v";
     line_length?: string | number;
