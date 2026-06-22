@@ -149,7 +149,7 @@ nodes:
     rotate: 45
     blur: 2
 
-  # --- Blinking（点滅）---
+  # --- Blinking（点滅）⚠️ blink は未実装（v1.1 予定）。現行レンダラーでは点滅せず静的表示 ---
   - id: blinking-dot
     type: circle
     x: 960
@@ -158,7 +158,7 @@ nodes:
     fill: "#FF0000"
     blink: 500 # blink_interval → blink
 
-  # --- Moving rect（移動する矩形、旧Window）---
+  # --- Moving rect（移動する矩形、旧Window）⚠️ animation は未実装（v1.1 予定）。現行レンダラーでは移動せず静的表示 ---
   - id: moving-rect
     type: rect
     x: 0
@@ -174,7 +174,7 @@ nodes:
       iterations: Infinity
       easing: linear
 
-  # --- Complex animation（複雑なアニメーション）---
+  # --- Complex animation（複雑なアニメーション）⚠️ animation は未実装（v1.1 予定）。現行レンダラーでは静的表示 ---
   - id: complex-rect
     type: rect
     x: 100
