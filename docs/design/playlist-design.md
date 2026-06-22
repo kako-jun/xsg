@@ -285,6 +285,8 @@ sources:
 # 再生順序: A → B → C → A → B → C → ...
 ```
 
+`loop: false` のときは全件（A → B → C）を再生したあと停止する。
+
 ### random（ランダム）
 
 ```yaml
@@ -299,6 +301,8 @@ sources:
 # 再生順序: B → A → C → B → B → A → ...（毎回ランダム）
 ```
 
+**random は本質的に無限再生で `loop` を無視する**（#20）。毎回ソースを乱択するだけで「全件出した」という終端の概念が無いため、`loop: false` を指定しても停止しない（`loop` フラグは random には無意味）。停止が必要なら sequence / shuffle を使う。
+
 ### shuffle（シャッフル）
 
 ```yaml
@@ -312,6 +316,8 @@ sources:
 
 # 再生順序: C → A → B → C → A → B → ...（最初にシャッフル、以降固定）
 ```
+
+`loop: false` のときは（シャッフル後の）全件を再生したあと停止する。
 
 ---
 
@@ -395,7 +401,7 @@ version: "1.0"
 # 再生設定（独立した軸）
 playback:
   order: sequence | random | shuffle # 再生順序
-  loop: boolean # ループ
+  loop: boolean # ループ（random では無視＝random は常に無限再生 #20）
   defaultDuration: number # デフォルト表示時間（ms）
 
 # データソース（独立した軸）

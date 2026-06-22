@@ -505,7 +505,7 @@ version: "1.0"
 
 playlist:
   mode: sequence | random | shuffle
-  loop: boolean
+  loop: boolean # random では無視（random は終端が無く常に無限再生 #20）
   defaultDuration: number # ms
 
 items:
@@ -546,6 +546,8 @@ items:
 1. ✅ **プレイリスト基本形式** - YAML定義
 2. ✅ **自動切り替え** - タイマー機能
 3. ✅ **sequence/random/shuffle** - 再生モード
+   - sequence / shuffle は `loop: false` で全件再生後に停止する
+   - **random は終端の概念が無く本質的に無限再生で `loop` を無視する**（#20）
 
 ### v1.1（推奨）
 
