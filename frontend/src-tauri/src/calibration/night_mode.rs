@@ -1,5 +1,5 @@
 use super::types::{ControlResult, NightModeStatus};
-#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[cfg(target_os = "linux")]
 use std::process::Command;
 
 /// Detect if night mode / blue light filter is enabled
