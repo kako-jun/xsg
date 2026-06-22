@@ -113,6 +113,14 @@ impl PlaylistRunner {
             return false;
         }
 
+        // Random order never exhausts: get_next() picks a fresh random source every
+        // call and never advances current_index, so there is no "played everything
+        // once" terminal state. Random is therefore inherently infinite and the
+        // `loop` flag is meaningless for it (#20, resolved as "random = infinite").
+        if matches!(self.playlist.playback.order, Order::Random) {
+            return true;
+        }
+
         // If looping is enabled, always continue
         if self.playlist.playback.loop_playback {
             return true;

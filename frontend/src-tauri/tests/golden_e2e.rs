@@ -549,6 +549,55 @@ fn runner_inproc_random_returns_only_input_members() {
 }
 
 #[test]
+fn runner_random_with_loop_false_is_infinite() {
+    // ★#20 の仕様ガード★ Order::Random は loop:false でも停止しない＝本質的に無限再生。
+    // 理由: get_next() は毎回 0..len から乱択するだけで current_index を進めない。
+    // 「全件出した」という終端の概念が無いので、loop フラグは Random には無意味。
+    // 対比: Sequence/Shuffle は loop:false なら全件再生後に should_continue()=false で
+    //   停止する（runner_inproc_should_continue_stops_after_all_items_when_no_loop /
+    //   load_playlist_honors_loop_false_and_stops_after_all_items が証人）。
+    //   Random だけはここで loop:false でも永遠に true を返すことを固定し、両者を対にする。
+    let playlist = make_playlist(
+        Order::Random,
+        false, // loop:false でも Random は停止しない（#20: random = infinite）
+        None,
+        vec![
+            pattern_source("a.yaml", None),
+            pattern_source("b.yaml", None),
+            pattern_source("c.yaml", None),
+        ],
+    );
+
+    let mut runner = PlaylistRunner::new(playlist);
+    runner.prepare();
+
+    // 件数(3)を大きく超えて get_next() を呼んでも should_continue() は常に true。
+    // 非決定方針（コメント先頭13行/321行）に従い順序は assert せず、
+    // (1) 無限継続（should_continue が毎回 true）と
+    // (2) メンバーシップ（返る各要素が入力集合に属する）だけを見る。
+    let input: BTreeSet<String> = ["a.yaml", "b.yaml", "c.yaml"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    for i in 0..20 {
+        assert!(
+            runner.should_continue(),
+            "Random+loop:false は {i} 回再生後も停止しない（#20: random = infinite）"
+        );
+        let got = source_path(runner.get_next().unwrap());
+        assert!(
+            input.contains(&got),
+            "Random が入力に無い要素 {got} を返した"
+        );
+    }
+    // 件数を超えて消化したあとも継続可能であることを最終確認（loop:false 無視の証拠）。
+    assert!(
+        runner.should_continue(),
+        "Random は終端の概念が無く loop:false を無視するので永続的に継続可能（#20）"
+    );
+}
+
+#[test]
 fn runner_inproc_get_duration_priority_source_then_default_then_fallback() {
     // s1: source 個別 duration=2000、s2: 個別 duration 無し。
     // defaultDuration=7000 を指定 → s2 はこれを使う。

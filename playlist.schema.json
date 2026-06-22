@@ -13,12 +13,12 @@
       "properties": {
         "order": {
           "enum": ["sequence", "random", "shuffle"],
-          "description": "Playback order: sequence (in order), random (random each time), shuffle (shuffled once)"
+          "description": "Playback order: sequence (in order), random (random each time; inherently infinite, the `loop` flag is ignored), shuffle (shuffled once)"
         },
         "loop": {
           "type": "boolean",
           "default": true,
-          "description": "Loop playback"
+          "description": "Loop playback. Ignored when order is `random`, which never terminates and always plays infinitely."
         },
         "defaultDuration": {
           "type": "number",
