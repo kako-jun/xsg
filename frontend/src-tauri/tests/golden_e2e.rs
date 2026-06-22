@@ -341,6 +341,58 @@ fn runner_should_continue_stops_after_all_items_when_no_loop() {
 }
 
 #[test]
+fn load_playlist_honors_loop_false_and_stops_after_all_items() {
+    // ★#17 回帰ガード★ loop:false の YAML が無視されず反映されること。
+    // 旧: Playback.loop_playback に `#[serde(rename = "loop")]` が無く、YAML の `loop:` キーが
+    //     黙って捨てられて常に default(true) になっていた。そのため loop:false が効かず、
+    //     全件消化後も should_continue() が（loop=true 扱いで）true を返し続けた。
+    // 新: `#[serde(rename = "loop")]` を付けたので wire 名 `loop` が loop_playback に届く。
+    // この assert は **load_playlist 経由（YAML → デシリアライズ）** で踏むので、rename が
+    // 再び外れたら loop_playback が default(true) に戻り、全件消化後の should_continue() が
+    // false にならず（true のまま）この assert が射抜く。Rust 直接構築の
+    // runner_should_continue_stops_after_all_items_when_no_loop はデシリアライズを介さないため、
+    // rename 漏れは検出できない。ここで YAML 駆動の門番を立てる。
+    let root = workspace("loopfalse");
+    // playback: {order, loop: false, defaultDuration} / sources 複数。
+    let yaml = "\
+playback:
+  order: sequence
+  loop: false
+  defaultDuration: 3000
+sources:
+  - type: pattern
+    path: \"a.yaml\"
+    duration: 3000
+  - type: pattern
+    path: \"b.yaml\"
+    duration: 3000
+  - type: pattern
+    path: \"c.yaml\"
+    duration: 3000
+";
+    let path = root.join("no-loop.yaml");
+    std::fs::write(&path, yaml).unwrap();
+
+    let playlist = load_playlist(&path).expect("load_playlist は成功するはず");
+    let mut runner = PlaylistRunner::new(playlist);
+    runner.prepare();
+
+    // --- 仕様: loop:false の YAML が反映され、全 source を get_next() で消化したあと停止する ---
+    assert!(runner.should_continue(), "再生前は継続可能");
+    runner.get_next(); // a.yaml (index -> 1)
+    runner.get_next(); // b.yaml (index -> 2)
+    runner.get_next(); // c.yaml (index -> 3 == len)
+                       // rename が外れて loop_playback=default(true) になると、should_continue() は
+                       // 「loop 有効なら常に継続」枝で true を返してしまう。loop:false が効いている証拠として false を要求。
+    assert!(
+        !runner.should_continue(),
+        "loop:false の YAML が無視されず反映されること（#17 回帰ガード）: 全件消化後は停止する"
+    );
+
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+#[test]
 fn runner_shuffle_preserves_membership_not_order() {
     let playlist = make_playlist(
         Order::Shuffle,
