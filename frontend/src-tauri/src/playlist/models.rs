@@ -14,7 +14,7 @@ pub enum Order {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Playback {
     pub order: Order,
-    #[serde(default = "default_loop")]
+    #[serde(rename = "loop", default = "default_loop")]
     pub loop_playback: bool,
     #[serde(rename = "defaultDuration")]
     pub default_duration: Option<f32>,
@@ -27,8 +27,6 @@ fn default_loop() -> bool {
 /// Pattern source
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PatternSource {
-    #[serde(rename = "type")]
-    pub type_: String, // "pattern"
     pub path: String,
     pub duration: Option<f32>,
 }
@@ -36,8 +34,6 @@ pub struct PatternSource {
 /// URL source
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UrlSource {
-    #[serde(rename = "type")]
-    pub type_: String, // "url"
     pub url: String,
     pub readonly: Option<bool>,
     pub duration: Option<f32>,
@@ -46,8 +42,6 @@ pub struct UrlSource {
 /// Image source
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImageSource {
-    #[serde(rename = "type")]
-    pub type_: String, // "image"
     pub src: String,
     pub fit: Option<String>,
     pub tile: Option<bool>,
@@ -59,8 +53,6 @@ pub struct ImageSource {
 /// Inline source
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InlineSource {
-    #[serde(rename = "type")]
-    pub type_: String, // "inline"
     pub pattern: HashMap<String, serde_json::Value>,
     pub duration: Option<f32>,
 }

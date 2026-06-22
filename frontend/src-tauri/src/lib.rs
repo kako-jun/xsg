@@ -1,9 +1,9 @@
 mod calibration;
 mod displays;
-mod pattern_expander;
+pub mod pattern_expander;
 mod pattern_loader;
-mod patterns;
-mod playlist;
+pub mod patterns;
+pub mod playlist;
 
 use calibration::{CalibrationStatus, ControlResult};
 use displays::{print_display_list, select_displays, DisplayInfo};
