@@ -151,7 +151,7 @@ export async function loadPattern(id: string): Promise<PatternModule | null> {
     const module = await import(`/patterns/${id}.tsx`);
     registry.register(id, module);
     return module;
-  } catch (e) {
+  } catch {
     // Try legacy location
     try {
       const module = await import(`../components/patterns/${id}.tsx`);

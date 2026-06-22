@@ -11,6 +11,9 @@ pub struct GammaStatus {
 }
 
 impl GammaStatus {
+    // Used by the non-macOS gamma paths (linux xrandr / unsupported-platform fallback);
+    // dead on the macOS build only.
+    #[allow(dead_code)]
     pub fn not_supported(message: impl Into<String>) -> Self {
         Self {
             supported: false,

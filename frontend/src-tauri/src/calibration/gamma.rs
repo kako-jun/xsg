@@ -81,7 +81,7 @@ pub fn restore_gamma() -> ControlResult {
             drop(saved);
             return set_gamma(gamma);
         }
-        return ControlResult::failure("No saved gamma to restore");
+        ControlResult::failure("No saved gamma to restore")
     }
 
     #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
