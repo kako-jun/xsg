@@ -43,6 +43,12 @@ export async function safeInvoke<T>(
  * パターン（さらにその extends/params）もモード適切（Tauri=Rust / web=fetch）に
  * 解決されつつ in-place 展開される。
  *
+ * ユーザのクエリ params（`?pattern=...&size=...`）は**base パターンにのみ**適用され、
+ * preset 参照の子へは伝播しない（子の getPattern には base の `params` を渡さない）。
+ * 子 preset は YAML 記述の `node.params` のみで解決される（preset params は作者固定）。
+ * また展開ノードの id はホストノード id で名前空間化されるため、同一 preset を
+ * 複数参照しても描画側の React key（`key={node.id}`）が衝突しない。
+ *
  * 規律3: preset 展開は TS のこの経路 1 箇所だけ。Rust 側には足さない。
  * 描画サイト（usePatternLoader / SlideshowView）は本関数を呼ぶだけでよい。
  */
