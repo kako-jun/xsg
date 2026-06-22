@@ -91,7 +91,7 @@ fn disable_night_mode_windows() -> ControlResult {
 #[cfg(target_os = "linux")]
 fn detect_night_mode_linux() -> NightModeStatus {
     // Check if redshift is running
-    if let Ok(output) = Command::new("pgrep").args(&["-x", "redshift"]).output() {
+    if let Ok(output) = Command::new("pgrep").args(["-x", "redshift"]).output() {
         if output.status.success() && !output.stdout.is_empty() {
             return NightModeStatus {
                 supported: true,
@@ -102,7 +102,7 @@ fn detect_night_mode_linux() -> NightModeStatus {
     }
 
     // Check if f.lux is running
-    if let Ok(output) = Command::new("pgrep").args(&["-x", "fluxgui"]).output() {
+    if let Ok(output) = Command::new("pgrep").args(["-x", "fluxgui"]).output() {
         if output.status.success() && !output.stdout.is_empty() {
             return NightModeStatus {
                 supported: true,
@@ -122,14 +122,14 @@ fn detect_night_mode_linux() -> NightModeStatus {
 #[cfg(target_os = "linux")]
 fn disable_night_mode_linux() -> ControlResult {
     // Try to kill redshift
-    if let Ok(output) = Command::new("pkill").args(&["-x", "redshift"]).output() {
+    if let Ok(output) = Command::new("pkill").args(["-x", "redshift"]).output() {
         if output.status.success() {
             return ControlResult::success("Redshift disabled");
         }
     }
 
     // Try to kill f.lux
-    if let Ok(output) = Command::new("pkill").args(&["-x", "fluxgui"]).output() {
+    if let Ok(output) = Command::new("pkill").args(["-x", "fluxgui"]).output() {
         if output.status.success() {
             return ControlResult::success("f.lux disabled");
         }

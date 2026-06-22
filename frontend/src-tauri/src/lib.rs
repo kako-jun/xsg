@@ -9,7 +9,7 @@ use calibration::{CalibrationStatus, ControlResult};
 use displays::{print_display_list, select_displays, DisplayInfo};
 use pattern_loader::load_pattern_with_params;
 use patterns::{load_patterns, PatternsResponse};
-use playlist::{Playlist, PlaylistRunner};
+use playlist::Playlist;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -20,7 +20,7 @@ use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 fn get_patterns() -> Result<PatternsResponse, String> {
     match load_patterns() {
         Ok(patterns) => Ok(PatternsResponse { patterns }),
-        Err(e) => Err(format!("Failed to load patterns: {}", e)),
+        Err(e) => Err(format!("Failed to load patterns: {e}")),
     }
 }
 
@@ -29,7 +29,7 @@ fn get_patterns() -> Result<PatternsResponse, String> {
 fn get_pattern(pattern_id: String, params: HashMap<String, String>) -> Result<Value, String> {
     match load_pattern_with_params(&pattern_id, params) {
         Ok(pattern) => Ok(pattern),
-        Err(e) => Err(format!("Failed to load pattern '{}': {}", pattern_id, e)),
+        Err(e) => Err(format!("Failed to load pattern '{pattern_id}': {e}")),
     }
 }
 
@@ -70,10 +70,9 @@ fn load_playlist(path: String) -> Result<Playlist, String> {
 
     if playlist_path.extension().and_then(|s| s.to_str()) == Some("json") {
         playlist::load_playlist_json(&playlist_path)
-            .map_err(|e| format!("Failed to load playlist: {}", e))
+            .map_err(|e| format!("Failed to load playlist: {e}"))
     } else {
-        playlist::load_playlist(&playlist_path)
-            .map_err(|e| format!("Failed to load playlist: {}", e))
+        playlist::load_playlist(&playlist_path).map_err(|e| format!("Failed to load playlist: {e}"))
     }
 }
 
@@ -84,23 +83,22 @@ pub fn run(pattern: String, display_spec: String, list_displays: bool) {
             move |app, args, _cwd| {
                 // This callback is triggered when a second instance is launched
                 log::info!(
-                    "Single instance: Another instance attempted to start with args: {:?}",
-                    args
+                    "Single instance: Another instance attempted to start with args: {args:?}"
                 );
 
                 // If args contain --pattern, switch to that pattern
                 if let Some(pattern_arg_idx) = args.iter().position(|arg| arg == "--pattern") {
                     if let Some(new_pattern) = args.get(pattern_arg_idx + 1) {
-                        log::info!("Switching to pattern: {}", new_pattern);
+                        log::info!("Switching to pattern: {new_pattern}");
 
                         // Switch pattern on all display windows by navigating to new URL
                         for i in 0..8 {
-                            let window_label = format!("display-{}", i);
+                            let window_label = format!("display-{i}");
                             if let Some(window) = app.get_webview_window(&window_label) {
                                 let url = if cfg!(debug_assertions) {
-                                    format!("http://localhost:3000/?pattern={}", new_pattern)
+                                    format!("http://localhost:3000/?pattern={new_pattern}")
                                 } else {
-                                    format!("tauri://localhost/?pattern={}", new_pattern)
+                                    format!("tauri://localhost/?pattern={new_pattern}")
                                 };
                                 let js = format!(
                                     "window.location.href = '{}';",
@@ -153,15 +151,15 @@ pub fn run(pattern: String, display_spec: String, list_displays: bool) {
             let selected_displays = select_displays(&display_spec, &all_displays);
 
             if selected_displays.is_empty() {
-                eprintln!("[ERROR] No displays selected with spec: {}", display_spec);
+                eprintln!("[ERROR] No displays selected with spec: {display_spec}");
                 std::process::exit(1);
             }
 
             // Build URL with pattern parameter
             let url = if cfg!(debug_assertions) {
-                format!("http://localhost:3000/?pattern={}", pattern)
+                format!("http://localhost:3000/?pattern={pattern}")
             } else {
-                format!("tauri://localhost/?pattern={}", pattern)
+                format!("tauri://localhost/?pattern={pattern}")
             };
 
             // Get the default window (created by tauri.conf.json)
@@ -172,7 +170,7 @@ pub fn run(pattern: String, display_spec: String, list_displays: bool) {
 
             // Create a window for each selected display
             for (i, display) in selected_displays.iter().enumerate() {
-                let window_label = format!("display-{}", i);
+                let window_label = format!("display-{i}");
 
                 WebviewWindowBuilder::new(
                     app,
