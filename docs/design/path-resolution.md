@@ -45,7 +45,7 @@ src: "../images/fg/crosstalk.png"
 | --- | --- | --- |
 | URL | `isUrl` = `/^https?:\/\//i` | そのまま返す |
 | `@/...` | `path.startsWith("@/")` → `resolveProjectRelative` | `${baseUrl}/<@/ 以降>` |
-| 絶対 | `isAbsolutePath`（`[A-Za-z]:[\\/]` / `^\\\\` / 先頭 `/`） → `resolveAbsolute` | `${baseUrl}/api/file?path=<encoded>`（バックエンド経由の想定 API） |
+| 絶対 | `isAbsolutePath`（`[A-Za-z]:[\\/]` / `^\\\\` / 先頭 `/`） → `resolveAbsolute` | `${baseUrl}/api/file?path=<encoded>`（**この `/api/file` エンドポイントは現状未実装**。`resolveAbsolute` は URL 文字列を組むだけで、絶対パス画像を実際に配信する経路はまだ無い） |
 | 相対 | 上記いずれも非該当 → `resolveRelative` | `currentFileDir` と結合（`combinePaths` が `.`/`..` を解決） |
 
 `baseUrl` の既定は `window.location.origin`。`PathResolverOptions`（`currentFilePath` / `projectRoot` / `baseUrl`）で上書きできる。
