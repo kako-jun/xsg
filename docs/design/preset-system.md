@@ -1,492 +1,184 @@
-# プリセット＝プラグイン アーキテクチャ
+# プリセットシステム
 
-## 🎯 設計哲学
-
-**「組み込みプリセットはない。全てがプラグインである。」**
-
-これはVSCode、Neovim、Emacsなどの設計哲学と同じです：
-
-- VSCode: 組み込み機能もextensionとして実装
-- Neovim: 組み込み機能もプラグインとして実装
-- Emacs: 組み込み機能もパッケージとして実装
-
-XSGでも同じアプローチを取ります。
+> ⚠️ **この文書は現行実装（YAML プリセット + TypeScript 展開）に合わせて 2026-06 に改訂した。**
+> 旧版は存在しない設計（プリセット＝React `.tsx` コンポーネント、`backend/app/presets.py` の FastAPI 自動検出、`GET /api/presets`、`presets/` ディレクトリ）を前提に書かれていたが、その設計は破棄された。現行のプリセットは **YAML パターンファイル**であり、`type: background | preset` ノードから参照され、TypeScript（`frontend/src/lib/presetExpander.ts`）が展開する。`.tsx` プリセットも presets API も存在しない。
 
 ---
 
-## 📁 プロジェクト構造
+## 設計の要点
 
-```
-xsg/
-├── presets/                    ← 全てのプリセットが平等
-│   ├── checker.tsx             ✅ 「標準」プリセット（リポジトリに含まれる）
-│   ├── colorbar.tsx            ✅ 「標準」プリセット
-│   ├── grayscale.tsx           ✅ 「標準」プリセット
-│   ├── pixeldefect.tsx         ✅ 「標準」プリセット
-│   ├── my-custom.tsx           ✅ ユーザーのカスタムプリセット
-│   └── company-logo.tsx        ✅ ユーザーのカスタムプリセット
-├── patterns/
-│   └── test.yaml
-├── frontend/
-└── backend/
-```
+XSG に「組み込みプリセット」と「ユーザープリセット」の区別はない。**すべてのプリセットは普通の YAML パターンファイル**であり、リポジトリに同梱されているか否かの差しかない。
 
-**重要:**
+- プリセットの実体: `frontend/public/patterns/*.yaml`（web が `fetch`）／ リポジトリルートの `patterns/*.yaml`（Tauri/Rust が読む）。両者は同じファイル群。
+- あるパターンが別パターンを「プリセット」として使うには、`{ type: background | preset, preset: "<id>", params: {...} }` ノードを置く。
+- そのノードは描画時に **参照先パターンの nodes へ in-place 展開**される（`expandPresets`）。
 
-- ❌ 「組み込み」と「カスタム」の区別はない
-- ✅ 全てのプリセットは `presets/` に配置される
-- ✅ リポジトリに含まれているか否かの違いだけ
-- ✅ 実装は全て同じ規約に従う
+`.tsx` コンポーネント・FastAPI 自動検出・Hot Reload する React プリセットは、いずれも現行実装に存在しない。
 
 ---
 
-## 🔧 プリセットの規約
+## プリセット参照ノード
 
-### 基本形式
+`frontend/src/lib/types.ts` に 2 つの参照ノード型がある（中身は同形）。
 
-```typescript
-// presets/checker.tsx
-import { useEffect, useRef } from 'react';
-import type { PresetProps } from '@/lib/presets';
-
-export default function Checker({ params }: PresetProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const size = params.size || 50;
-    const color1 = params.color1 || '#000000';
-    const color2 = params.color2 || '#FFFFFF';
-
-    // 描画ロジック
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const cols = Math.ceil(canvas.width / size);
-    const rows = Math.ceil(canvas.height / size);
-
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        ctx.fillStyle = (row + col) % 2 === 0 ? color1 : color2;
-        ctx.fillRect(col * size, row * size, size, size);
-      }
-    }
-  }, [params]);
-
-  return <canvas ref={canvasRef} className="w-full h-full" />;
+```ts
+interface BackgroundNode extends BaseNode {
+  type: "background";
+  preset: string;                      // 参照先パターン id
+  params?: Record<string, unknown>;    // プリセット固有パラメータ
 }
-
-// メタデータ（オプション）
-export const metadata = {
-  name: "Checker",
-  description: "市松模様パターン",
-  author: "XSG Team",
-  version: "1.0.0",
-  params: {
-    size: { type: "number", default: 50, min: 1, max: 500 },
-    color1: { type: "color", default: "#000000" },
-    color2: { type: "color", default: "#FFFFFF" },
-  },
-};
+interface PresetNode extends BaseNode {
+  type: "preset";
+  preset: string;
+  params?: Record<string, unknown>;
+}
 ```
 
----
+スキーマ正本は `xsg-pattern.schema.json` の `BackgroundNode` / `PresetNode`（どちらも `required: ["preset"]`）。`type` が `background` か `preset` かの違いだけで、展開ロジックは同一に扱う（背面に置きたいものを `background`、前景に重ねたいものを `preset` と書き分ける慣習）。
 
-## 🔍 プリセットの自動検出
+### 実 YAML 例
 
-```typescript
-// backend/app/presets.py
-from pathlib import Path
-import json
-
-def discover_presets(presets_dir: Path = None):
-    """
-    presets/ ディレクトリから全プリセットを自動検出
-
-    「組み込み」と「カスタム」の区別はしない。
-    全て同じ仕組みで扱う。
-    """
-    if presets_dir is None:
-        presets_dir = Path(__file__).parent.parent.parent / "presets"
-
-    presets = {}
-
-    if presets_dir.exists():
-        for file in presets_dir.glob("*.tsx"):
-            preset_name = file.stem  # ファイル名（拡張子なし）
-
-            # メタデータを抽出（オプション）
-            metadata = extract_metadata(file)
-
-            presets[preset_name] = {
-                "name": preset_name,
-                "path": str(file),
-                "metadata": metadata,
-            }
-
-    return presets
-
-def extract_metadata(file: Path):
-    """
-    .tsxファイルから export const metadata を抽出
-    """
-    # 簡易実装: 正規表現でJSONを抽出
-    content = file.read_text()
-    # TODO: より堅牢なパース実装
-    return {}
-
-# FastAPI endpoint
-@app.get("/api/presets")
-async def list_presets():
-    """全プリセット一覧を返す（「組み込み」の区別なし）"""
-    presets = discover_presets()
-    return {
-        "presets": list(presets.values())
-    }
-```
-
----
-
-## 📦 標準プリセットの配布
-
-### リポジトリに含まれる「標準」プリセット
-
-これらはあくまで**リポジトリに同梱されているプリセット**であり、特別扱いはしない：
-
-```
-presets/
-├── checker.tsx         # 市松模様
-├── colorbar.tsx        # SMPTEカラーバー
-├── ebu-colorbar.tsx    # EBUカラーバー
-├── arib-colorbar.tsx   # ARIBカラーバー
-├── grayscale.tsx       # グレースケール
-├── gradient.tsx        # グラデーション
-├── crosshatch.tsx      # クロスハッチ
-├── pixeldefect.tsx     # 画素欠け
-├── multiburst.tsx      # マルチバースト
-├── convergence.tsx     # コンバージェンス
-└── pluge.tsx           # PLUGE
-```
-
-**ユーザーは自由に:**
-
-- ✅ 削除できる（不要なプリセットを削除）
-- ✅ 編集できる（標準プリセットを改造）
-- ✅ 追加できる（独自プリセットを追加）
-
----
-
-## 🎨 使用例
-
-### パターンファイル
+`frontend/public/patterns/colorbar-simple.yaml` — `colorbar` プリセットを背景に敷くだけのパターン:
 
 ```yaml
-# patterns/test.yaml
 canvas:
   width: 1920
   height: 1080
-
 nodes:
-  # 「標準」プリセット（リポジトリに含まれる）
-  - type: background
-    preset: checker # presets/checker.tsx
+  - id: bg-colorbar
+    type: background
+    preset: colorbar        # → colorbar.yaml の nodes を借りる
+```
+
+参照先 `colorbar.yaml` はプリミティブ（`rect` 群）で本体を描く基底パターン:
+
+```yaml
+canvas: { width: 1920, height: 1080 }
+nodes:
+  - id: bar-white
+    type: rect
+    x: 0
+    y: 0
+    width: 274.3
+    height: 1080
+    fill: "#C0C0C0"
+  # ... 残りの色バー
+```
+
+`frontend/public/patterns/checker-with-dot.yaml` — 背景プリセット ＋ 前景の生ノードを重ねる:
+
+```yaml
+nodes:
+  - id: bg-checker
+    type: background
+    preset: checker
     params:
       size: 50
-      color1: "#000000"
-      color2: "#FFFFFF"
-
-  # ユーザーのカスタムプリセット
-  - type: preset
-    preset: company-logo # presets/company-logo.tsx
-    params:
-      scale: 1.5
-
-  # 別のカスタムプリセット
-  - type: preset
-    preset: my-custom # presets/my-custom.tsx
-```
-
-**重要: 実装側は区別しない**
-
-- `checker` も `company-logo` も同じ仕組みでロード
-- APIも同じ（`/api/presets` で全て返す）
-
----
-
-## 🔄 移行元コンポーネントの扱い
-
-現在、XSGには以下のコンポーネントが存在します：
-
-```
-frontend/src/components/patterns/
-├── Checker.tsx
-├── ColorBar.tsx
-├── CrossHatch.tsx
-├── GrayScale.tsx
-└── ...
-```
-
-### 移行方針
-
-**これらを `presets/` に移動する：**
-
-```bash
-# 移動
-mv frontend/src/components/patterns/*.tsx presets/
-
-# 結果
-presets/
-├── Checker.tsx      # 元: frontend/src/components/patterns/Checker.tsx
-├── ColorBar.tsx
-├── CrossHatch.tsx
-├── GrayScale.tsx
-└── ...
-```
-
-**変更点:**
-
-1. ファイルの配置場所が変わるだけ
-2. 実装は基本的に変更不要（Props型を統一）
-3. `preset` として使えるようになる
-
----
-
-## 🚀 プリセットの動的ロード
-
-```typescript
-// frontend/src/lib/presets.ts
-const PRESETS_CACHE = new Map<string, React.ComponentType>();
-
-export async function loadPreset(name: string) {
-  // キャッシュチェック
-  if (PRESETS_CACHE.has(name)) {
-    return PRESETS_CACHE.get(name);
-  }
-
-  try {
-    // presets/ から動的にインポート
-    const module = await import(`../../../presets/${name}.tsx`);
-    const PresetComponent = module.default;
-
-    // キャッシュに保存
-    PRESETS_CACHE.set(name, PresetComponent);
-
-    return PresetComponent;
-  } catch (err) {
-    throw new Error(
-      `Preset not found: ${name}\n` +
-      `Make sure presets/${name}.tsx exists.`
-    );
-  }
-}
-
-// 使用例
-const PresetComponent = await loadPreset('checker');
-return <PresetComponent params={node.params} />;
+  - id: defect-1
+    type: circle
+    x: 50%
+    y: 50%
+    diameter: 2
+    fill: "#FF0000"
 ```
 
 ---
 
-## 📋 プリセット開発ガイド
+## ロードと展開のパイプライン
 
-### 新しいプリセットを作る
+### ① パターン取得 `get_pattern`（extends 継承 ＋ `{{param}}` 置換）
 
-1. `presets/` に `.tsx` ファイルを作成
+- **Tauri**: Rust コマンド `get_pattern(pattern_id, params)`（`frontend/src-tauri/src/lib.rs` → `pattern_loader::load_pattern_with_params` → `pattern_expander.rs`）。`resolve_extends` でテンプレート継承、`expand` で `{{param}}` 置換を行う。
+- **Web**: `frontend/src/lib/tauriCompat.ts` の `loadPatternFromWeb`。`/patterns/<id>.yaml` を `fetch` → `paramExpander.ts` の `resolveExtends`（基底 YAML を再帰ロードしてマージ）→ `expandParams`（`{{param}}` 置換）。
+- 両モードの入口は `safeInvoke("get_pattern", { patternId, params })`（`isTauri()` で分岐）。
 
-```typescript
-// presets/my-pattern.tsx
-import { useEffect, useRef } from 'react';
-import type { PresetProps } from '@/lib/presets';
+この段階では `extends` と `{{param}}` は解決済みだが、**`background`/`preset` ノードはまだ残っている**。
 
-export default function MyPattern({ params }: PresetProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+#### `extends`（テンプレート継承）
 
-  useEffect(() => {
-    // 描画ロジック
-  }, [params]);
+子パターンの `extends: <base>.yaml` で基底パターンを継承する。`params`/`canvas`/`nodes` を子が上書きマージする（params はキー単位でマージ、canvas/nodes は子があれば子で置換）。
 
-  return <canvas ref={canvasRef} className="w-full h-full" />;
-}
-
-export const metadata = {
-  name: "My Pattern",
-  description: "独自のテストパターン",
-  params: {
-    color: { type: "color", default: "#FF0000" },
-  },
-};
-```
-
-2. YAMLで使用
+実例: `gradient.yaml`（基底） → `staircase.yaml` / `horizontal-gradient.yaml` / `vertical-gradient.yaml` が `extends: gradient.yaml`、`grayscale.yaml` が `extends: horizontal-gradient.yaml`。
 
 ```yaml
-- preset: my-pattern
-  params:
-    color: "#00FF00"
+# staircase.yaml
+extends: gradient.yaml
+params:
+  steps: { type: number, default: 21 }
+  direction: { type: string, default: "horizontal" }
 ```
 
-3. 完了！（リスタート不要、Hot Reload対応）
+> ⚠️ **既知のスキーマ欠落**: `extends` はコード（TS `resolveExtends` / Rust `resolve_extends`）では実装されているが、`xsg-pattern.schema.json` の top-level プロパティには宣言されていない（`required: ["canvas", "nodes"]` のみ）。`extends` を使うファイルはスキーマ検証を通らない可能性がある。スキーマへの `extends` 追加は別 Issue 候補。
+
+### ② プリセット展開 `expandPresets`（#23 新設）
+
+`frontend/src/lib/presetExpander.ts` の `expandPresets(pattern, getPattern, depth?)`。`pattern.nodes` を走査し:
+
+- `type === "background" | "preset"` のノードは、`node.preset`（参照先 id）を `getPattern(presetId, params)` で取得し、**再帰展開**した上で、その nodes を **同じ位置に差し込む**（z 順保持＝`background` を先頭に書けば背面に来る）。
+- それ以外のノードはそのまま残す。
+
+設計上の不変条件:
+
+- **id の名前空間化**: 展開した子ノードの `id` を `${hostId}/${childId}`（host に id が無ければ `preset-${index}/${childId}`）に書き換える。同じプリセットを複数回参照しても、プリセット内 id が兄弟と衝突しても、展開後 id が一意になり、描画側の React `key={node.id}` の重複を防ぐ。id 以外（type/座標/fill/z 順）は変えない。
+- **params の非伝播**: ユーザのクエリ params（`?pattern=...&size=...`）は **base パターンにのみ**適用され、プリセット参照の子には伝播しない。子プリセットは YAML 記述の `node.params` のみで解決される（プリセット params は作者固定）。`params` は `stringifyParams` で `Record<string,string>` 化して `get_pattern` に渡す。
+- **黒落ち防止**: 参照不能（`preset` 欠落・取得失敗・深度超過）な展開ノードは `console.warn` して **drop** し、他ノードの描画は継続する。`MAX_DEPTH = 16` で自己参照・相互参照の無限ループを防ぐ。
+- **入力不変**: 入力 `pattern` を破壊せず `{ ...pattern, nodes }` で新オブジェクトを返す（規律2: 定義 vs 状態の分離）。
+
+### ③ 結線 `loadResolvedPattern`（両モード共通）
+
+`frontend/src/lib/tauriCompat.ts` の `loadResolvedPattern(patternId, params)` が ① と ② を繋ぐ:
+
+```ts
+const base = await safeInvoke<XSGPattern>("get_pattern", { patternId, params });
+return expandPresets(base, (id, p) =>
+  safeInvoke<XSGPattern>("get_pattern", { patternId: id, params: p })
+);
+```
+
+`getPattern` として `safeInvoke("get_pattern", ...)` 自身を渡すので、参照先パターン（さらにその extends/param）も **モード適切に**（Tauri=Rust / web=fetch）解決される。描画サイトはこの 1 関数を呼ぶだけでよい。
+
+> **規律3（二重実装を作らない）**: プリセット展開ロジックは TS の `expandPresets` **1 箇所だけ**にある。Rust 側（`pattern_expander.rs`）には extends/param 展開はあるが **プリセット展開は無い**。両モードとも展開は TS 経由で行われる。
 
 ---
 
-## 🔍 プリセット一覧の取得
+## プリセット id の解決とセキュリティ
 
-### API
+`frontend/src/lib/patternId.ts` の `resolvePatternId(name)` がパターン名 → id を解決する。
 
-```bash
-GET /api/presets
-```
-
-**レスポンス:**
-
-```json
-{
-  "presets": [
-    {
-      "name": "checker",
-      "path": "/path/to/xsg/presets/checker.tsx",
-      "metadata": {
-        "name": "Checker",
-        "description": "市松模様パターン",
-        "author": "XSG Team",
-        "version": "1.0.0",
-        "params": {
-          "size": { "type": "number", "default": 50 }
-        }
-      }
-    },
-    {
-      "name": "company-logo",
-      "path": "/path/to/xsg/presets/company-logo.tsx",
-      "metadata": {
-        "name": "Company Logo",
-        "description": "会社ロゴ"
-      }
-    }
-  ]
-}
-```
-
-**重要: 「標準」と「カスタム」の区別はない**
+- エイリアステーブル `PATTERN_MAP`（`colorbars`→`colorbar`、`smpte`→`colorbar`、`grey`→`grayscale` 等）で canonical id へ。
+- 未知名は **安全な id（`SAFE_PATTERN_ID = /^[a-z0-9][a-z0-9-]*$/`）と確認できた場合のみ** passthrough（`colorbar-simple` のように `PATTERN_MAP` 未登録でもファイルが在ればロードできる）。
+- `/`・`\`・`.`・`..`・空白・その他不正文字を含む名前は **`"solid"` に倒す**。これにより Rust `pattern_expander.load_pattern_file` の `patterns_dir.join(path)` 経由でディレクトリ外の任意 `.yaml` を読まれる事故（パストラバーサル・拡張子注入）を遮断する。
+- `parsePatternParams(search)` がクエリ文字列から `pattern` キーを除いた params を集める。
 
 ---
 
-## 🎯 メリット
+## 同梱パターン一覧
 
-### 1. シンプル
+`frontend/public/patterns/` ＝ ルート `patterns/` の YAML 群（同じ実体）。例:
 
-- ❌ 「組み込み」「カスタム」の区別なし
-- ✅ 全て同じ仕組み
+```
+colorbar.yaml / colorbar-simple.yaml   # SMPTE カラーバー（基底 / プリセット参照版）
+ebu-colorbar.yaml / arib-colorbar.yaml
+grayscale.yaml / staircase.yaml / gradient.yaml
+horizontal-gradient.yaml / vertical-gradient.yaml
+checker.yaml / checker-with-dot.yaml / crosshatch.yaml
+convergence.yaml / pluge.yaml / multiburst.yaml / pixel-defect.yaml
+solid.yaml / image-example.yaml / ...
+```
 
-### 2. 拡張性
-
-- ✅ ユーザーは自由にプリセットを追加
-- ✅ 標準プリセットも編集・削除可能
-
-### 3. 一貫性
-
-- ✅ 全てのプリセットが同じ規約に従う
-- ✅ ドキュメントがシンプル
-
-### 4. 透明性
-
-- ✅ 標準プリセットのソースが見える
-- ✅ カスタマイズしやすい
+ユーザは YAML を自由に追加・編集・削除でき、`type: preset`/`background` から相互参照できる。「組み込み」と「カスタム」を実装側は区別しない。
 
 ---
 
-## 📂 Git管理
+## 関連ドキュメント
 
-### .gitignore
-
-```gitignore
-# ユーザーのカスタムプリセットを無視（オプション）
-# presets/*
-# !presets/checker.tsx
-# !presets/colorbar.tsx
-# ... 標準プリセットのみコミット
-```
-
-**または:**
-
-```gitignore
-# 全てのプリセットをコミット（推奨）
-# ユーザーがカスタムプリセットを追加してもOK
-```
+- スキーマ正本: `../../xsg-pattern.schema.json`、設計は `schema-orthogonality.md`
+- 座標・パス解決: `path-resolution.md`
+- Web/Canvas 描画: `web-rendering.md`
+- 拡張方法: `extensibility.md`
 
 ---
 
-## 🔄 既存コードの移行
+## 履歴
 
-### Phase 1: 既存コンポーネントを移動
-
-```bash
-# 既存のパターンコンポーネントを presets/ に移動
-mv frontend/src/components/patterns/*.tsx presets/
-```
-
-### Phase 2: PatternDisplay.tsx を簡素化
-
-```typescript
-// frontend/src/components/PatternDisplay.tsx
-import { loadPreset } from '@/lib/presets';
-
-export default function PatternDisplay({ pattern }: Props) {
-  const [PresetComponent, setPresetComponent] = useState(null);
-
-  useEffect(() => {
-    loadPreset(pattern).then(setPresetComponent);
-  }, [pattern]);
-
-  if (!PresetComponent) return <div>Loading...</div>;
-
-  return <PresetComponent params={{}} />;
-}
-```
-
-### Phase 3: 完全にYAMLベースへ
-
-```yaml
-# patterns/colorbar.yaml
-canvas:
-  width: 1920
-  height: 1080
-
-nodes:
-  - type: background
-    preset: colorbar # presets/ColorBar.tsx → presets/colorbar.tsx
-```
-
-```bash
-# 起動
-uv run python -m app.main --file patterns/colorbar.yaml
-```
-
----
-
-## ✅ まとめ
-
-**「組み込みプリセットはない。全てがプラグインである。」**
-
-| 項目             | 設計                                  |
-| ---------------- | ------------------------------------- |
-| プリセットの配置 | `presets/` ディレクトリ               |
-| 標準 vs カスタム | **区別しない**                        |
-| 実装の規約       | React Component、default export       |
-| 自動検出         | ファイル名 = プリセット名             |
-| Hot Reload       | ✅ 対応                               |
-| メタデータ       | `export const metadata`（オプション） |
-
-**利点:**
-
-1. ✅ シンプル（区別がない）
-2. ✅ 拡張性（自由に追加・編集・削除）
-3. ✅ 透明性（全てのソースが見える）
-4. ✅ 一貫性（全て同じ仕組み）
-
-これが真のプラグインアーキテクチャです。
+当初は「プリセット＝React `.tsx` コンポーネント」とし、`backend/app/presets.py`（FastAPI）が `presets/*.tsx` を自動検出して `GET /api/presets` で配る設計を構想していた。実装は Tauri + YAML + TypeScript へ移行し、プリセットは普通の YAML パターンファイル、参照は `type: background|preset` ノード、展開は TS の `expandPresets`（#23）に集約された。本文書はその現行実装を記述する。旧 `.tsx`/FastAPI 設計の詳細は破棄した。
