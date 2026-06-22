@@ -6,6 +6,9 @@
  * In browser mode, Tauri commands are simulated with web-based fallbacks.
  */
 
+import { expandPresets } from "./presetExpander";
+import type { XSGPattern } from "./types";
+
 /**
  * Check if running inside Tauri webview
  */
@@ -28,6 +31,32 @@ export async function safeInvoke<T>(
 
   // Web-mode fallbacks
   return webFallback<T>(cmd, args);
+}
+
+/**
+ * `get_pattern` でパターンを取得し、preset/background ノードを参照先の nodes に
+ * 展開した「描画可能な」パターンを返す（Issue #23）。
+ *
+ * `safeInvoke("get_pattern", ...)` の戻りは extends 継承と `{{param}}` 置換まで
+ * 解決済みだが、preset/background ノードはそのまま残る。`expandPresets` に
+ * `safeInvoke("get_pattern", ...)` 自身を `getPattern` として渡すことで、参照先
+ * パターン（さらにその extends/params）もモード適切（Tauri=Rust / web=fetch）に
+ * 解決されつつ in-place 展開される。
+ *
+ * 規律3: preset 展開は TS のこの経路 1 箇所だけ。Rust 側には足さない。
+ * 描画サイト（usePatternLoader / SlideshowView）は本関数を呼ぶだけでよい。
+ */
+export async function loadResolvedPattern(
+  patternId: string,
+  params: Record<string, string>
+): Promise<XSGPattern> {
+  const base = await safeInvoke<XSGPattern>("get_pattern", {
+    patternId,
+    params,
+  });
+  return expandPresets(base, (id, p) =>
+    safeInvoke<XSGPattern>("get_pattern", { patternId: id, params: p })
+  );
 }
 
 /**
@@ -112,13 +141,13 @@ async function loadPatternFromWeb(
   }
 
   const yamlText = await response.text();
-  let pattern = yaml.load(yamlText) as Record<string, unknown>;
+  let pattern = yaml.load(yamlText) as XSGPattern;
 
   // Resolve extends
-  pattern = (await resolveExtends(pattern as any)) as Record<string, unknown>;
+  pattern = await resolveExtends(pattern);
 
   // Expand params
-  pattern = expandParams(pattern as any, _params) as Record<string, unknown>;
+  pattern = expandParams(pattern, _params);
 
   return pattern;
 }
