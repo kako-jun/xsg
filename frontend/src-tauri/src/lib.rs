@@ -1,7 +1,7 @@
 mod calibration;
 mod displays;
 pub mod pattern_expander;
-pub mod pattern_loader;
+mod pattern_loader;
 pub mod patterns;
 pub mod playlist;
 
