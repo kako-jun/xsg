@@ -29,17 +29,20 @@ sources:
     path: "@/patterns/checker-with-dot.yaml"
     duration: 5000
 
-  # Random pattern (inline)
+  # Inline pattern (drawn directly from primitives the web renderer supports;
+  # `preset`/`background` are Rust-only and would render black on the web).
   - type: inline
     pattern:
       canvas:
         width: 1920
         height: 1080
       nodes:
+        # Full-frame solid fill via a rect primitive.
         - id: bg
-          type: background
-          preset: grayscale
-          params:
-            steps: 16
-            direction: horizontal
+          type: rect
+          x: 0
+          y: 0
+          width: 1920
+          height: 1080
+          fill: "#2E4053"
     duration: 10000
