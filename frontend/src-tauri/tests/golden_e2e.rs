@@ -228,6 +228,89 @@ nodes:
     let _ = std::fs::remove_dir_all(&root);
 }
 
+#[test]
+fn expander_substitutes_multiple_params_and_passes_through_unknown() {
+    // expand のもう2経路を守る:
+    //   (1) 1文字列内に複数 {{param}} がある場合、全部置換される（replace ループ経路）。
+    //       文字列が「単一 {{var}}」でないと extract_single_var が None を返し、
+    //       params を総なめして各 placeholder を replace で埋める。
+    //   (2) user_params にも default にも無い {{unknown}} はそのまま文字列に残る。
+    //       文字列が丸ごと {{unknown}} なら extract_single_var が Some("unknown") を返すが、
+    //       params に無いので元の文字列をそのまま String で返す（素通し）。
+    let root = workspace("expander_multi");
+
+    // params: r/g/b は number 型で default を持つ。色文字列内に3つ展開する。
+    // unknownNode.value は丸ごと {{unknown}}（params に定義されない）→ 素通し検証。
+    write_file(
+        &root,
+        "multi.yaml",
+        r##"
+name: "Multi Sub"
+category: "Test"
+params:
+  r:
+    type: number
+    default: 255
+  g:
+    type: number
+    default: 128
+  b:
+    type: number
+    default: 0
+nodes:
+  - id: rgb-node
+    type: rect
+    fill: "rgb({{r}},{{g}},{{b}})"
+  - id: unknown-node
+    type: rect
+    fill: "{{unknown}}"
+"##,
+    );
+
+    let expander = PatternExpander::new(root.clone());
+    let pattern = load_value(&root, "multi.yaml");
+
+    // --- 仕様(1): user_params 空なら default(r=255,g=128,b=0) が1文字列内の3 placeholder を全置換 ---
+    let mut defaulted = pattern.clone();
+    let empty: HashMap<String, String> = HashMap::new();
+    expander
+        .expand(&mut defaulted, &empty)
+        .expect("expand(default) は成功するはず");
+    assert_eq!(
+        defaulted["nodes"][0]["fill"],
+        serde_json::json!("rgb(255,128,0)"),
+        "1文字列内の複数 {{param}} が全部 default で置換される"
+    );
+
+    // --- 仕様(2): {{unknown}} は params に無いのでそのまま残る（素通し）---
+    assert_eq!(
+        defaulted["nodes"][1]["fill"],
+        serde_json::json!("{{unknown}}"),
+        "未定義 param の {{unknown}} は置換されず文字列に残る"
+    );
+
+    // --- 仕様(1の補強): user_params で一部を上書きしても残りは default、複数置換は維持 ---
+    let mut overridden = pattern.clone();
+    let mut user = HashMap::new();
+    user.insert("g".to_string(), "64".to_string());
+    expander
+        .expand(&mut overridden, &user)
+        .expect("expand(user) は成功するはず");
+    assert_eq!(
+        overridden["nodes"][0]["fill"],
+        serde_json::json!("rgb(255,64,0)"),
+        "user 上書き(g=64)と default(r,b)が混在しても複数置換される"
+    );
+    // 未定義 param は user_params で触れていないのでやはり素通し。
+    assert_eq!(
+        overridden["nodes"][1]["fill"],
+        serde_json::json!("{{unknown}}"),
+        "user_params 指定後も未定義 {{unknown}} は素通し"
+    );
+
+    let _ = std::fs::remove_dir_all(&root);
+}
+
 // =====================================================================
 // (3) playlist runner — order / loop / duration
 // =====================================================================
@@ -316,7 +399,7 @@ sources:
 }
 
 #[test]
-fn runner_should_continue_stops_after_all_items_when_no_loop() {
+fn runner_inproc_should_continue_stops_after_all_items_when_no_loop() {
     // loop=false: 全件再生後に停止する。
     let playlist = make_playlist(
         Order::Sequence,
@@ -338,6 +421,14 @@ fn runner_should_continue_stops_after_all_items_when_no_loop() {
     runner.get_next(); // index -> 2 (== len)
                        // --- 仕様: loop=false で全件消化後は should_continue が false ---
     assert!(!runner.should_continue(), "loop=false なら全件後に停止する");
+
+    // --- 仕様: 非ループ Sequence で全件を消化したあと get_next() を呼ぶと None を返す ---
+    // current_index(==len) を wrap しないので sources.get(index) が None になる。
+    // これが「再生終了」の正規シグナル。should_continue() の false と二重に芯を守る。
+    assert!(
+        runner.get_next().is_none(),
+        "loop=false で全件消化後の get_next() は None を返す（末尾超過の境界）"
+    );
 }
 
 #[test]
@@ -393,7 +484,7 @@ sources:
 }
 
 #[test]
-fn runner_shuffle_preserves_membership_not_order() {
+fn runner_inproc_shuffle_preserves_membership_not_order() {
     let playlist = make_playlist(
         Order::Shuffle,
         false,
@@ -427,7 +518,7 @@ fn runner_shuffle_preserves_membership_not_order() {
 }
 
 #[test]
-fn runner_random_returns_only_input_members() {
+fn runner_inproc_random_returns_only_input_members() {
     let playlist = make_playlist(
         Order::Random,
         true,
@@ -458,7 +549,7 @@ fn runner_random_returns_only_input_members() {
 }
 
 #[test]
-fn runner_get_duration_priority_source_then_default_then_fallback() {
+fn runner_inproc_get_duration_priority_source_then_default_then_fallback() {
     // s1: source 個別 duration=2000、s2: 個別 duration 無し。
     // defaultDuration=7000 を指定 → s2 はこれを使う。
     let playlist = make_playlist(
@@ -492,7 +583,7 @@ fn runner_get_duration_priority_source_then_default_then_fallback() {
 }
 
 #[test]
-fn runner_get_duration_falls_back_to_5000_when_nothing_set() {
+fn runner_inproc_get_duration_falls_back_to_5000_when_nothing_set() {
     // 個別 duration も defaultDuration も無い → 実装既定の 5000ms に落ちる。
     let playlist = make_playlist(
         Order::Sequence,
