@@ -10,17 +10,17 @@ use std::fs;
 /// Load pattern from YAML file
 pub fn load_pattern_file(pattern_id: &str) -> Result<Value> {
     let patterns_dir = get_patterns_dir()?;
-    let pattern_path = patterns_dir.join(format!("{}.yaml", pattern_id));
+    let pattern_path = patterns_dir.join(format!("{pattern_id}.yaml"));
 
     if !pattern_path.exists() {
-        return Err(anyhow::anyhow!("Pattern not found: {}", pattern_id));
+        return Err(anyhow::anyhow!("Pattern not found: {pattern_id}"));
     }
 
     let content = fs::read_to_string(&pattern_path)
-        .with_context(|| format!("Failed to read pattern file: {:?}", pattern_path))?;
+        .with_context(|| format!("Failed to read pattern file: {pattern_path:?}"))?;
 
     let yaml: Value = serde_yaml::from_str(&content)
-        .with_context(|| format!("Failed to parse YAML: {:?}", pattern_path))?;
+        .with_context(|| format!("Failed to parse YAML: {pattern_path:?}"))?;
 
     Ok(yaml)
 }

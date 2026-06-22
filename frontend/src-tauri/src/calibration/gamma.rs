@@ -71,7 +71,7 @@ pub fn restore_gamma() -> ControlResult {
             drop(saved);
             return set_gamma(gamma);
         }
-        return ControlResult::failure("No saved gamma to restore");
+        ControlResult::failure("No saved gamma to restore")
     }
 
     #[cfg(target_os = "macos")]
@@ -249,7 +249,7 @@ fn detect_gamma_linux() -> GammaStatus {
                     if parts.len() >= 2 {
                         let gamma_str = parts[1].trim();
                         let gamma_parts: Vec<&str> = gamma_str.split(':').collect();
-                        if let Some(gamma_str) = gamma_parts.get(0) {
+                        if let Some(gamma_str) = gamma_parts.first() {
                             if let Ok(gamma_val) = gamma_str.parse::<f32>() {
                                 let is_default = (gamma_val - 1.0).abs() < 0.05;
 
@@ -312,20 +312,20 @@ fn set_gamma_linux(gamma: f32) -> ControlResult {
     }
 
     // Set gamma
-    let gamma_str = format!("{:.2}:{:.2}:{:.2}", gamma, gamma, gamma);
+    let gamma_str = format!("{gamma:.2}:{gamma:.2}:{gamma:.2}");
     let result = Command::new("xrandr")
-        .args(&["--output", display_name, "--gamma", &gamma_str])
+        .args(["--output", display_name, "--gamma", &gamma_str])
         .output();
 
     match result {
         Ok(output) if output.status.success() => {
-            ControlResult::success(format!("Gamma set to {:.2} on {}", gamma, display_name))
+            ControlResult::success(format!("Gamma set to {gamma:.2} on {display_name}"))
         }
         Ok(output) => {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            ControlResult::failure(format!("xrandr failed: {}", stderr))
+            ControlResult::failure(format!("xrandr failed: {stderr}"))
         }
-        Err(e) => ControlResult::failure(format!("Error: {}", e)),
+        Err(e) => ControlResult::failure(format!("Error: {e}")),
     }
 }
 

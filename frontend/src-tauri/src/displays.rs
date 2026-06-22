@@ -39,10 +39,7 @@ pub fn group_displays_by_position(displays: &[DisplayInfo], axis: &str) -> Vec<V
 
     for display in displays {
         let coord = if axis == "x" { display.x } else { display.y };
-        groups
-            .entry(coord)
-            .or_insert_with(Vec::new)
-            .push(display.clone());
+        groups.entry(coord).or_default().push(display.clone());
     }
 
     // Sort groups by coordinate

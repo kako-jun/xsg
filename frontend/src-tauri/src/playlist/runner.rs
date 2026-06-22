@@ -63,10 +63,9 @@ impl PlaylistRunner {
                 let source = self.sources.get(self.current_index);
                 self.current_index += 1;
 
-                if self.current_index >= self.sources.len() {
-                    if self.playlist.playback.loop_playback {
-                        self.current_index = 0;
-                    }
+                if self.current_index >= self.sources.len() && self.playlist.playback.loop_playback
+                {
+                    self.current_index = 0;
                 }
 
                 source
@@ -82,10 +81,9 @@ impl PlaylistRunner {
                 let source = self.sources.get(self.current_index);
                 self.current_index += 1;
 
-                if self.current_index >= self.sources.len() {
-                    if self.playlist.playback.loop_playback {
-                        self.current_index = 0;
-                    }
+                if self.current_index >= self.sources.len() && self.playlist.playback.loop_playback
+                {
+                    self.current_index = 0;
                 }
 
                 source

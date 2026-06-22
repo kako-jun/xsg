@@ -68,7 +68,7 @@ pub fn load_patterns_from(dir: &Path) -> Result<Vec<PatternInfo>> {
                 }
             }
             Err(e) => {
-                log::warn!("Failed to process glob entry: {}", e);
+                log::warn!("Failed to process glob entry: {e}");
             }
         }
     }
@@ -82,10 +82,10 @@ pub fn load_patterns_from(dir: &Path) -> Result<Vec<PatternInfo>> {
 /// Load pattern metadata from a single YAML file
 fn load_pattern_info(path: &Path) -> Result<PatternInfo> {
     let content = fs::read_to_string(path)
-        .with_context(|| format!("Failed to read pattern file: {:?}", path))?;
+        .with_context(|| format!("Failed to read pattern file: {path:?}"))?;
 
     let yaml: HashMap<String, serde_yaml::Value> = serde_yaml::from_str(&content)
-        .with_context(|| format!("Failed to parse YAML: {:?}", path))?;
+        .with_context(|| format!("Failed to parse YAML: {path:?}"))?;
 
     let pattern_id = path
         .file_stem()

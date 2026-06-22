@@ -106,7 +106,7 @@ impl PatternExpander {
                         serde_json::Number::from_f64(float_val).context("Invalid float value")?,
                     ))
                 } else {
-                    Err(anyhow::anyhow!("Cannot parse '{}' as number", value))
+                    Err(anyhow::anyhow!("Cannot parse '{value}' as number"))
                 }
             }
             "boolean" => {
@@ -151,7 +151,7 @@ impl PatternExpander {
         // Replace all {{paramName}} occurrences
         let mut result = s.to_string();
         for (key, value) in params {
-            let placeholder = format!("{{{{{}}}}}", key);
+            let placeholder = format!("{{{{{key}}}}}");
             if result.contains(&placeholder) {
                 let replacement = match value {
                     Value::String(s) => s.clone(),
@@ -247,8 +247,8 @@ impl PatternExpander {
     /// Load a pattern file by path
     fn load_pattern_file(&self, path: &str) -> Result<Value> {
         // Normalize path
-        let file_path = if path.starts_with('/') {
-            PathBuf::from(&path[1..])
+        let file_path = if let Some(stripped) = path.strip_prefix('/') {
+            PathBuf::from(stripped)
         } else {
             self.patterns_dir.join(path)
         };

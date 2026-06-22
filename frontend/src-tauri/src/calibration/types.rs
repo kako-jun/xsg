@@ -41,6 +41,9 @@ pub struct NightModeStatus {
 }
 
 impl NightModeStatus {
+    // Used by the non-Linux/Windows/macOS cfg fallback in night_mode.rs;
+    // dead on this platform's build only.
+    #[allow(dead_code)]
     pub fn not_supported(message: impl Into<String>) -> Self {
         Self {
             supported: false,
@@ -49,6 +52,9 @@ impl NightModeStatus {
         }
     }
 
+    // Symmetric status constructor (mirrors GammaStatus::error); reserved for
+    // platform-specific error paths.
+    #[allow(dead_code)]
     pub fn error(message: impl Into<String>) -> Self {
         Self {
             supported: true,
@@ -75,6 +81,9 @@ impl HDRStatus {
         }
     }
 
+    // Symmetric status constructor (mirrors GammaStatus::error); reserved for
+    // platform-specific error paths.
+    #[allow(dead_code)]
     pub fn error(message: impl Into<String>) -> Self {
         Self {
             supported: true,
