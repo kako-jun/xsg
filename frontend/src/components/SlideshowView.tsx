@@ -5,7 +5,7 @@ import NodeRenderer from "./NodeRenderer";
 import { useSlideshow } from "../hooks/useSlideshow";
 import { resolvePath } from "../lib/pathResolver";
 import type { Playlist, PlaylistSource } from "../lib/playlistTypes";
-import type { XSGPattern } from "../lib/types";
+import type { PatternLoad, XSGPattern } from "../lib/types";
 
 interface SlideshowViewProps {
   /** Playlist name (e.g. "digital-signage") taken from `?playlist=`. */
@@ -169,38 +169,42 @@ function patternIdFromPath(path: string): string {
 
 /** Pattern source: load via get_pattern then render nodes (like PatternDisplay). */
 function PatternSlide({ path }: { path: string }) {
-  const [pattern, setPattern] = useState<XSGPattern | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // Runtime load state (規律2): the loaded `XSGPattern` is an immutable
+  // definition; loading/error are held alongside it in `PatternLoad` instead of
+  // overloading the definition type as a state container.
+  const [load, setLoad] = useState<PatternLoad>({ status: "loading" });
 
   useEffect(() => {
     let cancelled = false;
-    const load = async () => {
-      setError(null);
-      setPattern(null);
+    const run = async () => {
+      setLoad({ status: "loading" });
       try {
         const { safeInvoke } = await import("../lib/tauriCompat");
         const data = await safeInvoke<XSGPattern>("get_pattern", {
           patternId: patternIdFromPath(path),
           params: {},
         });
-        if (!cancelled) setPattern(data);
+        if (!cancelled) setLoad({ status: "ready", pattern: data });
       } catch (err) {
         if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load pattern"
-          );
+          setLoad({
+            status: "error",
+            message:
+              err instanceof Error ? err.message : "Failed to load pattern",
+          });
         }
       }
     };
-    load();
+    run();
     return () => {
       cancelled = true;
     };
   }, [path]);
 
-  if (error) return <CenterMessage>Error: {error}</CenterMessage>;
-  if (!pattern || !pattern.nodes) return null;
-  return <PatternNodes pattern={pattern} />;
+  if (load.status === "error")
+    return <CenterMessage>Error: {load.message}</CenterMessage>;
+  if (load.status !== "ready" || !load.pattern.nodes) return null;
+  return <PatternNodes pattern={load.pattern} />;
 }
 
 /** Inline source: render the embedded pattern's nodes directly. */

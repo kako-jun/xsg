@@ -318,18 +318,46 @@ export interface ParamDef {
 }
 
 /**
- * XSG Pattern definition
+ * XSG Pattern definition.
+ *
+ * This is the immutable *definition* type (規律2: 定義 vs 状態の分離). A loaded
+ * pattern is read-only data — it is never used as the container for runtime
+ * state (loading flags, the currently displayed slide, playback cursors, …).
+ * Runtime/loading state lives in separate `~State`/load types
+ * ({@link PatternLoad}, `SequencerState` in `slideshowSequencer.ts`).
+ *
+ * Pure transforms over patterns (`paramExpander.ts`: `expandParams`,
+ * `resolveExtends`) deep-clone or build a fresh object rather than mutating the
+ * input, so the fields are declared `readonly` to keep that contract honest.
  */
 export interface XSGPattern {
   /** Extends another pattern (template inheritance) */
-  extends?: string;
+  readonly extends?: string;
   /** Canvas dimensions */
-  canvas?: Canvas;
+  readonly canvas?: Canvas;
   /** Parameter definitions (optional, for template patterns) */
-  params?: Record<string, ParamDef>;
+  readonly params?: Record<string, ParamDef>;
   /** Array of nodes (layers), rendered in order (first = back, last = front) */
-  nodes?: PatternNode[];
+  readonly nodes?: PatternNode[];
 }
+
+// ============================================================================
+// Runtime State (NOT part of the definition)
+// ============================================================================
+
+/**
+ * Runtime load state for a pattern fetched via `get_pattern`.
+ *
+ * This is the `~State` companion to the {@link XSGPattern} definition: it is the
+ * mutable, per-component state of *loading* a pattern. Keeping it separate makes
+ * it explicit that the immutable definition ({@link XSGPattern}) is not reused as
+ * a state container (規律2). The loaded `pattern` is the definition; everything
+ * else here (status, error message) is runtime state.
+ */
+export type PatternLoad =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; pattern: XSGPattern };
 
 // ============================================================================
 // Legacy Format (for migration)
