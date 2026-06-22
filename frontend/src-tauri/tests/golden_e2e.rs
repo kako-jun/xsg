@@ -232,19 +232,15 @@ nodes:
 // (3) playlist runner — order / loop / duration
 // =====================================================================
 //
-// 注: 当初は load_playlist(YAML) でフィクスチャを読み runner に渡す設計だったが、
-// 調査の結果 `load_playlist` / `load_playlist_json` は **既存バグで全 playlist の
-// デシリアライズに失敗する**（PlaylistSource が `#[serde(tag = "type")]` の内部タグ
-// enum でありながら、各 variant 構造体も `#[serde(rename = "type")] type_` を再宣言
-// しており、タグ消費後に inner struct の `type` が「missing field」になる。リポ同梱の
-// playlists/*.yaml すら読めない）。これはプロダクションコードのバグなので**このテストでは
-// 直さず**、runner の芯（order/loop/duration）を守るため Playlist を Rust で直接構築する。
-// デシリアライズ経路自体は下の deserialize_bug テストで回帰ガードとして固定する。
+// #16 の type タグ衝突バグ修正後は `load_playlist(YAML)` が機能するので、Sequence 系の
+// golden は **temp dir に同梱書式の playlist YAML を書き、`load_playlist` で読んで runner に
+// 渡す本物の e2e**（YAML → デシリアライズ → PlaylistRunner → 順序検証の一気通貫）に格上げした。
+// 非決定（Shuffle/Random）系は順序 assert を持ち込まないため、引き続き Rust 直接構築で集合・件数を見る。
 
 /// pattern source を1件作る（path と任意の個別 duration）。
+/// 非決定系テスト（Shuffle/Random）用の直接構築ヘルパ。
 fn pattern_source(path: &str, duration: Option<f32>) -> PlaylistSource {
     PlaylistSource::Pattern(PatternSource {
-        type_: "pattern".to_string(),
         path: path.to_string(),
         duration,
     })
@@ -278,17 +274,32 @@ fn source_path(s: &PlaylistSource) -> String {
 
 #[test]
 fn runner_sequence_order_is_deterministic_and_loops() {
-    // loop=true: 末尾の次で先頭へ wrap し延々続く。
-    let playlist = make_playlist(
-        Order::Sequence,
-        true,
-        None,
-        vec![
-            pattern_source("a.yaml", None),
-            pattern_source("b.yaml", None),
-            pattern_source("c.yaml", None),
-        ],
-    );
+    // ★本物の e2e★ 同梱 playlists/*.yaml と同じ書式のフィクスチャを temp dir に書き、
+    // load_playlist(YAML) → デシリアライズ → PlaylistRunner → 順序検証を一気通貫で踏む。
+    // （#16 の type タグ衝突を直したので load_playlist が実際に機能することを芯で守る。）
+    let root = workspace("seq");
+    // playback: {order, loop, defaultDuration} / sources: [{type: pattern, path, duration}]
+    let yaml = "\
+playback:
+  order: sequence
+  loop: true
+  defaultDuration: 3000
+sources:
+  - type: pattern
+    path: \"a.yaml\"
+    duration: 3000
+  - type: pattern
+    path: \"b.yaml\"
+    duration: 3000
+  - type: pattern
+    path: \"c.yaml\"
+    duration: 3000
+";
+    let path = root.join("sequence.yaml");
+    std::fs::write(&path, yaml).unwrap();
+
+    // --- 仕様: 同梱書式の YAML が load_playlist でデシリアライズできる（#16 修正の芯）---
+    let playlist = load_playlist(&path).expect("load_playlist は成功するはず（#16 修正後）");
 
     let mut runner = PlaylistRunner::new(playlist);
     runner.prepare();
@@ -300,6 +311,8 @@ fn runner_sequence_order_is_deterministic_and_loops() {
     // --- 仕様: loop_playback=true は末尾の次で先頭へ wrap する ---
     assert_eq!(source_path(runner.get_next().unwrap()), "a.yaml");
     assert_eq!(source_path(runner.get_next().unwrap()), "b.yaml");
+
+    let _ = std::fs::remove_dir_all(&root);
 }
 
 #[test]
@@ -450,35 +463,87 @@ fn runner_get_duration_falls_back_to_5000_when_nothing_set() {
 }
 
 // =====================================================================
-// (3b) playlist デシリアライズ経路の回帰ガード（既存バグの固定）
+// (3b) playlist デシリアライズ経路の正常系（#16 修正の回帰ガード）
 // =====================================================================
 
 #[test]
-fn load_playlist_currently_fails_on_internally_tagged_source_bug() {
-    // ★既存バグの回帰ガード★
-    // PlaylistSource は内部タグ enum (#[serde(tag = "type")]) なのに、各 variant 構造体も
-    // `#[serde(rename = "type")] type_` を持つ。タグが消費された後 inner struct の `type` が
-    // 「missing field」になり、**全ての playlist がデシリアライズできない**。
-    // リポ同梱の playlists/*.yaml すら読めない。これはプロダクションのバグなのでテストでは
-    // 直さず、現状の挙動（失敗する）を固定して将来の修正を検知できるようにする。
-    // models.rs の variant struct から `type_` フィールドを除く（or untagged 化する）と
-    // この assert は反転するので、修正時にここを更新するシグナルになる。
-    let root = workspace("plbug");
-    let yaml = "playback:\n  order: sequence\n  loop_playback: true\nsources:\n  - type: pattern\n    path: \"a.yaml\"\n";
-    let path = root.join("pl.yaml");
+fn load_playlist_deserializes_all_source_types() {
+    // ★#16 修正の回帰ガード（反転後）★
+    // 旧: 内部タグ enum (#[serde(tag = "type")]) と各 variant の `#[serde(rename = "type")] type_`
+    //     が衝突し、タグ消費後 inner struct の `type` が「missing field」になって全 playlist の
+    //     デシリアライズが失敗していた。
+    // 新: variant struct から type_ を除いたので、url/pattern/image/inline の各 type が
+    //     正しい PlaylistSource variant にデシリアライズされる。同梱書式の混在 YAML を読んで
+    //     各 type → 期待 variant のマッピングと中身を固定する。type_ を再宣言で復活させると
+    //     再び失敗するので、この正常系が #16 の回帰を射抜く。
+    let root = workspace("plall");
+    // 同梱 digital-signage.yaml と同じ書式（4 type すべてを1本に混在）。
+    let yaml = "\
+playback:
+  order: sequence
+  loop: true
+  defaultDuration: 10000
+sources:
+  - type: url
+    url: \"https://example.com/dashboard\"
+    readonly: true
+    duration: 30000
+  - type: pattern
+    path: \"@/patterns/colorbar-simple.yaml\"
+    duration: 5000
+  - type: image
+    src: \"@/images/announcement.png\"
+    fit: contain
+    duration: 15000
+  - type: inline
+    pattern:
+      canvas:
+        width: 1920
+        height: 1080
+    duration: 10000
+";
+    let path = root.join("all-types.yaml");
     std::fs::write(&path, yaml).unwrap();
 
-    let result = load_playlist(&path);
-    assert!(
-        result.is_err(),
-        "回帰ガード: 内部タグ/フィールド衝突バグが残る限り load_playlist は失敗するはず。\
-         成功したならバグが直っている → このテストを正常系に書き換えること"
-    );
-    let msg = result.unwrap_err().to_string();
-    assert!(
-        msg.contains("missing field `type`"),
-        "想定どおりの失敗理由（type フィールド衝突）であること。実際: {msg}"
-    );
+    // --- 仕様: #16 修正後は混在 playlist がエラーなくデシリアライズできる ---
+    let playlist = load_playlist(&path).expect("load_playlist は成功するはず（#16 修正後）");
+    let sources = playlist.sources.expect("sources を持つ");
+    assert_eq!(sources.len(), 4, "4 件の source がすべて読める");
+
+    // --- 仕様: 各 type が正しい variant にデシリアライズされ、中身も保持される ---
+    match &sources[0] {
+        PlaylistSource::Url(u) => {
+            assert_eq!(u.url, "https://example.com/dashboard");
+            assert_eq!(u.readonly, Some(true));
+            assert_eq!(u.duration, Some(30000.0));
+        }
+        other => panic!("sources[0] は Url のはず: {other:?}"),
+    }
+    match &sources[1] {
+        PlaylistSource::Pattern(p) => {
+            assert_eq!(p.path, "@/patterns/colorbar-simple.yaml");
+            assert_eq!(p.duration, Some(5000.0));
+        }
+        other => panic!("sources[1] は Pattern のはず: {other:?}"),
+    }
+    match &sources[2] {
+        PlaylistSource::Image(i) => {
+            assert_eq!(i.src, "@/images/announcement.png");
+            assert_eq!(i.fit.as_deref(), Some("contain"));
+            assert_eq!(i.duration, Some(15000.0));
+        }
+        other => panic!("sources[2] は Image のはず: {other:?}"),
+    }
+    match &sources[3] {
+        PlaylistSource::Inline(inl) => {
+            assert!(
+                inl.pattern.contains_key("canvas"),
+                "inline は pattern を持つ"
+            );
+            assert_eq!(inl.duration, Some(10000.0));
+        }
+        other => panic!("sources[3] は Inline のはず: {other:?}"),
+    }
 
     let _ = std::fs::remove_dir_all(&root);
 }
