@@ -276,13 +276,16 @@ function UrlSlide({
       src={source.url}
       title="slideshow-url"
       className="w-full h-full border-0"
-      // readonly signage: block all pointer/keyboard interaction and lock down
-      // the embedded page. sandbox without allow-scripts would break many
-      // dashboards, so we keep scripts but cut user interaction via CSS.
+      // Playlist URLs are assumed to be trusted (a signage operator's own
+      // dashboards). We still avoid the sandbox-escape combo: `allow-scripts`
+      // together with `allow-same-origin` lets a framed page remove its own
+      // sandbox, so we never grant both. Scripts stay enabled (dashboards need
+      // them) but same-origin is withheld. readonly signage additionally blocks
+      // all pointer/keyboard interaction via CSS.
       sandbox={
         source.readonly
-          ? "allow-scripts allow-same-origin"
-          : "allow-scripts allow-same-origin allow-forms allow-popups"
+          ? "allow-scripts allow-popups"
+          : "allow-scripts allow-forms allow-popups"
       }
       style={{
         pointerEvents: source.readonly ? "none" : "auto",
